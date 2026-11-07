@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "devDependencies": {
+    "tsx": "^4.23.15"
+  }
+}
