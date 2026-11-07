@@ -1,0 +1,46 @@
+---
+description: Practices for the WireSleuth backend. Update this file in the same change that changes one of these practices.
+alwaysApply: true
+---
+
+# WireSleuth backend
+
+`docs/decisions.md` wins when it disagrees with a design doc or `docs/filling-the-skeletons.md`.
+
+Do not add a Nest controller until an HTTP route contract is in the repo. The architecture doc names NestJS for `apps/api` and the worker. A controller with no route is not that app.
+
+## Modules
+
+Import the database as `#db`, SQL nulls as `#sql`, domain types as `#domain`, and rules as `#rules`. Do not climb out of an app with a relative path to `src/prisma` or `packages/`. Do not import a Prisma internal module from application code. `src/prisma/sql.ts` owns typed SQL nulls.
+
+`packages/domain` exports types and the status lists. It does not export functions. The implementations live in `apps/api`, `apps/worker`, and `packages/rules`.
+
+Relative imports keep the `.ts` suffix because `tsx` runs the source files.
+
+## Statuses
+
+Status sets are string literal aliases in `packages/domain/src/states.ts`. Do not use the TypeScript `enum` keyword. Do not merge two fields because they share a word. `RECEIVED` on a verification is not `RECEIVED` on processing.
+
+`verify` and the attempt insert use `VerificationState` excluding `RECEIVED`. A signature check does not return that value.
+
+PostgreSQL enums in `prisma/schema.prisma` use the same labels. The generated contract in `src/prisma/contract.d.ts` is produced by `npm run contract:emit`. Do not edit it.
+
+## Ingest and classification
+
+`ingest` commits the delivery and an outbox row. It does not call Redis. A result is a union a caller can switch on. Do not throw a plain string for an unknown token or a conflict.
+
+Metadata-only is the default. Redact before persistence. Do not store the signing secret on an event or in a read response.
+
+Rules read `IncidentContext` only. They do not query the database and they do not call a model. Evidence ids in a match come from that context. `UNKNOWN` is returned only when no specific class matched.
+
+`classifyJob` stores one finding per event, rule id, and rule version. The finding belongs to an incident. A second call does not insert another finding. The incident is unique on workspace, fingerprint, and rule version. Group with `fingerprint` from `#rules`. `environment` and `endpoint` come from the integration.
+
+`NETWORK_TIMEOUT` and `OUT_OF_ORDER` stay empty until the context can show the comparison. Do not compare clocks from two machines.
+
+`npm test` runs one file at a time. The database tests share one Postgres database. A parallel run deletes another file's rows.
+
+## When a practice changes
+
+Update this file in the same change. A practice that is no longer true and is left here will be copied into the next implementation.
+
+Failure to avoid: a second copy of `verify` under `packages/domain` that only throws, while `apps/api` has the real one. Callers then import the wrong function.

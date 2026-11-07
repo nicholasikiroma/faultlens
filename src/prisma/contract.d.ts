@@ -23,9 +23,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'56c42b5fed75f503ccc83bd181410616afe44ec277931510122d206e2452ebd4'>;
+  StorageHashBase<'b34168499028a08c57d0b23c5456220acb24cb7344d1435037262f7219a8bc5e'>;
 export type ExecutionHash =
-  ExecutionHashBase<'4b3a5b0bc4ff1e7ff97260f0e1afb4037f034d013813dce28abe7d47b3e83476'>;
+  ExecutionHashBase<'59c821dd76f6d83e0190e80958a8b8b17c2e6556cb5c669d9428ca8b59687637'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -295,6 +295,82 @@ type FieldTypeOverrides = {
         };
         readonly trustTier: { readonly output: 'A' | 'B' | 'C'; readonly input: 'A' | 'B' | 'C' };
       };
+      readonly Finding: {
+        readonly failureClass: {
+          readonly output:
+            | 'AUTH_FAILURE'
+            | 'RATE_LIMIT'
+            | 'NETWORK_TIMEOUT'
+            | 'UPSTREAM_5XX'
+            | 'SCHEMA_MISMATCH'
+            | 'INVALID_SIGNATURE'
+            | 'DUPLICATE_DELIVERY'
+            | 'OUT_OF_ORDER'
+            | 'UNKNOWN';
+          readonly input:
+            | 'AUTH_FAILURE'
+            | 'RATE_LIMIT'
+            | 'NETWORK_TIMEOUT'
+            | 'UPSTREAM_5XX'
+            | 'SCHEMA_MISMATCH'
+            | 'INVALID_SIGNATURE'
+            | 'DUPLICATE_DELIVERY'
+            | 'OUT_OF_ORDER'
+            | 'UNKNOWN';
+        };
+      };
+      readonly Incident: {
+        readonly failureClass: {
+          readonly output:
+            | 'AUTH_FAILURE'
+            | 'RATE_LIMIT'
+            | 'NETWORK_TIMEOUT'
+            | 'UPSTREAM_5XX'
+            | 'SCHEMA_MISMATCH'
+            | 'INVALID_SIGNATURE'
+            | 'DUPLICATE_DELIVERY'
+            | 'OUT_OF_ORDER'
+            | 'UNKNOWN';
+          readonly input:
+            | 'AUTH_FAILURE'
+            | 'RATE_LIMIT'
+            | 'NETWORK_TIMEOUT'
+            | 'UPSTREAM_5XX'
+            | 'SCHEMA_MISMATCH'
+            | 'INVALID_SIGNATURE'
+            | 'DUPLICATE_DELIVERY'
+            | 'OUT_OF_ORDER'
+            | 'UNKNOWN';
+        };
+        readonly status: {
+          readonly output: 'OPEN' | 'INVESTIGATING' | 'RESOLVED' | 'ARCHIVED';
+          readonly input: 'OPEN' | 'INVESTIGATING' | 'RESOLVED' | 'ARCHIVED';
+        };
+      };
+      readonly InvestigationRun: {
+        readonly mode: {
+          readonly output: 'RULES' | 'AI_ASSISTED';
+          readonly input: 'RULES' | 'AI_ASSISTED';
+        };
+        readonly state: {
+          readonly output:
+            | 'NOT_STARTED'
+            | 'QUEUED'
+            | 'RUNNING'
+            | 'NEEDS_REVIEW'
+            | 'COMPLETED'
+            | 'FAILED'
+            | 'CANCELLED';
+          readonly input:
+            | 'NOT_STARTED'
+            | 'QUEUED'
+            | 'RUNNING'
+            | 'NEEDS_REVIEW'
+            | 'COMPLETED'
+            | 'FAILED'
+            | 'CANCELLED';
+        };
+      };
       readonly WebhookEvent: {
         readonly processingState: {
           readonly output: 'RECEIVED' | 'QUEUED' | 'PROCESSED' | 'FAILED';
@@ -338,6 +414,82 @@ type ColumnTypeOverrides = {
         readonly input: 'DELIVERY_ATTEMPT' | 'WEBHOOK_EVENT' | 'FIXTURE';
       };
       readonly trust_tier: { readonly output: 'A' | 'B' | 'C'; readonly input: 'A' | 'B' | 'C' };
+    };
+    readonly findings: {
+      readonly failure_class: {
+        readonly output:
+          | 'AUTH_FAILURE'
+          | 'RATE_LIMIT'
+          | 'NETWORK_TIMEOUT'
+          | 'UPSTREAM_5XX'
+          | 'SCHEMA_MISMATCH'
+          | 'INVALID_SIGNATURE'
+          | 'DUPLICATE_DELIVERY'
+          | 'OUT_OF_ORDER'
+          | 'UNKNOWN';
+        readonly input:
+          | 'AUTH_FAILURE'
+          | 'RATE_LIMIT'
+          | 'NETWORK_TIMEOUT'
+          | 'UPSTREAM_5XX'
+          | 'SCHEMA_MISMATCH'
+          | 'INVALID_SIGNATURE'
+          | 'DUPLICATE_DELIVERY'
+          | 'OUT_OF_ORDER'
+          | 'UNKNOWN';
+      };
+    };
+    readonly incidents: {
+      readonly failure_class: {
+        readonly output:
+          | 'AUTH_FAILURE'
+          | 'RATE_LIMIT'
+          | 'NETWORK_TIMEOUT'
+          | 'UPSTREAM_5XX'
+          | 'SCHEMA_MISMATCH'
+          | 'INVALID_SIGNATURE'
+          | 'DUPLICATE_DELIVERY'
+          | 'OUT_OF_ORDER'
+          | 'UNKNOWN';
+        readonly input:
+          | 'AUTH_FAILURE'
+          | 'RATE_LIMIT'
+          | 'NETWORK_TIMEOUT'
+          | 'UPSTREAM_5XX'
+          | 'SCHEMA_MISMATCH'
+          | 'INVALID_SIGNATURE'
+          | 'DUPLICATE_DELIVERY'
+          | 'OUT_OF_ORDER'
+          | 'UNKNOWN';
+      };
+      readonly status: {
+        readonly output: 'OPEN' | 'INVESTIGATING' | 'RESOLVED' | 'ARCHIVED';
+        readonly input: 'OPEN' | 'INVESTIGATING' | 'RESOLVED' | 'ARCHIVED';
+      };
+    };
+    readonly investigation_runs: {
+      readonly mode: {
+        readonly output: 'RULES' | 'AI_ASSISTED';
+        readonly input: 'RULES' | 'AI_ASSISTED';
+      };
+      readonly state: {
+        readonly output:
+          | 'NOT_STARTED'
+          | 'QUEUED'
+          | 'RUNNING'
+          | 'NEEDS_REVIEW'
+          | 'COMPLETED'
+          | 'FAILED'
+          | 'CANCELLED';
+        readonly input:
+          | 'NOT_STARTED'
+          | 'QUEUED'
+          | 'RUNNING'
+          | 'NEEDS_REVIEW'
+          | 'COMPLETED'
+          | 'FAILED'
+          | 'CANCELLED';
+      };
     };
     readonly webhook_events: {
       readonly processing_state: {
@@ -388,16 +540,80 @@ export namespace Models {
     summary: FieldOutputTypes['public']['Evidence']['summary'];
     trustTier: FieldOutputTypes['public']['Evidence']['trustTier'];
     workspaceId: FieldOutputTypes['public']['Evidence']['workspaceId'];
-    readonly [RelationKeys]?: never;
+    findingLinks: public_FindingEvidence[];
+    readonly [RelationKeys]?: 'findingLinks';
+  };
+  export type public_Finding = {
+    certainty: FieldOutputTypes['public']['Finding']['certainty'];
+    eventId: FieldOutputTypes['public']['Finding']['eventId'];
+    explanation: FieldOutputTypes['public']['Finding']['explanation'];
+    failureClass: FieldOutputTypes['public']['Finding']['failureClass'];
+    id: FieldOutputTypes['public']['Finding']['id'];
+    incidentId: FieldOutputTypes['public']['Finding']['incidentId'];
+    ruleId: FieldOutputTypes['public']['Finding']['ruleId'];
+    ruleVersion: FieldOutputTypes['public']['Finding']['ruleVersion'];
+    workspaceId: FieldOutputTypes['public']['Finding']['workspaceId'];
+    event: public_WebhookEvent;
+    evidence: public_FindingEvidence[];
+    incident: public_Incident;
+    readonly [RelationKeys]?: 'event' | 'evidence' | 'incident';
+  };
+  export type public_FindingEvidence = {
+    evidenceId: FieldOutputTypes['public']['FindingEvidence']['evidenceId'];
+    findingId: FieldOutputTypes['public']['FindingEvidence']['findingId'];
+    evidence: public_Evidence;
+    finding: public_Finding;
+    readonly [RelationKeys]?: 'evidence' | 'finding';
+  };
+  export type public_Incident = {
+    endpoint: FieldOutputTypes['public']['Incident']['endpoint'];
+    environment: FieldOutputTypes['public']['Incident']['environment'];
+    eventCount: FieldOutputTypes['public']['Incident']['eventCount'];
+    failureClass: FieldOutputTypes['public']['Incident']['failureClass'];
+    fingerprint: FieldOutputTypes['public']['Incident']['fingerprint'];
+    firstSeenAt: FieldOutputTypes['public']['Incident']['firstSeenAt'];
+    id: FieldOutputTypes['public']['Incident']['id'];
+    integrationId: FieldOutputTypes['public']['Incident']['integrationId'];
+    lastSeenAt: FieldOutputTypes['public']['Incident']['lastSeenAt'];
+    ruleVersion: FieldOutputTypes['public']['Incident']['ruleVersion'];
+    status: FieldOutputTypes['public']['Incident']['status'];
+    workspaceId: FieldOutputTypes['public']['Incident']['workspaceId'];
+    events: public_IncidentEvent[];
+    findings: public_Finding[];
+    runs: public_InvestigationRun[];
+    readonly [RelationKeys]?: 'events' | 'findings' | 'runs';
+  };
+  export type public_IncidentEvent = {
+    eventId: FieldOutputTypes['public']['IncidentEvent']['eventId'];
+    incidentId: FieldOutputTypes['public']['IncidentEvent']['incidentId'];
+    linkedAt: FieldOutputTypes['public']['IncidentEvent']['linkedAt'];
+    event: public_WebhookEvent;
+    incident: public_Incident;
+    readonly [RelationKeys]?: 'event' | 'incident';
   };
   export type public_Integration = {
+    endpoint: FieldOutputTypes['public']['Integration']['endpoint'];
     endpointToken: FieldOutputTypes['public']['Integration']['endpointToken'];
+    environment: FieldOutputTypes['public']['Integration']['environment'];
     id: FieldOutputTypes['public']['Integration']['id'];
     signingSecret: FieldOutputTypes['public']['Integration']['signingSecret'];
     workspaceId: FieldOutputTypes['public']['Integration']['workspaceId'];
     attempts: public_DeliveryAttempt[];
     events: public_WebhookEvent[];
     readonly [RelationKeys]?: 'attempts' | 'events';
+  };
+  export type public_InvestigationRun = {
+    endedAt: FieldOutputTypes['public']['InvestigationRun']['endedAt'];
+    eventId: FieldOutputTypes['public']['InvestigationRun']['eventId'];
+    id: FieldOutputTypes['public']['InvestigationRun']['id'];
+    incidentId: FieldOutputTypes['public']['InvestigationRun']['incidentId'];
+    mode: FieldOutputTypes['public']['InvestigationRun']['mode'];
+    rulesetVersion: FieldOutputTypes['public']['InvestigationRun']['rulesetVersion'];
+    startedAt: FieldOutputTypes['public']['InvestigationRun']['startedAt'];
+    state: FieldOutputTypes['public']['InvestigationRun']['state'];
+    event: public_WebhookEvent;
+    incident: public_Incident;
+    readonly [RelationKeys]?: 'event' | 'incident';
   };
   export type public_Outbox = {
     attemptId: FieldOutputTypes['public']['Outbox']['attemptId'];
@@ -421,9 +637,18 @@ export namespace Models {
     traceId: FieldOutputTypes['public']['WebhookEvent']['traceId'];
     workspaceId: FieldOutputTypes['public']['WebhookEvent']['workspaceId'];
     attempts: public_DeliveryAttempt[];
+    findings: public_Finding[];
+    incidentLinks: public_IncidentEvent[];
     integration: public_Integration;
+    investigationRuns: public_InvestigationRun[];
     outboxRows: public_Outbox[];
-    readonly [RelationKeys]?: 'attempts' | 'integration' | 'outboxRows';
+    readonly [RelationKeys]?:
+      | 'attempts'
+      | 'findings'
+      | 'incidentLinks'
+      | 'integration'
+      | 'investigationRuns'
+      | 'outboxRows';
   };
 }
 
@@ -431,7 +656,12 @@ export declare const models: {
   public: {
     DeliveryAttempt: Models.public_DeliveryAttempt;
     Evidence: Models.public_Evidence;
+    Finding: Models.public_Finding;
+    FindingEvidence: Models.public_FindingEvidence;
+    Incident: Models.public_Incident;
+    IncidentEvent: Models.public_IncidentEvent;
     Integration: Models.public_Integration;
+    InvestigationRun: Models.public_InvestigationRun;
     Outbox: Models.public_Outbox;
     WebhookEvent: Models.public_WebhookEvent;
   };
@@ -609,12 +839,313 @@ type ContractBase = Omit<
               indexes: readonly [];
               foreignKeys: readonly [];
             };
+            readonly finding_evidence: {
+              columns: {
+                readonly evidence_id: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly finding_id: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['finding_id', 'evidence_id'] };
+              uniques: readonly [];
+              indexes: readonly [];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'finding_evidence';
+                    readonly columns: readonly ['finding_id'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'findings';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'finding_evidence';
+                    readonly columns: readonly ['evidence_id'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'evidence';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
+            };
+            readonly findings: {
+              columns: {
+                readonly certainty: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly event_id: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly explanation: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly failure_class: {
+                  readonly dataType: 'pg/enum';
+                  readonly codecId: 'pg/enum@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly typeName: 'FailureClass' };
+                  readonly many: false;
+                };
+                readonly id: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly incident_id: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly rule_id: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly rule_version: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly workspace_id: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [];
+              indexes: readonly [
+                {
+                  readonly name: 'findings_event_id_rule_id_rule_version_key';
+                  readonly columns: readonly ['event_id', 'rule_id', 'rule_version'];
+                  readonly unique: true;
+                },
+              ];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'findings';
+                    readonly columns: readonly ['incident_id'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'incidents';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'findings';
+                    readonly columns: readonly ['event_id'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'webhook_events';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
+            };
+            readonly incident_events: {
+              columns: {
+                readonly event_id: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly incident_id: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly linked_at: {
+                  readonly dataType: 'pg/timestamp';
+                  readonly codecId: 'pg/timestamp-date@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['incident_id', 'event_id'] };
+              uniques: readonly [];
+              indexes: readonly [];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'incident_events';
+                    readonly columns: readonly ['incident_id'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'incidents';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'incident_events';
+                    readonly columns: readonly ['event_id'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'webhook_events';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
+            };
+            readonly incidents: {
+              columns: {
+                readonly endpoint: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly environment: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly event_count: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly failure_class: {
+                  readonly dataType: 'pg/enum';
+                  readonly codecId: 'pg/enum@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly typeName: 'FailureClass' };
+                  readonly many: false;
+                };
+                readonly fingerprint: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly first_seen_at: {
+                  readonly dataType: 'pg/timestamp';
+                  readonly codecId: 'pg/timestamp-date@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly id: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly integration_id: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly last_seen_at: {
+                  readonly dataType: 'pg/timestamp';
+                  readonly codecId: 'pg/timestamp-date@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly rule_version: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly status: {
+                  readonly dataType: 'pg/enum';
+                  readonly codecId: 'pg/enum@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly typeName: 'IncidentStatus' };
+                  readonly many: false;
+                };
+                readonly workspace_id: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [];
+              indexes: readonly [
+                {
+                  readonly name: 'incidents_workspace_id_fingerprint_rule_version_key';
+                  readonly columns: readonly ['workspace_id', 'fingerprint', 'rule_version'];
+                  readonly unique: true;
+                },
+              ];
+              foreignKeys: readonly [];
+            };
             readonly integrations: {
               columns: {
+                readonly endpoint: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/text@1', '/'>;
+                  };
+                  readonly many: false;
+                };
                 readonly endpoint_token: {
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
                   readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly environment: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'local'>;
+                  };
                   readonly many: false;
                 };
                 readonly id: {
@@ -646,6 +1177,97 @@ type ContractBase = Omit<
                 },
               ];
               foreignKeys: readonly [];
+            };
+            readonly investigation_runs: {
+              columns: {
+                readonly ended_at: {
+                  readonly dataType: 'pg/timestamp';
+                  readonly codecId: 'pg/timestamp-date@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly event_id: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly id: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly incident_id: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly mode: {
+                  readonly dataType: 'pg/enum';
+                  readonly codecId: 'pg/enum@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly typeName: 'RunMode' };
+                  readonly many: false;
+                };
+                readonly ruleset_version: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly started_at: {
+                  readonly dataType: 'pg/timestamp';
+                  readonly codecId: 'pg/timestamp-date@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly state: {
+                  readonly dataType: 'pg/enum';
+                  readonly codecId: 'pg/enum@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly typeName: 'RunState' };
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [];
+              indexes: readonly [
+                {
+                  readonly name: 'investigation_runs_event_id_incident_id_mode_ruleset_versio_key';
+                  readonly columns: readonly ['event_id', 'incident_id', 'mode', 'ruleset_version'];
+                  readonly unique: true;
+                },
+              ];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'investigation_runs';
+                    readonly columns: readonly ['incident_id'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'incidents';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'investigation_runs';
+                    readonly columns: readonly ['event_id'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'webhook_events';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
             };
             readonly outbox: {
               columns: {
@@ -803,13 +1425,47 @@ type ContractBase = Omit<
             };
           };
           readonly valueSet: {
+            readonly FailureClass: {
+              readonly kind: 'valueSet';
+              readonly values: readonly [
+                'AUTH_FAILURE',
+                'RATE_LIMIT',
+                'NETWORK_TIMEOUT',
+                'UPSTREAM_5XX',
+                'SCHEMA_MISMATCH',
+                'INVALID_SIGNATURE',
+                'DUPLICATE_DELIVERY',
+                'OUT_OF_ORDER',
+                'UNKNOWN',
+              ];
+            };
             readonly HandlerState: {
               readonly kind: 'valueSet';
               readonly values: readonly ['PENDING', 'PROCESSED', 'FAILED'];
             };
+            readonly IncidentStatus: {
+              readonly kind: 'valueSet';
+              readonly values: readonly ['OPEN', 'INVESTIGATING', 'RESOLVED', 'ARCHIVED'];
+            };
             readonly ProcessingState: {
               readonly kind: 'valueSet';
               readonly values: readonly ['RECEIVED', 'QUEUED', 'PROCESSED', 'FAILED'];
+            };
+            readonly RunMode: {
+              readonly kind: 'valueSet';
+              readonly values: readonly ['RULES', 'AI_ASSISTED'];
+            };
+            readonly RunState: {
+              readonly kind: 'valueSet';
+              readonly values: readonly [
+                'NOT_STARTED',
+                'QUEUED',
+                'RUNNING',
+                'NEEDS_REVIEW',
+                'COMPLETED',
+                'FAILED',
+                'CANCELLED',
+              ];
             };
             readonly SourceKind: {
               readonly kind: 'valueSet';
@@ -839,9 +1495,23 @@ type ContractBase = Omit<
       readonly model: 'DeliveryAttempt';
     };
     readonly evidence: { readonly namespace: 'public' & NamespaceId; readonly model: 'Evidence' };
+    readonly finding_evidence: {
+      readonly namespace: 'public' & NamespaceId;
+      readonly model: 'FindingEvidence';
+    };
+    readonly findings: { readonly namespace: 'public' & NamespaceId; readonly model: 'Finding' };
+    readonly incident_events: {
+      readonly namespace: 'public' & NamespaceId;
+      readonly model: 'IncidentEvent';
+    };
+    readonly incidents: { readonly namespace: 'public' & NamespaceId; readonly model: 'Incident' };
     readonly integrations: {
       readonly namespace: 'public' & NamespaceId;
       readonly model: 'Integration';
+    };
+    readonly investigation_runs: {
+      readonly namespace: 'public' & NamespaceId;
+      readonly model: 'InvestigationRun';
     };
     readonly outbox: { readonly namespace: 'public' & NamespaceId; readonly model: 'Outbox' };
     readonly webhook_events: {
@@ -1006,7 +1676,19 @@ type ContractBase = Omit<
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
             };
-            readonly relations: Record<string, never>;
+            readonly relations: {
+              readonly findingLinks: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'FindingEvidence';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['evidenceId'];
+                };
+              };
+            };
             readonly storage: {
               readonly table: 'evidence';
               readonly namespaceId: 'public';
@@ -1021,9 +1703,335 @@ type ContractBase = Omit<
               };
             };
           };
+          readonly Finding: {
+            readonly fields: {
+              readonly certainty: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly eventId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly explanation: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly failureClass: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/enum@1';
+                  readonly typeParams: { readonly typeName: 'FailureClass' };
+                };
+              };
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly incidentId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly ruleId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly ruleVersion: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly workspaceId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+            };
+            readonly relations: {
+              readonly event: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'WebhookEvent';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['eventId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly evidence: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'FindingEvidence';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['findingId'];
+                };
+              };
+              readonly incident: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Incident';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['incidentId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'findings';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly certainty: { readonly column: 'certainty' };
+                readonly eventId: { readonly column: 'event_id' };
+                readonly explanation: { readonly column: 'explanation' };
+                readonly failureClass: { readonly column: 'failure_class' };
+                readonly id: { readonly column: 'id' };
+                readonly incidentId: { readonly column: 'incident_id' };
+                readonly ruleId: { readonly column: 'rule_id' };
+                readonly ruleVersion: { readonly column: 'rule_version' };
+                readonly workspaceId: { readonly column: 'workspace_id' };
+              };
+            };
+          };
+          readonly FindingEvidence: {
+            readonly fields: {
+              readonly evidenceId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly findingId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+            };
+            readonly relations: {
+              readonly evidence: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Evidence';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['evidenceId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly finding: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Finding';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['findingId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'finding_evidence';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly evidenceId: { readonly column: 'evidence_id' };
+                readonly findingId: { readonly column: 'finding_id' };
+              };
+            };
+          };
+          readonly Incident: {
+            readonly fields: {
+              readonly endpoint: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly environment: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly eventCount: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly failureClass: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/enum@1';
+                  readonly typeParams: { readonly typeName: 'FailureClass' };
+                };
+              };
+              readonly fingerprint: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly firstSeenAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamp-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly integrationId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly lastSeenAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamp-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly ruleVersion: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly status: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/enum@1';
+                  readonly typeParams: { readonly typeName: 'IncidentStatus' };
+                };
+              };
+              readonly workspaceId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+            };
+            readonly relations: {
+              readonly events: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'IncidentEvent';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['incidentId'];
+                };
+              };
+              readonly findings: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Finding';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['incidentId'];
+                };
+              };
+              readonly runs: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'InvestigationRun';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['incidentId'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'incidents';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly endpoint: { readonly column: 'endpoint' };
+                readonly environment: { readonly column: 'environment' };
+                readonly eventCount: { readonly column: 'event_count' };
+                readonly failureClass: { readonly column: 'failure_class' };
+                readonly fingerprint: { readonly column: 'fingerprint' };
+                readonly firstSeenAt: { readonly column: 'first_seen_at' };
+                readonly id: { readonly column: 'id' };
+                readonly integrationId: { readonly column: 'integration_id' };
+                readonly lastSeenAt: { readonly column: 'last_seen_at' };
+                readonly ruleVersion: { readonly column: 'rule_version' };
+                readonly status: { readonly column: 'status' };
+                readonly workspaceId: { readonly column: 'workspace_id' };
+              };
+            };
+          };
+          readonly IncidentEvent: {
+            readonly fields: {
+              readonly eventId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly incidentId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly linkedAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamp-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+            };
+            readonly relations: {
+              readonly event: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'WebhookEvent';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['eventId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly incident: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Incident';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['incidentId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'incident_events';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly eventId: { readonly column: 'event_id' };
+                readonly incidentId: { readonly column: 'incident_id' };
+                readonly linkedAt: { readonly column: 'linked_at' };
+              };
+            };
+          };
           readonly Integration: {
             readonly fields: {
+              readonly endpoint: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly endpointToken: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly environment: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
@@ -1068,10 +2076,104 @@ type ContractBase = Omit<
               readonly table: 'integrations';
               readonly namespaceId: 'public';
               readonly fields: {
+                readonly endpoint: { readonly column: 'endpoint' };
                 readonly endpointToken: { readonly column: 'endpoint_token' };
+                readonly environment: { readonly column: 'environment' };
                 readonly id: { readonly column: 'id' };
                 readonly signingSecret: { readonly column: 'signing_secret' };
                 readonly workspaceId: { readonly column: 'workspace_id' };
+              };
+            };
+          };
+          readonly InvestigationRun: {
+            readonly fields: {
+              readonly endedAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamp-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly eventId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly incidentId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly mode: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/enum@1';
+                  readonly typeParams: { readonly typeName: 'RunMode' };
+                };
+              };
+              readonly rulesetVersion: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly startedAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamp-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly state: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/enum@1';
+                  readonly typeParams: { readonly typeName: 'RunState' };
+                };
+              };
+            };
+            readonly relations: {
+              readonly event: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'WebhookEvent';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['eventId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly incident: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Incident';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['incidentId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'investigation_runs';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly endedAt: { readonly column: 'ended_at' };
+                readonly eventId: { readonly column: 'event_id' };
+                readonly id: { readonly column: 'id' };
+                readonly incidentId: { readonly column: 'incident_id' };
+                readonly mode: { readonly column: 'mode' };
+                readonly rulesetVersion: { readonly column: 'ruleset_version' };
+                readonly startedAt: { readonly column: 'started_at' };
+                readonly state: { readonly column: 'state' };
               };
             };
           };
@@ -1206,6 +2308,28 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['eventId'];
                 };
               };
+              readonly findings: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Finding';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['eventId'];
+                };
+              };
+              readonly incidentLinks: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'IncidentEvent';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['eventId'];
+                };
+              };
               readonly integration: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -1216,6 +2340,17 @@ type ContractBase = Omit<
                 readonly on: {
                   readonly localFields: readonly ['integrationId'];
                   readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly investigationRuns: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'InvestigationRun';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['eventId'];
                 };
               };
               readonly outboxRows: {
@@ -1304,7 +2439,31 @@ type ContractBase = Omit<
         {
           readonly onCreate: { readonly id: 'uuidv4'; readonly kind: 'generator' };
           readonly ref: {
+            readonly entry: 'findings';
+            readonly field: 'id';
+            readonly namespace: 'public';
+          };
+        },
+        {
+          readonly onCreate: { readonly id: 'uuidv4'; readonly kind: 'generator' };
+          readonly ref: {
+            readonly entry: 'incidents';
+            readonly field: 'id';
+            readonly namespace: 'public';
+          };
+        },
+        {
+          readonly onCreate: { readonly id: 'uuidv4'; readonly kind: 'generator' };
+          readonly ref: {
             readonly entry: 'integrations';
+            readonly field: 'id';
+            readonly namespace: 'public';
+          };
+        },
+        {
+          readonly onCreate: { readonly id: 'uuidv4'; readonly kind: 'generator' };
+          readonly ref: {
+            readonly entry: 'investigation_runs';
             readonly field: 'id';
             readonly namespace: 'public';
           };

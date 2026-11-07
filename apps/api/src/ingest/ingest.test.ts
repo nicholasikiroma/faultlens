@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHash, createHmac, randomUUID } from 'node:crypto';
-import { after, test } from 'node:test';
+import { test } from 'node:test';
 import { db } from '#db';
 import { ingest } from './ingest.ts';
 import { SIGNATURE_HEADER } from './verify.ts';
@@ -8,10 +8,6 @@ import { SIGNATURE_HEADER } from './verify.ts';
 const secret = 'simulator-secret';
 const token = 'demo-token';
 const workspaceId = 'workspace-1';
-
-after(async () => {
-  await db.close();
-});
 
 test('an unknown token writes no row', async () => {
   await reset();
@@ -142,8 +138,14 @@ test('a forced rollback leaves events and outbox unchanged', async () => {
 });
 
 async function reset(): Promise<void> {
+  await db.execute(db.raw.sql`DELETE FROM finding_evidence`.affectedCount().build());
+  await db.execute(db.raw.sql`DELETE FROM findings`.affectedCount().build());
+  await db.execute(db.raw.sql`DELETE FROM incident_events`.affectedCount().build());
+  await db.execute(db.raw.sql`DELETE FROM investigation_runs`.affectedCount().build());
+  await db.execute(db.raw.sql`DELETE FROM incidents`.affectedCount().build());
   await db.execute(db.raw.sql`DELETE FROM outbox`.affectedCount().build());
   await db.execute(db.raw.sql`DELETE FROM delivery_attempts`.affectedCount().build());
+  await db.execute(db.raw.sql`DELETE FROM evidence`.affectedCount().build());
   await db.execute(db.raw.sql`DELETE FROM webhook_events`.affectedCount().build());
   await db.execute(db.raw.sql`DELETE FROM integrations`.affectedCount().build());
 }
@@ -154,6 +156,8 @@ async function seed(): Promise<void> {
     workspaceId,
     endpointToken: token,
     signingSecret: secret,
+    environment: 'production',
+    endpoint: '/hooks/billing',
   });
 }
 
