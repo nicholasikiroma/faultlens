@@ -1,9 +1,19 @@
-import type { ClassificationRule } from '../../../domain/src/index.ts';
+import type { ClassificationRule } from '#domain';
+import { attemptList, evidenceIds, invalidSignatures } from '../signals.ts';
 
 export const rule: ClassificationRule = {
   id: 'INVALID_SIGNATURE',
   version: '0',
-  evaluate(_ctx) {
-    throw new Error('not implemented');
+  async evaluate(ctx) {
+    const hits = invalidSignatures(ctx);
+    if (hits.length === 0) return [];
+    return [
+      {
+        failureClass: 'INVALID_SIGNATURE',
+        explanation: `Verification rejected ${attemptList(hits)}.`,
+        evidenceIds: evidenceIds(ctx, hits),
+        certainty: 'observed',
+      },
+    ];
   },
 };

@@ -1,0 +1,1263 @@
+{
+  "schemaVersion": "1",
+  "targetFamily": "sql",
+  "target": "postgres",
+  "profileHash": "3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2",
+  "roots": {
+    "delivery_attempts": {
+      "model": "DeliveryAttempt",
+      "namespace": "public"
+    },
+    "evidence": {
+      "model": "Evidence",
+      "namespace": "public"
+    },
+    "integrations": {
+      "model": "Integration",
+      "namespace": "public"
+    },
+    "outbox": {
+      "model": "Outbox",
+      "namespace": "public"
+    },
+    "webhook_events": {
+      "model": "WebhookEvent",
+      "namespace": "public"
+    }
+  },
+  "domain": {
+    "namespaces": {
+      "public": {
+        "models": {
+          "DeliveryAttempt": {
+            "fields": {
+              "correlationId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "durationMs": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "errorCode": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "eventId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "handlerState": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/enum@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "typeName": "HandlerState"
+                  }
+                }
+              },
+              "httpStatus": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "integrationId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "receivedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamp-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "verificationState": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/enum@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "typeName": "VerificationState"
+                  }
+                }
+              },
+              "workspaceId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "event": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "eventId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "WebhookEvent",
+                  "namespace": "public"
+                }
+              },
+              "integration": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "integrationId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Integration",
+                  "namespace": "public"
+                }
+              },
+              "outboxRows": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "attemptId"
+                  ]
+                },
+                "to": {
+                  "model": "Outbox",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "correlationId": {
+                  "column": "correlation_id"
+                },
+                "durationMs": {
+                  "column": "duration_ms"
+                },
+                "errorCode": {
+                  "column": "error_code"
+                },
+                "eventId": {
+                  "column": "event_id"
+                },
+                "handlerState": {
+                  "column": "handler_state"
+                },
+                "httpStatus": {
+                  "column": "http_status"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "integrationId": {
+                  "column": "integration_id"
+                },
+                "receivedAt": {
+                  "column": "received_at"
+                },
+                "verificationState": {
+                  "column": "verification_state"
+                },
+                "workspaceId": {
+                  "column": "workspace_id"
+                }
+              },
+              "namespaceId": "public",
+              "table": "delivery_attempts"
+            }
+          },
+          "Evidence": {
+            "fields": {
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "sha256Digest": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "sourceKind": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/enum@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "typeName": "SourceKind"
+                  }
+                }
+              },
+              "sourceRecordId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "summary": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "trustTier": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/enum@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "typeName": "TrustTier"
+                  }
+                }
+              },
+              "workspaceId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {},
+            "storage": {
+              "fields": {
+                "id": {
+                  "column": "id"
+                },
+                "sha256Digest": {
+                  "column": "sha256_digest"
+                },
+                "sourceKind": {
+                  "column": "source_kind"
+                },
+                "sourceRecordId": {
+                  "column": "source_record_id"
+                },
+                "summary": {
+                  "column": "summary"
+                },
+                "trustTier": {
+                  "column": "trust_tier"
+                },
+                "workspaceId": {
+                  "column": "workspace_id"
+                }
+              },
+              "namespaceId": "public",
+              "table": "evidence"
+            }
+          },
+          "Integration": {
+            "fields": {
+              "endpointToken": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "signingSecret": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "workspaceId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "attempts": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "integrationId"
+                  ]
+                },
+                "to": {
+                  "model": "DeliveryAttempt",
+                  "namespace": "public"
+                }
+              },
+              "events": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "integrationId"
+                  ]
+                },
+                "to": {
+                  "model": "WebhookEvent",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "endpointToken": {
+                  "column": "endpoint_token"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "signingSecret": {
+                  "column": "signing_secret"
+                },
+                "workspaceId": {
+                  "column": "workspace_id"
+                }
+              },
+              "namespaceId": "public",
+              "table": "integrations"
+            }
+          },
+          "Outbox": {
+            "fields": {
+              "attemptId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "enqueuedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamp-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "eventId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "attempt": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "attemptId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "DeliveryAttempt",
+                  "namespace": "public"
+                }
+              },
+              "event": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "eventId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "WebhookEvent",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "attemptId": {
+                  "column": "attempt_id"
+                },
+                "enqueuedAt": {
+                  "column": "enqueued_at"
+                },
+                "eventId": {
+                  "column": "event_id"
+                },
+                "id": {
+                  "column": "id"
+                }
+              },
+              "namespaceId": "public",
+              "table": "outbox"
+            }
+          },
+          "WebhookEvent": {
+            "fields": {
+              "eventType": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "externalEventId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "firstReceivedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamp-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "integrationId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "occurredAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamp-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "payloadDigest": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "processingState": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/enum@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "typeName": "ProcessingState"
+                  }
+                }
+              },
+              "redactedPayloadJson": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/jsonb@1",
+                  "kind": "scalar"
+                }
+              },
+              "traceId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "workspaceId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "attempts": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "eventId"
+                  ]
+                },
+                "to": {
+                  "model": "DeliveryAttempt",
+                  "namespace": "public"
+                }
+              },
+              "integration": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "integrationId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Integration",
+                  "namespace": "public"
+                }
+              },
+              "outboxRows": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "eventId"
+                  ]
+                },
+                "to": {
+                  "model": "Outbox",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "eventType": {
+                  "column": "event_type"
+                },
+                "externalEventId": {
+                  "column": "external_event_id"
+                },
+                "firstReceivedAt": {
+                  "column": "first_received_at"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "integrationId": {
+                  "column": "integration_id"
+                },
+                "occurredAt": {
+                  "column": "occurred_at"
+                },
+                "payloadDigest": {
+                  "column": "payload_digest"
+                },
+                "processingState": {
+                  "column": "processing_state"
+                },
+                "redactedPayloadJson": {
+                  "column": "redacted_payload_json"
+                },
+                "traceId": {
+                  "column": "trace_id"
+                },
+                "workspaceId": {
+                  "column": "workspace_id"
+                }
+              },
+              "namespaceId": "public",
+              "table": "webhook_events"
+            }
+          }
+        }
+      }
+    }
+  },
+  "storage": {
+    "namespaces": {
+      "public": {
+        "entries": {
+          "native_enum": {
+            "HandlerState": {
+              "kind": "postgres-enum",
+              "members": [
+                "PENDING",
+                "PROCESSED",
+                "FAILED"
+              ],
+              "typeName": "HandlerState"
+            },
+            "ProcessingState": {
+              "kind": "postgres-enum",
+              "members": [
+                "RECEIVED",
+                "QUEUED",
+                "PROCESSED",
+                "FAILED"
+              ],
+              "typeName": "ProcessingState"
+            },
+            "SourceKind": {
+              "kind": "postgres-enum",
+              "members": [
+                "DELIVERY_ATTEMPT",
+                "WEBHOOK_EVENT",
+                "FIXTURE"
+              ],
+              "typeName": "SourceKind"
+            },
+            "TrustTier": {
+              "kind": "postgres-enum",
+              "members": [
+                "A",
+                "B",
+                "C"
+              ],
+              "typeName": "TrustTier"
+            },
+            "VerificationState": {
+              "kind": "postgres-enum",
+              "members": [
+                "RECEIVED",
+                "VERIFIED",
+                "REJECTED"
+              ],
+              "typeName": "VerificationState"
+            }
+          },
+          "table": {
+            "delivery_attempts": {
+              "columns": {
+                "correlation_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "duration_ms": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
+                },
+                "error_code": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
+                "event_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
+                "handler_state": {
+                  "codecId": "pg/enum@1",
+                  "dataType": "pg/enum",
+                  "nullable": false,
+                  "typeParams": {
+                    "typeName": "HandlerState"
+                  },
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "HandlerState",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "http_status": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "integration_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "received_at": {
+                  "codecId": "pg/timestamp-date@1",
+                  "dataType": "pg/timestamp",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "verification_state": {
+                  "codecId": "pg/enum@1",
+                  "dataType": "pg/enum",
+                  "nullable": false,
+                  "typeParams": {
+                    "typeName": "VerificationState"
+                  },
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "VerificationState",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "workspace_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "restrict",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "event_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "delivery_attempts"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "webhook_events"
+                  }
+                },
+                {
+                  "onDelete": "restrict",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "integration_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "delivery_attempts"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "integrations"
+                  }
+                }
+              ],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
+            "evidence": {
+              "columns": {
+                "id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "sha256_digest": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "source_kind": {
+                  "codecId": "pg/enum@1",
+                  "dataType": "pg/enum",
+                  "nullable": false,
+                  "typeParams": {
+                    "typeName": "SourceKind"
+                  },
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "SourceKind",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "source_record_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "summary": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "trust_tier": {
+                  "codecId": "pg/enum@1",
+                  "dataType": "pg/enum",
+                  "nullable": false,
+                  "typeParams": {
+                    "typeName": "TrustTier"
+                  },
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "TrustTier",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "workspace_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
+            "integrations": {
+              "columns": {
+                "endpoint_token": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "signing_secret": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "workspace_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [],
+              "indexes": [
+                {
+                  "columns": [
+                    "endpoint_token"
+                  ],
+                  "name": "integrations_endpoint_token_key",
+                  "unique": true
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
+            "outbox": {
+              "columns": {
+                "attempt_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "enqueued_at": {
+                  "codecId": "pg/timestamp-date@1",
+                  "dataType": "pg/timestamp",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "event_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "restrict",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "event_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "outbox"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "webhook_events"
+                  }
+                },
+                {
+                  "onDelete": "restrict",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "attempt_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "outbox"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "delivery_attempts"
+                  }
+                }
+              ],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
+            "webhook_events": {
+              "columns": {
+                "event_type": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
+                "external_event_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
+                "first_received_at": {
+                  "codecId": "pg/timestamp-date@1",
+                  "dataType": "pg/timestamp",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "integration_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "occurred_at": {
+                  "codecId": "pg/timestamp-date@1",
+                  "dataType": "pg/timestamp",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "payload_digest": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "processing_state": {
+                  "codecId": "pg/enum@1",
+                  "dataType": "pg/enum",
+                  "nullable": false,
+                  "typeParams": {
+                    "typeName": "ProcessingState"
+                  },
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "ProcessingState",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "redacted_payload_json": {
+                  "codecId": "pg/jsonb@1",
+                  "dataType": "pg/jsonb",
+                  "nullable": true
+                },
+                "trace_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
+                "workspace_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "index": {
+                    "name": "webhook_events_integration_id_external_event_id_key"
+                  },
+                  "onDelete": "restrict",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "integration_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "webhook_events"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "integrations"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "integration_id",
+                    "external_event_id"
+                  ],
+                  "name": "webhook_events_integration_id_external_event_id_key",
+                  "unique": true
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            }
+          },
+          "valueSet": {
+            "HandlerState": {
+              "kind": "valueSet",
+              "values": [
+                "PENDING",
+                "PROCESSED",
+                "FAILED"
+              ]
+            },
+            "ProcessingState": {
+              "kind": "valueSet",
+              "values": [
+                "RECEIVED",
+                "QUEUED",
+                "PROCESSED",
+                "FAILED"
+              ]
+            },
+            "SourceKind": {
+              "kind": "valueSet",
+              "values": [
+                "DELIVERY_ATTEMPT",
+                "WEBHOOK_EVENT",
+                "FIXTURE"
+              ]
+            },
+            "TrustTier": {
+              "kind": "valueSet",
+              "values": [
+                "A",
+                "B",
+                "C"
+              ]
+            },
+            "VerificationState": {
+              "kind": "valueSet",
+              "values": [
+                "RECEIVED",
+                "VERIFIED",
+                "REJECTED"
+              ]
+            }
+          }
+        },
+        "id": "public",
+        "kind": "postgres-schema"
+      }
+    },
+    "storageHash": "56c42b5fed75f503ccc83bd181410616afe44ec277931510122d206e2452ebd4"
+  },
+  "execution": {
+    "executionHash": "4b3a5b0bc4ff1e7ff97260f0e1afb4037f034d013813dce28abe7d47b3e83476",
+    "mutations": {
+      "defaults": [
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "entry": "delivery_attempts",
+            "field": "id",
+            "namespace": "public"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "entry": "evidence",
+            "field": "id",
+            "namespace": "public"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "entry": "integrations",
+            "field": "id",
+            "namespace": "public"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "entry": "outbox",
+            "field": "id",
+            "namespace": "public"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "entry": "webhook_events",
+            "field": "id",
+            "namespace": "public"
+          }
+        }
+      ]
+    }
+  },
+  "capabilities": {
+    "postgres": {
+      "distinctOn": true,
+      "forKeyShare": true,
+      "forNoKeyUpdate": true,
+      "jsonAgg": true,
+      "lateral": true,
+      "limit": true,
+      "orderBy": true,
+      "returning": true
+    },
+    "sql": {
+      "checkConstraint": true,
+      "defaultInInsert": true,
+      "enums": true,
+      "forShare": true,
+      "forUpdate": true,
+      "insertOnConflictSkip": true,
+      "insertOnConflictTarget": true,
+      "insertOnConflictWithoutTarget": true,
+      "lateral": true,
+      "lockNowait": true,
+      "lockOf": true,
+      "lockSkipLocked": true,
+      "returning": true,
+      "scalarList": true
+    }
+  },
+  "extensions": {},
+  "meta": {},
+  "_generated": {
+    "warning": "⚠️  GENERATED FILE - DO NOT EDIT",
+    "message": "This file is automatically generated by \"prisma contract emit\".",
+    "regenerate": "To regenerate, run: prisma contract emit"
+  }
+}

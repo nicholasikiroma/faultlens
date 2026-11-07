@@ -1,6 +1,25 @@
 {
   "private": true,
+  "type": "module",
+  "imports": {
+    "#db": "./src/prisma/db.ts",
+    "#sql": "./src/prisma/sql.ts",
+    "#domain": "./packages/domain/src/index.ts"
+  },
   "devDependencies": {
-    "tsx": "^4.23.15"
+    "@prisma/cli-engine": "^0.9.0",
+    "@types/node": "^26.6.6",
+    "prisma": "^8.0.0-rc.33",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@prisma/orm-postgres": "^8.0.0-rc.23",
+    "dotenv": "^18.0.9"
+  },
+  "scripts": {
+    "contract:emit": "prisma contract emit",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test packages/domain/src/rule.test.ts packages/rules/src/rules.test.ts apps/api/src/ingest/verify.test.ts apps/api/src/ingest/redact.test.ts apps/api/src/ingest/ingest.test.ts apps/api/src/read/read.test.ts apps/worker/src/classify-job.test.ts"
   }
 }

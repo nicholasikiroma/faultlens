@@ -7,6 +7,7 @@ import { rule as invalidSignature } from './classes/invalid-signature.ts';
 import { rule as duplicateDelivery } from './classes/duplicate-delivery.ts';
 import { rule as outOfOrder } from './classes/out-of-order.ts';
 import { rule as unknownRule } from './classes/unknown.ts';
+import type { IncidentContext, RuleMatch } from '#domain';
 import { fingerprint } from './fingerprint.ts';
 
 export const RULES = [
@@ -20,5 +21,10 @@ export const RULES = [
   outOfOrder,
   unknownRule,
 ];
+
+export async function evaluateRules(ctx: Readonly<IncidentContext>): Promise<RuleMatch[]> {
+  const groups = await Promise.all(RULES.map((rule) => rule.evaluate(ctx)));
+  return groups.flat();
+}
 
 export { fingerprint };

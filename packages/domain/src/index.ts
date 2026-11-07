@@ -10,13 +10,3 @@ export type {
 } from './states.ts';
 export type { DeliveryAttempt, Evidence, IncidentContext, WebhookEvent } from './entities.ts';
 export type { ClassificationRule, RuleMatch } from './rule.ts';
-export {
-  classifyJob,
-  dispatchPending,
-  evaluate,
-  fingerprint,
-  ingest,
-  listEvents,
-  redact,
-  verify,
-} from './rule.ts';

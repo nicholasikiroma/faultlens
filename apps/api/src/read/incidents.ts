@@ -1,4 +1,4 @@
-import type { FailureClass } from '../../../../packages/domain/src/index.ts';
+import type { FailureClass } from '#domain';
 
 export function listIncidents(
   _failureClass: FailureClass | null,

@@ -1,4 +1,4 @@
-import type { DeliveryAttempt, WebhookEvent } from '../../../../packages/domain/src/index.ts';
+import type { DeliveryAttempt, WebhookEvent } from '#domain';
 
 export function listEvents(
   _cursor: string | null,

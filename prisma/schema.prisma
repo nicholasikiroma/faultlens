@@ -42,6 +42,7 @@ model Integration {
   id            String @id @default(uuid())
   workspaceId   String @map("workspace_id")
   endpointToken String @unique @map("endpoint_token")
+  signingSecret String @map("signing_secret")
 
   events   WebhookEvent[]
   attempts DeliveryAttempt[]
