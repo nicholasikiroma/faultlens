@@ -3,6 +3,7 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
+import { investigate } from "./diagnose/lab.js";
 
 const exec = promisify(execFile);
 const root = fileURLToPath(new URL(".", import.meta.url));
@@ -137,6 +138,8 @@ await reset();
   assert(attempt?.observed?.status === 201 && attempt?.observed?.outcome === "stored", "happy attempt 201 stored");
   assert(stored.length === 1 && stored[0].outcome === "stored", "happy one stored row");
   assert(stored[0]?.attemptHash === report.sends?.[0]?.payloadSha256, "happy hashes match");
+  const investigation = await investigate(report);
+  assert(investigation.findings.length === 0, "happy has no findings");
 }
 
 await reset();
@@ -148,6 +151,11 @@ await reset();
   assert(second?.status === 200 && second?.outcome === "duplicate", "duplicate second is 200");
   assert(stored.length === 2 && stored[0].outcome === "stored" && stored[1].outcome === "duplicate", "duplicate one event two attempts");
   assert(stored[0].attemptHash === stored[1].attemptHash && stored[0].eventHash === stored[0].attemptHash, "duplicate hashes stay equal");
+  const investigation = await investigate(report);
+  assert(
+    investigation.findings.map((finding) => finding.pattern).join(",") === "duplicate-delivery",
+    "duplicate pattern duplicate-delivery",
+  );
 }
 
 await reset();
@@ -159,6 +167,11 @@ await reset();
   assert(second?.status === 409 && second?.outcome === "conflict", "conflict is 409");
   assert(stored.length === 2 && stored[0].outcome === "stored" && stored[1].outcome === "conflict", "conflict keeps the first event");
   assert(stored[0].eventHash === stored[0].attemptHash && stored[1].attemptHash !== stored[0].eventHash, "conflict hash differs and the stored body stays");
+  const investigation = await investigate(report);
+  assert(
+    investigation.findings.length === 0 && investigation.unexplained.length > 0,
+    "conflict has no findings and an unexplained attempt",
+  );
 }
 
 await reset();
@@ -168,6 +181,11 @@ for (const name of ["invalid-json", "invalid-shape"]) {
   const observed = report.sends?.[0]?.attempts?.[0]?.observed;
   assert(report.sends?.[0]?.verdict === "rejected" && observed?.status === 400, `${name} is 400`);
   assert(stored.length === 1 && stored[0].outcome === "invalid" && stored[0].eventMissing, `${name} writes an attempt and no event`);
+  const investigation = await investigate(report);
+  assert(
+    investigation.findings.map((finding) => finding.pattern).join(",") === "validation-error",
+    `${name} pattern validation-error`,
+  );
   await reset();
 }
 
@@ -181,6 +199,12 @@ await reset();
   assert(
     stored.length === 2 && stored[0].senderAttempt === 2 && stored[0].outcome === "stored" && stored[1].senderAttempt === 1 && stored[1].outcome === "duplicate",
     "timeout-before commits the retry first",
+  );
+  const investigation = await investigate(report);
+  const timeout = investigation.findings.find((finding) => finding.pattern === "timeout");
+  assert(
+    investigation.findings.map((finding) => finding.pattern).join(",") === "timeout" && timeout?.commit.kind === "after-give-up",
+    "timeout-before-commit pattern timeout after-give-up",
   );
 }
 
@@ -204,6 +228,12 @@ await reset();
   assert(
     typeof traceId === "string" && senderTimeout && senderRetry && receiverStored && receiverDuplicate,
     "timeout-after one trace id on the timeout, the retry, the stored row, and the duplicate",
+  );
+  const investigation = await investigate(report);
+  const timeout = investigation.findings.find((finding) => finding.pattern === "timeout");
+  assert(
+    investigation.findings.map((finding) => finding.pattern).join(",") === "timeout" && timeout?.commit.kind === "before-give-up",
+    "timeout-after-commit pattern timeout before-give-up",
   );
 }
 
@@ -239,6 +269,11 @@ await reset();
   assert(report.sends?.length === 2 && report.sends.every((send) => send.verdict === "acked"), "parallel-duplicate both calls are acked");
   assert(outcomes.length === 2 && outcomes[0] === "duplicate" && outcomes[1] === "stored", "parallel-duplicate one winner and one duplicate");
   assert(stored[0].attemptHash === stored[1].attemptHash, "parallel-duplicate is the same bytes");
+  const investigation = await investigate(report);
+  assert(
+    investigation.findings.map((finding) => finding.pattern).join(",") === "duplicate-delivery",
+    "parallel-duplicate pattern duplicate-delivery",
+  );
 }
 
 await reset();

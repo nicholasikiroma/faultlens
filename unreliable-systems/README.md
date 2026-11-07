@@ -92,6 +92,14 @@ curl -s -X POST localhost:3001/scenarios/timeout-after-commit
 
 The first attempt is `timeout` again. The retry is 200 `duplicate`. Ordered by `recorded_at`, attempt 1 is `stored` and attempt 2 is `duplicate`. The receiver had committed before the sender stopped waiting.
 
+## Read a report of that timeout
+
+```sh
+curl -s -X POST localhost:3001/scenarios/timeout-after-commit | node diagnose/investigate.mjs
+```
+
+The text names a timeout on send 1 attempt 1. It says the row was recorded before the sender gave up. The retry returned status 200 and outcome `duplicate`.
+
 ## Follow that timeout in the logs
 
 The curl JSON has `traceId` on the send. Every log line for that send uses the same `trace_id`.
