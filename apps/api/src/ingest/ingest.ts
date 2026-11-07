@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { PostgresTransactionContext } from '@prisma/orm-postgres/runtime';
 import { db, type Contract } from '#db';
+import type { VerificationState } from '#domain';
 import { sqlText, sqlTimestamp } from '#sql';
 import { redact } from './redact.ts';
 import { verify } from './verify.ts';
@@ -142,7 +143,7 @@ async function insertAttempt(
     integrationId: string;
     workspaceId: string;
     receivedAt: Date;
-    verificationState: 'VERIFIED' | 'REJECTED';
+    verificationState: Exclude<VerificationState, 'RECEIVED'>;
     errorCode: string | null;
   },
 ): Promise<string> {

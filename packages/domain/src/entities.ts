@@ -1,4 +1,4 @@
-import type { ProcessingState, TrustTier } from './states.ts';
+import type { HandlerState, ProcessingState, SourceKind, TrustTier, VerificationState } from './states.ts';
 
 export interface WebhookEvent {
   id: string;
@@ -20,15 +20,15 @@ export interface DeliveryAttempt {
   receivedAt: Date;
   httpStatus: number | null;
   durationMs: number | null;
-  verificationState: 'RECEIVED' | 'VERIFIED' | 'REJECTED';
-  handlerState: 'PENDING' | 'PROCESSED' | 'FAILED';
+  verificationState: VerificationState;
+  handlerState: HandlerState;
   errorCode: string | null;
   correlationId: string;
 }
 
 export interface Evidence {
   id: string;
-  sourceKind: 'DELIVERY_ATTEMPT' | 'WEBHOOK_EVENT' | 'FIXTURE';
+  sourceKind: SourceKind;
   sourceRecordId: string;
   summary: string;
   sha256Digest: string;

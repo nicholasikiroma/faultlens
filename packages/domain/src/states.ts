@@ -13,6 +13,9 @@ export const FAILURE_CLASSES = [
 export type FailureClass = (typeof FAILURE_CLASSES)[number];
 
 export type ProcessingState = 'RECEIVED' | 'QUEUED' | 'PROCESSED' | 'FAILED';
+export type VerificationState = 'RECEIVED' | 'VERIFIED' | 'REJECTED';
+export type HandlerState = 'PENDING' | 'PROCESSED' | 'FAILED';
+export type SourceKind = 'DELIVERY_ATTEMPT' | 'WEBHOOK_EVENT' | 'FIXTURE';
 export type IncidentStatus = 'OPEN' | 'INVESTIGATING' | 'RESOLVED' | 'ARCHIVED';
 export type EpistemicStatus = 'OBSERVED' | 'INFERRED' | 'HYPOTHESIS' | 'UNVERIFIED';
 export type RunMode = 'RULES' | 'AI_ASSISTED';
