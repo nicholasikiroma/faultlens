@@ -26,8 +26,8 @@ Last checked against the source on 8 Nov 2026. Earlier that day `npm test` was g
 | 2 | Classify and group | Done | Two calls for one event leave one finding. Two events with one fingerprint share one incident. |
 | 3 | Publish the outbox | Done | A second `dispatchPending` does not enqueue the same row. Redis down leaves `enqueuedAt` null. |
 | 4 | Consume and classify | Done | One verified ingest, one publish, and the handler leave one finding. Running that path again leaves the same finding. |
-| 5 | Crash and queue tests | Now | Duplicate delivery, database interruption, worker crash, queue downtime, and a rejected signature are covered by tests. |
-| 6 | Payload bounds and schema errors | Left | An oversized body is refused. A malformed body returns a schema error with a field path and no secret. |
+| 5 | Crash and queue tests | Done | Duplicate delivery, database interruption, worker crash, queue downtime, and a rejected signature are covered by tests. |
+| 6 | Payload bounds and schema errors | Now | An oversized body is refused. A malformed body returns a schema error with a field path and no secret. |
 | 7 | Timeout finding | Left | A timeout scenario creates a `NETWORK_TIMEOUT` finding that cites the attempt. |
 | 8 | Incident lifecycle | Left | A legal transition changes status. An illegal one does not. A manual override is recorded. |
 | 9 | Authenticated read | Left | Page two repeats no id from page one. Search filters match the P0 list. An export has evidence ids and no signing secret. A bad token is `unauthorized`. |
@@ -83,17 +83,17 @@ Not in this milestone. The crash matrix. That is milestone 5.
 
 ## 5. Crash and queue tests
 
-Status. Now.
+Status. Done.
 
-The M1 exit is that a duplicate delivery does not duplicate logical processing, and source history survives crashes. The duplicate and rollback cases already pass in `ingest.test.ts`. The rest do not exist yet.
+The M1 exit is that a duplicate delivery does not duplicate logical processing, and source history survives crashes. Duplicate delivery and synthetic rollback cases are verified in `apps/api/src/ingest/ingest.test.ts`. Database interruption during ingest, worker crash after outbox insert before `enqueuedAt` is set, queue outage with unchanged committed delivery and recovery retry, and the 4-vector signature rejection matrix are verified in `apps/worker/src/classify-job.test.ts`.
 
-Add tests for a database interruption during ingest, a worker crash after the outbox insert and before `enqueuedAt` is set, a queue outage, and a rejected signature. A failed enqueue must not change the committed delivery. The next `dispatchPending` retries rows that are still null.
+A failed enqueue leaves committed deliveries unmutated, and the subsequent `dispatchPending` retries rows whose `enqueuedAt` is null. BullMQ deduplicates jobs by `jobId`, and worker consumption leaves single findings without duplication.
 
-Done when those four cases, plus the existing duplicate case, pass against the real database and a real Redis.
+Checked on 8 Nov 2026 by `apps/worker/src/classify-job.test.ts` and `apps/api/src/ingest/ingest.test.ts` via `npm test` (36 passed, 0 failed; all 4 crash and queue failure scenarios plus baseline duplicate/rollback cases pass against real PostgreSQL on port 5432 and real Redis on port 6379).
 
 ## 6. Payload bounds and schema errors
 
-Status. Left.
+Status. Now.
 
 PRD P0-03 and AC-03. Ingest rejects an invalid signature. It does not yet reject an oversized body, and a malformed body does not return a field path.
 
