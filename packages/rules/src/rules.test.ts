@@ -1,11 +1,16 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { DeliveryAttempt, Evidence, IncidentContext, WebhookEvent } from '#domain';
-import { FAILURE_CLASSES } from '#domain';
+import { FAILURE_CLASSES, INCIDENT_TRANSITIONS } from '#domain';
 import { evaluateRules, fingerprint, RULES } from './index.ts';
 
-test('RULES ids follow FAILURE_CLASSES', () => {
+test('RULES ids follow FAILURE_CLASSES and incident states are the four statuses', () => {
+  assert.ok(FAILURE_CLASSES.join(',').endsWith('UNKNOWN'));
   assert.equal(RULES.map((rule) => rule.id).join(','), FAILURE_CLASSES.join(','));
+  assert.equal(
+    Object.keys(INCIDENT_TRANSITIONS).join(','),
+    'OPEN,INVESTIGATING,RESOLVED,ARCHIVED',
+  );
 });
 
 test('one context returns that failure class and not UNKNOWN', async () => {

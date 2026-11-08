@@ -32,4 +32,6 @@ Dependencies should prefer MIT, Apache-2.0, BSD, and ISC. Restrictive or commerc
 
 Projects and environments are logically isolated inside one deployment. Each environment has its own identifier, ingestion credentials, capture policy, and retention settings. Isolation is enforced in the backend and in database queries.
 
+The backend (`apps/api` and `apps/worker`) stays lightweight and framework-agnostic: plain TypeScript modules, a thin HTTP shell over domain functions, and a standalone BullMQ worker rather than heavyweight frameworks such as NestJS. The monorepo uses a single root `package.json` with Node.js subpath imports (`#db`, `#sql`, `#domain`, `#rules`) rather than nested package manifests or external monorepo task runners.
+
 A GitHub read-only integration waits until the core investigation workflow exists. It would later retrieve commits, deployment information, and code changes through a GitHub App, on explicitly selected repositories, with read-only permissions.

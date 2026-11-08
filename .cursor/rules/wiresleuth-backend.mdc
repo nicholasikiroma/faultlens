@@ -9,11 +9,13 @@ alwaysApply: true
 
 `docs/mvp-backend-plan.md` is the status of the MVP backend. After a milestone in that file is finished, update the file in the same change. Set the finished row to `Done`, set the next open row to `Now`, and name the check that proved it. A finished milestone left on `Left` will be built twice.
 
-Do not add a Nest controller until an HTTP route contract is in the repo. The architecture doc names NestJS for `apps/api` and the worker. A controller with no route is not that app.
+Keep `apps/api` and `apps/worker` lightweight and framework-agnostic (plain TypeScript modules and a thin HTTP shell over domain functions, not heavyweight frameworks like NestJS). Do not add HTTP route handlers until an HTTP route contract is in the repo.
 
 ## Modules
 
 Import the database as `#db`, SQL nulls as `#sql`, domain types as `#domain`, and rules as `#rules`. Do not climb out of an app with a relative path to `src/prisma` or `packages/`. Do not import a Prisma internal module from application code. `src/prisma/sql.ts` owns typed SQL nulls.
+
+The monorepo uses a single root `package.json` for dependencies and Node subpath imports (`#db`, `#sql`, `#domain`, `#rules`). Do not add nested `package.json` or `package-lock.json` files under `apps/` or `packages/`, as they shadow root subpath imports.
 
 `packages/domain` exports types and the status lists. It does not export functions. The implementations live in `apps/api`, `apps/worker`, and `packages/rules`.
 
@@ -55,4 +57,4 @@ Queue connection lifecycle, BullMQ `Queue` instances, and worker connection pool
 
 Each milestone begins on a new branch named `be-<number>-<milestone-slug>` branched from the previous milestone.
 
-Failure to avoid: a second copy of `verify` under `packages/domain` that only throws, while `apps/api` has the real one. Callers then import the wrong function.
+Failure to avoid: duplicating rule definitions, tests, or throwing function stubs under `packages/domain` while `packages/rules` and `apps/*` own the implementations. Callers then import the wrong module.

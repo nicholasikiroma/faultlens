@@ -1,4 +1,11 @@
-import type { HandlerState, ProcessingState, SourceKind, TrustTier, VerificationState } from './states.ts';
+import type {
+  FailureClass,
+  HandlerState,
+  ProcessingState,
+  SourceKind,
+  TrustTier,
+  VerificationState,
+} from './states.ts';
 
 export interface WebhookEvent {
   id: string;
@@ -42,3 +49,18 @@ export interface IncidentContext {
   attempts: readonly DeliveryAttempt[];
   evidence: readonly Evidence[];
 }
+
+export interface RuleMatch {
+  failureClass: FailureClass;
+  explanation: string;
+  evidenceIds: readonly string[];
+  certainty: 'observed' | 'inferred';
+  severityHint?: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+}
+
+export interface ClassificationRule {
+  id: string;
+  version: string;
+  evaluate(ctx: Readonly<IncidentContext>): Promise<RuleMatch[]>;
+}
+

@@ -1,4 +1,5 @@
 {
+  "name": "wiresleuth",
   "private": true,
   "type": "module",
   "imports": {
@@ -23,6 +24,6 @@
   "scripts": {
     "contract:emit": "prisma contract emit",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test --test-concurrency=1 packages/domain/src/rule.test.ts packages/rules/src/rules.test.ts apps/api/src/ingest/verify.test.ts apps/api/src/ingest/redact.test.ts apps/api/src/ingest/ingest.test.ts apps/api/src/read/read.test.ts apps/worker/src/classify-job.test.ts"
+    "test": "node --import tsx --test --test-concurrency=1 packages/rules/src/rules.test.ts apps/api/src/ingest/verify.test.ts apps/api/src/ingest/redact.test.ts apps/api/src/ingest/ingest.test.ts apps/api/src/read/read.test.ts apps/worker/src/classify-job.test.ts"
   }
 }

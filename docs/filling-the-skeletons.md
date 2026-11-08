@@ -4,9 +4,7 @@ Decisions that override this guide are in `docs/decisions.md`. Where this page d
 
 Real production traffic is the SDK and the versioned ingestion API. A generic webhook route is for simulated traffic only. Capture defaults to metadata-only. Redacted and raw capture are explicit. Redact before persistence and before any model call. Raw payloads are encrypted, access-controlled, and kept 1 day unless that retention is changed. Dashboard users use OIDC. Ingestion uses scoped hashed API keys. Local development has a simplified authentication mode.
 
-You are on `be-5-read-api`. Fill the functions in the order below. Each one throws `not implemented` until you replace that throw. Steps 1, 2, 3, 4, 5, 6, and 7 are implemented. Steps 8, 9, and 10 still throw.
-
-Do not edit `packages/domain/src/rule.ts`. Those functions are a second copy. The file in each section is the one you fill.
+Fill the functions in the order below. Each one throws `not implemented` until you replace that throw. Steps 1, 2, 3, 4, 5, 6, and 7 are implemented. Steps 8, 9, and 10 still throw.
 
 The tests only check the throw. When your function returns a promise, change the test so it `await`s that promise. A function that fails inside `async` rejects. The old test still expects a synchronous throw, so it fails for the wrong reason.
 
@@ -150,7 +148,7 @@ Done when `node --import tsx --test packages/rules/src/rules.test.ts` still show
 
 Read `timeoutFindings`, `validationFindings`, and `duplicateFindings` in `unreliable-systems/diagnose/diagnose.js` before those three rules. Compare durations for the timeout. Do not compare clocks from two machines. Auth, rate limit, upstream 5xx, and invalid signature have no fixture bytes yet. You cannot assert those four until you add the bytes.
 
-`RuleMatch` is in `packages/domain/src/rule.ts`. The class list is also in `design-spec/WireSleuth_Technical_Architecture.docx`.
+`RuleMatch` and `ClassificationRule` are in `packages/domain/src/entities.ts` (exported from `#domain`). The class list is also in `design-spec/WireSleuth_Technical_Architecture.docx`.
 
 ## fingerprint
 

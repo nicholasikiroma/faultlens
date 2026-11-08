@@ -170,9 +170,9 @@ Done when a finding has one rating after two ratings from the same actor, and a 
 
 Status. Left.
 
-No Nest controller until the route list is a file in this repo. The architecture doc names NestJS for `apps/api` and the worker. A controller with no route is not that app.
+No HTTP route handlers until the route list is a file in this repo. `apps/api` and `apps/worker` stay lightweight and framework-agnostic rather than adopting heavyweight frameworks such as NestJS.
 
-Write the route list first. It covers the versioned ingest POST and the reads and writes from milestones 8, 9, and 10. Then add Nest controllers that call those functions and nothing else.
+Write the route list first. It covers the versioned ingest POST and the reads and writes from milestones 8, 9, and 10. Then add thin HTTP route handlers that call those functions and nothing else.
 
 Done when a request with the admin token returns one page of events, and a request without it returns unauthorized. The generic webhook path stays simulated traffic.
 

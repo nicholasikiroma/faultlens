@@ -11,5 +11,11 @@ export type {
   TrustTier,
   VerificationState,
 } from './states.ts';
-export type { DeliveryAttempt, Evidence, IncidentContext, WebhookEvent } from './entities.ts';
-export type { ClassificationRule, RuleMatch } from './rule.ts';
+export type {
+  ClassificationRule,
+  DeliveryAttempt,
+  Evidence,
+  IncidentContext,
+  RuleMatch,
+  WebhookEvent,
+} from './entities.ts';
