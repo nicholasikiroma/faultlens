@@ -18,7 +18,7 @@ A finished milestone that still says `Left` will be built twice.
 
 ## At a glance
 
-Last checked against the source on 8 Nov 2026. `npm run typecheck` and `npm test` were green (47 passed), and `npx prisma db migrate` and `npx prisma db sign` advanced space `app` to `4c9acb24de3aae5df7013120ee427d662d4e1c0da68bb0a18823f31d0d81535a`.
+Last checked against the source on 8 Nov 2026. `npm run typecheck` and `npm test` were green (49 passed), and `npx prisma db migrate` and `npx prisma db sign` advanced space `app` to `4c9acb24de3aae5df7013120ee427d662d4e1c0da68bb0a18823f31d0d81535a`.
 
 | | Milestone | Status | Done when |
 | --- | --- | --- | --- |
@@ -30,8 +30,8 @@ Last checked against the source on 8 Nov 2026. `npm run typecheck` and `npm test
 | 6 | Payload bounds and schema errors | Done | An oversized body is refused. A malformed body returns a schema error with a field path and no secret. |
 | 7 | Timeout finding | Done | A timeout scenario creates a `NETWORK_TIMEOUT` finding that cites the attempt. |
 | 8 | Incident lifecycle | Done | A legal transition changes status. An illegal one does not. A manual override is recorded. |
-| 9 | Authenticated read | Now | Page two repeats no id from page one. Search filters match the P0 list. An export has evidence ids and no signing secret. A bad token is `unauthorized`. |
-| 10 | Feedback and audit | Left | A rating is stored for a finding. An audit row records who changed an incident status and when. |
+| 9 | Authenticated read | Done | Page two repeats no id from page one. Search filters match the P0 list. An export has evidence ids and no signing secret. A bad token is `unauthorized`. |
+| 10 | Feedback and audit | Now | A rating is stored for a finding. An audit row records who changed an incident status and when. |
 | 11 | HTTP shell | Left | The route list is in the repo. A tokened request returns one page. A request without a token is unauthorized. |
 | 12 | Hashed ingest keys | Left | A revoked key writes no event. A valid key stores one event, one attempt, and one outbox row. |
 | 13 | SDK | Left | A sample host returns its own response when the SDK post fails. |
@@ -123,21 +123,13 @@ Checked on 8 Nov 2026 by `apps/api/src/incidents/lifecycle.test.ts` via `npm run
 
 ## 9. Authenticated read
 
-Status. Left.
+Status. Done.
 
-`listEvents`, `listAttempts`, `listIncidents`, and `exportIncident` still throw. The fill steps are in `docs/filling-the-skeletons.md`. P0-04 and AC-06 ask for more than those steps.
+PRD P0-04 and AC-06. `listEvents` and `listAttempts` in `apps/api/src/read/events.ts`, `listIncidents` in `apps/api/src/read/incidents.ts`, and `exportIncident` in `apps/api/src/read/export.ts` require an `adminToken` and a trusted `workspaceId` argument. `verifyAdminToken` in `apps/api/src/read/auth.ts` compares the provided token against `WIRESLEUTH_ADMIN_TOKEN` (from `apps/api/src/config.ts`) in constant time using `crypto.timingSafeEqual`. A missing or wrong token returns `{ kind: 'unauthorized' }` without throwing.
 
-Every read takes an admin token and a workspace id. The workspace id is an argument from the caller. It is not taken from the query string alone. The local check is `WIRESLEUTH_ADMIN_TOKEN`, compared in constant time. A missing or wrong token returns `{ kind: 'unauthorized' }`. It does not throw a string. This is the simplified local mode in `docs/decisions.md`. OIDC is under Later.
+`listEvents` orders by `firstReceivedAt` ascending then `id` ascending, supports cursor pagination (`cursor: null` for page one, last row `id` for subsequent pages, and `nextCursor: null` on the last page), and filters by integration, time range (`from` / `to`), external event id, status (`processingState`), error class (`errorClass` / `failureClass`), and trace id. `listAttempts` returns only attempts for that event in that workspace, or `[]`. `listIncidents` returns the workspace's incidents with their lifecycle `status`, optionally filtered by `failureClass`. `exportIncident` returns the incident, chronological `timeline` of linked events, attempts, cited `evidence`, and findings with `evidenceIds` verified against `evidence`, containing no signing secret and no raw payload, or `{ kind: 'missing' }` when absent.
 
-`listEvents` orders by `firstReceivedAt`, then `id`. A null cursor is the first page. Any other cursor is the last row of the previous page. The last page has `nextCursor: null`. Filters are integration, time range, external event id, status, error class, and trace id. That is P0-04.
-
-`listAttempts` returns only that event in that workspace, or an empty list.
-
-`listIncidents` returns the workspace's incidents. A failure class argument keeps only that class. The row includes the status from milestone 8.
-
-`exportIncident` returns the incident, the timeline of linked events, the attempts, and each finding's evidence ids. Every evidence id exists in `evidence`. The JSON has no signing secret and no raw payload. A missing incident returns `{ kind: 'missing' }` and no other incident's rows.
-
-Done when page two repeats no id from page one, each P0-04 filter excludes a non-matching row, a class filter returns only that class, an export cites the stored evidence, and a bad token is `unauthorized`. Update `apps/api/src/read/read.test.ts`.
+Checked on 8 Nov 2026 by `apps/api/src/read/read.test.ts` via `npm run typecheck` and `npm test` (49 passed, 0 failed).
 
 ## 10. Feedback and audit
 

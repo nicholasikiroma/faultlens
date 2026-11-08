@@ -4,7 +4,7 @@ Decisions that override this guide are in `docs/decisions.md`. Where this page d
 
 Real production traffic is the SDK and the versioned ingestion API. A generic webhook route is for simulated traffic only. Capture defaults to metadata-only. Redacted and raw capture are explicit. Redact before persistence and before any model call. Raw payloads are encrypted, access-controlled, and kept 1 day unless that retention is changed. Dashboard users use OIDC. Ingestion uses scoped hashed API keys. Local development has a simplified authentication mode.
 
-Fill the functions in the order below. Each one throws `not implemented` until you replace that throw. Steps 1, 2, 3, 4, 5, 6, and 7 are implemented, including the duration-based `NETWORK_TIMEOUT` rule. Steps 8, 9, and 10 still throw.
+Fill the functions in the order below. Each one throws `not implemented` until you replace that throw. Steps 1 through 10 are implemented, including the duration-based `NETWORK_TIMEOUT` rule and the authenticated read API.
 
 The tests only check the throw. When your function returns a promise, change the test so it `await`s that promise. A function that fails inside `async` rejects. The old test still expects a synchronous throw, so it fails for the wrong reason.
 
