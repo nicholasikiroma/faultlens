@@ -1,6 +1,6 @@
 # Fill the skeleton functions
 
-Decisions that override this guide are in `docs/decisions.md`. Where this page disagrees with that file, follow that file.
+Decisions that override this guide are in `docs/decisions.md`. Where this page disagrees with that file, follow that file. Milestone status lives in `docs/mvp-backend-plan.md`. Update that file in the same change that finishes a milestone.
 
 Real production traffic is the SDK and the versioned ingestion API. A generic webhook route is for simulated traffic only. Capture defaults to metadata-only. Redacted and raw capture are explicit. Redact before persistence and before any model call. Raw payloads are encrypted, access-controlled, and kept 1 day unless that retention is changed. Dashboard users use OIDC. Ingestion uses scoped hashed API keys. Local development has a simplified authentication mode.
 

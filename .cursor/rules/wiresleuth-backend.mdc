@@ -5,7 +5,9 @@ alwaysApply: true
 
 # WireSleuth backend
 
-`docs/decisions.md` wins when it disagrees with a design doc or `docs/filling-the-skeletons.md`.
+`docs/decisions.md` wins when it disagrees with a design doc, `docs/filling-the-skeletons.md`, or `docs/mvp-backend-plan.md`.
+
+`docs/mvp-backend-plan.md` is the status of the MVP backend. After a milestone in that file is finished, update the file in the same change. Set the finished row to `Done`, set the next open row to `Now`, and name the check that proved it. A finished milestone left on `Left` will be built twice.
 
 Do not add a Nest controller until an HTTP route contract is in the repo. The architecture doc names NestJS for `apps/api` and the worker. A controller with no route is not that app.
 
