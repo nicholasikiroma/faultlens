@@ -18,7 +18,7 @@ A finished milestone that still says `Left` will be built twice.
 
 ## At a glance
 
-Last checked against the source on 8 Nov 2026. `npm run typecheck` and `npm test` were green (55 passed), and `npx prisma db migrate` and `npx prisma db sign` advanced space `app` to `550abe7d3161095409a9ec24dcdb674c2ab6c031e8fc4abe55c121c65915a1f6`.
+Last checked against the source on 8 Nov 2026. `npm run typecheck` and `npm test` were green (65 passed), and `npx prisma db migrate` and `npx prisma db sign` advanced space `app` to `550abe7d3161095409a9ec24dcdb674c2ab6c031e8fc4abe55c121c65915a1f6`.
 
 | | Milestone | Status | Done when |
 | --- | --- | --- | --- |
@@ -32,8 +32,8 @@ Last checked against the source on 8 Nov 2026. `npm run typecheck` and `npm test
 | 8 | Incident lifecycle | Done | A legal transition changes status. An illegal one does not. A manual override is recorded. |
 | 9 | Authenticated read | Done | Page two repeats no id from page one. Search filters match the P0 list. An export has evidence ids and no signing secret. A bad token is `unauthorized`. |
 | 10 | Feedback and audit | Done | A rating is stored for a finding. An audit row records who changed an incident status and when. |
-| 11 | HTTP shell | Now | The route list is in the repo. A tokened request returns one page. A request without a token is unauthorized. |
-| 12 | Hashed ingest keys | Left | A revoked key writes no event. A valid key stores one event, one attempt, and one outbox row. |
+| 11 | HTTP shell | Done | The route list is in the repo. A tokened request returns one page. A request without a token is unauthorized. |
+| 12 | Hashed ingest keys | Now | A revoked key writes no event. A valid key stores one event, one attempt, and one outbox row. |
 | 13 | SDK | Left | A sample host returns its own response when the SDK post fails. |
 | 14 | Local install | Left | One documented command seeds fixtures and starts the backend with no model key. |
 
@@ -147,17 +147,17 @@ Checked on 8 Nov 2026 by `apps/api/src/feedback/feedback.test.ts` via `npm run t
 
 ## 11. HTTP shell
 
-Status. Left.
+Status. Done.
 
-No HTTP route handlers until the route list is a file in this repo. `apps/api` and `apps/worker` stay lightweight and framework-agnostic rather than adopting heavyweight frameworks such as NestJS.
+The route list is `apps/api/src/http/routes.ts`. `docs/http-routes.md` lists the same routes, and `apps/api/src/http/routes.test.ts` fails when a heading and a `ROUTES` entry disagree. `apps/api/src/http/server.ts` is a `node:http` shell. It matches that list, checks the admin token before it reads a body, and calls one domain function per route.
 
-Write the route list first. It covers the versioned ingest POST and the reads and writes from milestones 8, 9, and 10. Then add thin HTTP route handlers that call those functions and nothing else.
+`POST /v1/ingest` takes the ingest credential as `Authorization: Bearer`. `stored` and `duplicate` respond 200, which matches the `httpStatus` `ingest` stores on the attempt. `POST /hooks/:token` is mounted only when `WIRESLEUTH_SIMULATED_WEBHOOKS` is `1`. Admin routes use `WIRESLEUTH_ADMIN_TOKEN`. The workspace id is `WIRESLEUTH_WORKSPACE_ID` and the actor on a write is `WIRESLEUTH_ADMIN_ACTOR`. A `workspaceId` query parameter is 400.
 
-Done when a request with the admin token returns one page of events, and a request without it returns unauthorized. The generic webhook path stays simulated traffic.
+Checked on 8 Nov 2026 by `apps/api/src/http/server.test.ts` via `npm run typecheck` and `npm test` (65 passed, 0 failed). A tokened `GET /v1/events?limit=1` returns one page, and the next page does not repeat that id. The same path with no token or a wrong token is 401.
 
 ## 12. Hashed ingest keys
 
-Status. Left.
+Status. Now.
 
 `docs/decisions.md` says real traffic uses scoped hashed API keys. The integration still stores a signing secret. The secret must stay out of read and export responses.
 
