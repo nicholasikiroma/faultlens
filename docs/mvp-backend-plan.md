@@ -18,7 +18,7 @@ A finished milestone that still says `Left` will be built twice.
 
 ## At a glance
 
-Last checked against the source on 8 Nov 2026. `npm run typecheck` and `npm test` were green (49 passed), and `npx prisma db migrate` and `npx prisma db sign` advanced space `app` to `4c9acb24de3aae5df7013120ee427d662d4e1c0da68bb0a18823f31d0d81535a`.
+Last checked against the source on 8 Nov 2026. `npm run typecheck` and `npm test` were green (55 passed), and `npx prisma db migrate` and `npx prisma db sign` advanced space `app` to `550abe7d3161095409a9ec24dcdb674c2ab6c031e8fc4abe55c121c65915a1f6`.
 
 | | Milestone | Status | Done when |
 | --- | --- | --- | --- |
@@ -31,8 +31,8 @@ Last checked against the source on 8 Nov 2026. `npm run typecheck` and `npm test
 | 7 | Timeout finding | Done | A timeout scenario creates a `NETWORK_TIMEOUT` finding that cites the attempt. |
 | 8 | Incident lifecycle | Done | A legal transition changes status. An illegal one does not. A manual override is recorded. |
 | 9 | Authenticated read | Done | Page two repeats no id from page one. Search filters match the P0 list. An export has evidence ids and no signing secret. A bad token is `unauthorized`. |
-| 10 | Feedback and audit | Now | A rating is stored for a finding. An audit row records who changed an incident status and when. |
-| 11 | HTTP shell | Left | The route list is in the repo. A tokened request returns one page. A request without a token is unauthorized. |
+| 10 | Feedback and audit | Done | A rating is stored for a finding. An audit row records who changed an incident status and when. |
+| 11 | HTTP shell | Now | The route list is in the repo. A tokened request returns one page. A request without a token is unauthorized. |
 | 12 | Hashed ingest keys | Left | A revoked key writes no event. A valid key stores one event, one attempt, and one outbox row. |
 | 13 | SDK | Left | A sample host returns its own response when the SDK post fails. |
 | 14 | Local install | Left | One documented command seeds fixtures and starts the backend with no model key. |
@@ -117,7 +117,7 @@ Status. Done.
 
 PRD P0-06. Classification inserts `OPEN` and never changes it. `transitionIncident` and `canTransitionIncident` in `apps/api/src/incidents/lifecycle.ts` (re-exported from `apps/api/src/read/incidents.ts`) apply transitions for a workspace using `INCIDENT_TRANSITIONS` (`OPEN -> INVESTIGATING, RESOLVED, ARCHIVED`, `INVESTIGATING -> RESOLVED, ARCHIVED`, `RESOLVED -> ARCHIVED`, `ARCHIVED -> []`).
 
-A legal move updates `status` in a row-locked transaction and returns `{ outcome: 'transitioned', previousStatus, status }`. A second identical move does not write and returns `{ outcome: 'unchanged', previousStatus, status }`. An edge not in `INCIDENT_TRANSITIONS` does not write and returns `{ outcome: 'illegal', previousStatus, status }`. An unknown incident or mismatched workspace returns `{ outcome: 'missing', status: null }`. Manual overrides use the same `INCIDENT_TRANSITIONS` table without inventing a fifth status, and subsequent classifications preserve the overridden status. Recording the actor in `AuditEvent` belongs to milestone 10.
+A legal move updates `status` in a row-locked transaction and returns `{ outcome: 'transitioned', previousStatus, status }`. A second identical move does not write and returns `{ outcome: 'unchanged', previousStatus, status }`. An edge not in `INCIDENT_TRANSITIONS` does not write and returns `{ outcome: 'illegal', previousStatus, status }`. An unknown incident or mismatched workspace returns `{ outcome: 'missing', status: null }`. Manual overrides use the same `INCIDENT_TRANSITIONS` table without inventing a fifth status, and subsequent classifications preserve the overridden status. A transitioned move records `actor` on an `AuditEvent`. That write is milestone 10.
 
 Checked on 8 Nov 2026 by `apps/api/src/incidents/lifecycle.test.ts` via `npm run typecheck` and `npm test` (47 passed, 0 failed).
 
@@ -133,15 +133,17 @@ Checked on 8 Nov 2026 by `apps/api/src/read/read.test.ts` via `npm run typecheck
 
 ## 10. Feedback and audit
 
-Status. Left.
+Status. Done.
 
-PRD P0-10 and AC-10. The architecture doc names `Feedback` and `AuditEvent`. Neither table exists.
+PRD P0-10 and AC-10. `Feedback` and `AuditEvent` are in `prisma/schema.prisma` and `prisma/sql/incidents.sql`. The migration is `migrations/app/20261108T2116_add_feedback_and_audit`. `npx prisma db migrate` and `npx prisma db sign` advanced space `app` to `550abe7d3161095409a9ec24dcdb674c2ab6c031e8fc4abe55c121c65915a1f6`.
 
-`Feedback` stores the finding id, the actor, the rating, an optional note, and the time. Ratings are useful and incorrect. A second rating from the same actor replaces the earlier one.
+`rateFinding` in `apps/api/src/feedback/feedback.ts` locks the finding in the caller's workspace. The first rating from an actor inserts one `Feedback` row. A later rating from that same actor updates that row's `rating`, `note`, and `createdAt`. The unique key is `(finding_id, actor)`. Two actors leave two rows. A missing finding returns `{ outcome: 'missing' }` and writes nothing. Ratings are `USEFUL` and `INCORRECT`.
 
-`AuditEvent` stores the actor, the action, the object type, the object id, the old state, the new state, and the time. The status command from milestone 8 writes one row. A rating writes one row.
+`recordAudit` in `apps/api/src/audit/audit.ts` inserts one `AuditEvent` in the caller's transaction. `objectType` comes from `AUDIT_OBJECT_TYPE` in `packages/domain/src/states.ts`, so `INCIDENT_STATUS_CHANGED` is `INCIDENT` and `FINDING_RATED` is `FINDING`. `transitionIncident` writes that row only on `transitioned`, with `oldState` the status it moved from. `unchanged`, `illegal`, and `missing` write no audit row. Every `rated` or `replaced` result from `rateFinding` writes one `FINDING_RATED` row in the same transaction. The first rating stores `oldState` null. A replacement stores the previous rating.
 
-Done when a finding has one rating after two ratings from the same actor, and a status change can be read back as who moved it and from which status.
+`listFindingFeedback` and `listAuditEvents` take `adminToken` and `workspaceId`. `verifyAdminToken` rejects a missing or wrong token, and a blank workspace returns `{ kind: 'unauthorized' }`. Both reads stay inside the workspace. `listAuditEvents` orders by `timestamp` then `id`. `toAuditEvent` reads `old_state` and `new_state` back into `IncidentStatus` or `FeedbackRating` and throws when the stored text is not in that list.
+
+Checked on 8 Nov 2026 by `apps/api/src/feedback/feedback.test.ts` via `npm run typecheck` and `npm test` (55 passed, 0 failed). Two ratings from one actor leave one `Feedback` row. A status change reads back as the actor and the status it moved from.
 
 ## 11. HTTP shell
 

@@ -18,6 +18,7 @@ test('a legal transition changes status and a second identical move stays on the
     workspaceId: 'workspace-1',
     incidentId,
     status: 'INVESTIGATING',
+    actor: 'tester',
   });
   assert.deepEqual(toInvestigating, {
     outcome: 'transitioned',
@@ -30,6 +31,7 @@ test('a legal transition changes status and a second identical move stays on the
     workspaceId: 'workspace-1',
     incidentId,
     status: 'INVESTIGATING',
+    actor: 'tester',
   });
   assert.deepEqual(duplicateMove, {
     outcome: 'unchanged',
@@ -42,6 +44,7 @@ test('a legal transition changes status and a second identical move stays on the
     workspaceId: 'workspace-1',
     incidentId,
     status: 'RESOLVED',
+    actor: 'tester',
   });
   assert.deepEqual(toResolved, {
     outcome: 'transitioned',
@@ -54,6 +57,7 @@ test('a legal transition changes status and a second identical move stays on the
     workspaceId: 'workspace-1',
     incidentId,
     status: 'ARCHIVED',
+    actor: 'tester',
   });
   assert.deepEqual(toArchived, {
     outcome: 'transitioned',
@@ -77,6 +81,7 @@ test('an illegal transition does not write and leaves the stored status unchange
         workspaceId: 'workspace-1',
         incidentId,
         status: to,
+        actor: 'tester',
       });
       assert.deepEqual(
         result,
@@ -148,6 +153,7 @@ test('a manual override uses INCIDENT_TRANSITIONS and classification preserves t
     workspaceId: 'workspace-1',
     incidentId,
     status: 'RESOLVED',
+    actor: 'tester',
   });
   assert.deepEqual(overrideResult, {
     outcome: 'transitioned',
@@ -170,6 +176,7 @@ test('transitionIncident enforces workspace isolation and returns missing for un
     workspaceId: 'workspace-2',
     incidentId,
     status: 'INVESTIGATING',
+    actor: 'tester',
   });
   assert.deepEqual(wrongWorkspace, { outcome: 'missing', status: null });
   assert.equal(await storedStatus(incidentId), 'OPEN');
@@ -178,6 +185,7 @@ test('transitionIncident enforces workspace isolation and returns missing for un
     workspaceId: 'workspace-1',
     incidentId: randomUUID(),
     status: 'INVESTIGATING',
+    actor: 'tester',
   });
   assert.deepEqual(missingIncident, { outcome: 'missing', status: null });
 });
@@ -211,6 +219,8 @@ async function storedStatus(incidentId: string): Promise<IncidentStatus | null> 
 }
 
 async function reset(): Promise<void> {
+  await db.execute(db.raw.sql`DELETE FROM feedback`.affectedCount().build());
+  await db.execute(db.raw.sql`DELETE FROM audit_events`.affectedCount().build());
   await db.execute(db.raw.sql`DELETE FROM finding_evidence`.affectedCount().build());
   await db.execute(db.raw.sql`DELETE FROM findings`.affectedCount().build());
   await db.execute(db.raw.sql`DELETE FROM incident_events`.affectedCount().build());

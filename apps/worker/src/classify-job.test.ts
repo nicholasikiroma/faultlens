@@ -895,6 +895,8 @@ async function reset(): Promise<void> {
   await db.execute(
     db.raw.sql`ALTER TABLE outbox DROP CONSTRAINT IF EXISTS sim_db_interruption`.affectedCount().build(),
   );
+  await db.execute(db.raw.sql`DELETE FROM feedback`.affectedCount().build());
+  await db.execute(db.raw.sql`DELETE FROM audit_events`.affectedCount().build());
   await db.execute(db.raw.sql`DELETE FROM finding_evidence`.affectedCount().build());
   await db.execute(db.raw.sql`DELETE FROM findings`.affectedCount().build());
   await db.execute(db.raw.sql`DELETE FROM incident_events`.affectedCount().build());

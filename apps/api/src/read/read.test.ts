@@ -63,7 +63,6 @@ test('listEvents orders by firstReceivedAt then id, page two repeats no id from 
     signingSecret: 'other-secret-key',
   });
 
-  // Two events at the exact same timestamp to verify tie-breaking by id, plus a third later event
   const idA = '00000000-0000-4000-8000-000000000001';
   const idB = '00000000-0000-4000-8000-000000000002';
   const idC = '00000000-0000-4000-8000-000000000003';
@@ -72,7 +71,6 @@ test('listEvents orders by firstReceivedAt then id, page two repeats no id from 
   const t1 = new Date('2026-11-08T10:00:00.000Z');
   const t2 = new Date('2026-11-08T10:05:00.000Z');
 
-  // Insert out of order (idB, idC, idA) to verify deterministic sorting
   await db.orm.public.WebhookEvent.create({
     id: idB,
     integrationId,
@@ -222,10 +220,9 @@ test('each P0-04 filter in listEvents excludes non-matching rows', async () => {
     workspaceId: 'workspace-1',
   });
 
-  await classifyJob(event1); // AUTH_FAILURE
-  await classifyJob(event2); // NETWORK_TIMEOUT
+  await classifyJob(event1);
+  await classifyJob(event2);
 
-  // 1. Filter by integration
   const byIntegration = await listEvents({
     adminToken: TEST_ADMIN_TOKEN,
     workspaceId: 'workspace-1',
@@ -237,7 +234,6 @@ test('each P0-04 filter in listEvents excludes non-matching rows', async () => {
     [event1],
   );
 
-  // 2. Filter by time range (from / to)
   const byTimeRange = await listEvents({
     adminToken: TEST_ADMIN_TOKEN,
     workspaceId: 'workspace-1',
@@ -252,7 +248,6 @@ test('each P0-04 filter in listEvents excludes non-matching rows', async () => {
     [event2],
   );
 
-  // 3. Filter by externalEventId
   const byExternalId = await listEvents({
     adminToken: TEST_ADMIN_TOKEN,
     workspaceId: 'workspace-1',
@@ -264,7 +259,6 @@ test('each P0-04 filter in listEvents excludes non-matching rows', async () => {
     [event1],
   );
 
-  // 4. Filter by status (processingState)
   const byStatus = await listEvents({
     adminToken: TEST_ADMIN_TOKEN,
     workspaceId: 'workspace-1',
@@ -276,7 +270,6 @@ test('each P0-04 filter in listEvents excludes non-matching rows', async () => {
     [event1],
   );
 
-  // 5. Filter by errorClass
   const byErrorClass = await listEvents({
     adminToken: TEST_ADMIN_TOKEN,
     workspaceId: 'workspace-1',
@@ -288,7 +281,6 @@ test('each P0-04 filter in listEvents excludes non-matching rows', async () => {
     [event2],
   );
 
-  // 6. Filter by traceId
   const byTraceId = await listEvents({
     adminToken: TEST_ADMIN_TOKEN,
     workspaceId: 'workspace-1',
@@ -524,6 +516,7 @@ test('listIncidents filters by failureClass, scopes to workspace, and includes l
     workspaceId: 'workspace-1',
     incidentId: timeoutIncident.id,
     status: 'INVESTIGATING',
+    actor: 'tester',
   });
 
   const filteredTimeout = await listIncidents({
@@ -614,7 +607,6 @@ test('exportIncident returns timeline, attempts, and stored evidence ids with no
   assert.equal(exported.findings.length, 1);
   assert.deepEqual(exported.findings[0]?.evidenceIds, [evidenceId]);
 
-  // Every evidence id in findings exists in the evidence table and in exported.evidence
   const storedEvidenceIds = new Set(
     (await db.orm.public.Evidence.all()).map((row) => row.id),
   );
@@ -626,13 +618,11 @@ test('exportIncident returns timeline, attempts, and stored evidence ids with no
     }
   }
 
-  // Export JSON has no signing secret and no raw payload
   const serialized = JSON.stringify(exported);
   assert.ok(!serialized.includes(signingSecret), 'export leaked signingSecret');
   assert.ok(!serialized.includes(rawPayloadSecret), 'export leaked raw payload');
   assert.ok(!serialized.includes('signingSecret'), 'export contains signingSecret key');
 
-  // Missing incident or wrong workspace returns { kind: 'missing' } and no other incident's rows
   const missingRes = await exportIncident({
     adminToken: TEST_ADMIN_TOKEN,
     workspaceId: 'workspace-1',
@@ -665,6 +655,8 @@ async function seedIntegration(input: {
 }
 
 async function reset(): Promise<void> {
+  await db.execute(db.raw.sql`DELETE FROM feedback`.affectedCount().build());
+  await db.execute(db.raw.sql`DELETE FROM audit_events`.affectedCount().build());
   await db.execute(db.raw.sql`DELETE FROM finding_evidence`.affectedCount().build());
   await db.execute(db.raw.sql`DELETE FROM findings`.affectedCount().build());
   await db.execute(db.raw.sql`DELETE FROM incident_events`.affectedCount().build());

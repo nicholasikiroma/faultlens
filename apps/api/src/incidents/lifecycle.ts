@@ -1,10 +1,12 @@
 import { db } from "#db";
 import { INCIDENT_TRANSITIONS, type IncidentStatus } from "#domain";
+import { recordAudit } from "../audit/audit.ts";
 
 export interface TransitionIncidentInput {
   workspaceId: string;
   incidentId: string;
   status: IncidentStatus;
+  actor: string;
 }
 
 export type TransitionIncidentResult =
@@ -61,6 +63,15 @@ export async function transitionIncident(
       workspaceId: input.workspaceId,
     }).update({
       status: input.status,
+    });
+
+    await recordAudit(tx, {
+      action: "INCIDENT_STATUS_CHANGED",
+      workspaceId: input.workspaceId,
+      actor: input.actor,
+      objectId: incident.id,
+      oldState: incident.status,
+      newState: input.status,
     });
 
     return {
