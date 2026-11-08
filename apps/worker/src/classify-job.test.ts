@@ -4,8 +4,10 @@ import { after, test } from 'node:test';
 import { db } from '#db';
 import { classifyJob } from './classify-job.ts';
 import { dispatchPending } from './dispatcher.ts';
+import { closeQueue, getQueue } from './queue.ts';
 
 after(async () => {
+  await closeQueue();
   await db.close();
 });
 
@@ -134,13 +136,144 @@ test('two events with one fingerprint share one incident', async () => {
   assert.equal(findings.length, 2);
 });
 
-test('dispatchPending throws not implemented', () => {
-  assert.throws(
-    () => {
-      dispatchPending();
-    },
-    (error: unknown) => error instanceof Error && error.message === 'not implemented',
-  );
+test('a second dispatchPending does not enqueue the same row', async () => {
+  await reset();
+  const queue = getQueue();
+  await queue.obliterate({ force: true });
+
+  const integrationId = randomUUID();
+  const eventId = randomUUID();
+  const verifiedAttemptId = randomUUID();
+  const verifiedOutboxId = randomUUID();
+  const rejectedAttemptId = randomUUID();
+  const rejectedOutboxId = randomUUID();
+
+  await db.orm.public.Integration.create({
+    id: integrationId,
+    workspaceId: 'workspace-1',
+    endpointToken: `token-${integrationId}`,
+    signingSecret: 'secret',
+    environment: 'production',
+    endpoint: '/hooks/billing',
+  });
+
+  await db.orm.public.WebhookEvent.create({
+    id: eventId,
+    integrationId,
+    externalEventId: 'evt-outbox',
+    eventType: 'invoice.paid',
+    occurredAt: new Date('2026-11-07T20:00:00.000Z'),
+    firstReceivedAt: new Date('2026-11-07T20:00:01.000Z'),
+    traceId: null,
+    payloadDigest: 'a'.repeat(64),
+    processingState: 'RECEIVED',
+    workspaceId: 'workspace-1',
+  });
+
+  await db.orm.public.DeliveryAttempt.create({
+    id: verifiedAttemptId,
+    eventId,
+    integrationId,
+    receivedAt: new Date('2026-11-07T20:00:01.000Z'),
+    httpStatus: 200,
+    durationMs: null,
+    verificationState: 'VERIFIED',
+    handlerState: 'PENDING',
+    errorCode: null,
+    correlationId: randomUUID(),
+    workspaceId: 'workspace-1',
+  });
+
+  await db.orm.public.Outbox.create({
+    id: verifiedOutboxId,
+    eventId,
+    attemptId: verifiedAttemptId,
+    enqueuedAt: null,
+  });
+
+  await db.orm.public.DeliveryAttempt.create({
+    id: rejectedAttemptId,
+    eventId: null,
+    integrationId,
+    receivedAt: new Date('2026-11-07T20:00:02.000Z'),
+    httpStatus: 401,
+    durationMs: null,
+    verificationState: 'REJECTED',
+    handlerState: 'PENDING',
+    errorCode: null,
+    correlationId: randomUUID(),
+    workspaceId: 'workspace-1',
+  });
+
+  await db.orm.public.Outbox.create({
+    id: rejectedOutboxId,
+    eventId: null,
+    attemptId: rejectedAttemptId,
+    enqueuedAt: null,
+  });
+
+  const markedFirst = await dispatchPending();
+  assert.equal(markedFirst, 2);
+
+  const outboxRowsAfterFirst = await db.orm.public.Outbox.all();
+  assert.equal(outboxRowsAfterFirst.length, 2);
+  assert.ok(outboxRowsAfterFirst[0]?.enqueuedAt !== null);
+  assert.ok(outboxRowsAfterFirst[1]?.enqueuedAt !== null);
+
+  const jobs = await queue.getJobs(['waiting', 'active', 'completed', 'delayed']);
+  assert.equal(jobs.length, 2);
+  const jobIds = new Set(jobs.map((j) => j.id));
+  assert.ok(jobIds.has(eventId));
+  assert.ok(jobIds.has(rejectedAttemptId));
+
+  const markedSecond = await dispatchPending();
+  assert.equal(markedSecond, 0);
+
+  const jobsAfterSecond = await queue.getJobs(['waiting', 'active', 'completed', 'delayed']);
+  assert.equal(jobsAfterSecond.length, 2);
+});
+
+test('a failed Redis connection leaves enqueuedAt null', async () => {
+  await reset();
+  const integrationId = randomUUID();
+  const attemptId = randomUUID();
+  const outboxId = randomUUID();
+
+  await db.orm.public.Integration.create({
+    id: integrationId,
+    workspaceId: 'workspace-1',
+    endpointToken: `token-${integrationId}`,
+    signingSecret: 'secret',
+    environment: 'production',
+    endpoint: '/hooks/billing',
+  });
+
+  await db.orm.public.DeliveryAttempt.create({
+    id: attemptId,
+    eventId: null,
+    integrationId,
+    receivedAt: new Date('2026-11-07T20:00:01.000Z'),
+    httpStatus: 401,
+    durationMs: null,
+    verificationState: 'REJECTED',
+    handlerState: 'PENDING',
+    errorCode: null,
+    correlationId: randomUUID(),
+    workspaceId: 'workspace-1',
+  });
+
+  await db.orm.public.Outbox.create({
+    id: outboxId,
+    eventId: null,
+    attemptId,
+    enqueuedAt: null,
+  });
+
+  const marked = await dispatchPending({ redisUrl: 'redis://127.0.0.1:6378' });
+  assert.equal(marked, 0);
+
+  const row = await db.orm.public.Outbox.where({ id: outboxId }).first();
+  assert.equal(row?.enqueuedAt, null);
 });
 
 async function reset(): Promise<void> {

@@ -24,8 +24,8 @@ Last checked against the source on 8 Nov 2026. Earlier that day `npm test` was g
 | --- | --- | --- | --- |
 | 1 | Verified ingest | Done | A known body is stored once. A bad signature stores an attempt and no event. A forced rollback leaves the tables unchanged. |
 | 2 | Classify and group | Done | Two calls for one event leave one finding. Two events with one fingerprint share one incident. |
-| 3 | Publish the outbox | Now | A second `dispatchPending` does not enqueue the same row. Redis down leaves `enqueuedAt` null. |
-| 4 | Consume and classify | Left | One verified ingest, one publish, and the handler leave one finding. Running that path again leaves the same finding. |
+| 3 | Publish the outbox | Done | A second `dispatchPending` does not enqueue the same row. Redis down leaves `enqueuedAt` null. |
+| 4 | Consume and classify | Now | One verified ingest, one publish, and the handler leave one finding. Running that path again leaves the same finding. |
 | 5 | Crash and queue tests | Left | Duplicate delivery, database interruption, worker crash, queue downtime, and a rejected signature are covered by tests. |
 | 6 | Payload bounds and schema errors | Left | An oversized body is refused. A malformed body returns a schema error with a field path and no secret. |
 | 7 | Timeout finding | Left | A timeout scenario creates a `NETWORK_TIMEOUT` finding that cites the attempt. |
@@ -63,29 +63,17 @@ Checked by `apps/worker/src/classify-job.test.ts` and `packages/rules/src/rules.
 
 ## 3. Publish the outbox
 
-Status. Now.
+Status. Done.
 
-`dispatchPending` in `apps/worker/src/dispatcher.ts` still throws. This is the next change.
+`dispatchPending` in `apps/worker/src/dispatcher.ts` reads `outbox` rows whose `enqueuedAt` is null, enqueues one BullMQ job per row using `eventId` (or `attemptId` when `eventId` is null) as the job id, and sets `enqueuedAt` after the enqueue succeeds. If Redis is down, `enqueuedAt` is left null for subsequent retries. Returns the count of rows marked.
 
-`ingest` already inserts `outbox` rows with `enqueuedAt` null. This milestone publishes them. It does not classify.
-
-Work.
-
-1. Add `bullmq` and a local Redis. The lab compose file at `unreliable-systems/docker-compose.yml` runs Postgres only.
-2. Read `outbox` rows whose `enqueuedAt` is null.
-3. Enqueue one job per row. The job id is `eventId`. When `eventId` is null, the job id is `attemptId`. That row is a rejected delivery.
-4. Set `enqueuedAt` only after that enqueue succeeds.
-5. If Redis is down, leave `enqueuedAt` null. The next call retries those rows.
-6. Return the count of rows marked.
-7. The API does not call this function. A loop in the worker does.
-
-Done when a second call does not enqueue the same row, and a failed Redis connection leaves `enqueuedAt` null. Replace the throw test in `apps/worker/src/classify-job.test.ts`.
+Checked on 8 Nov 2026 by `apps/worker/src/classify-job.test.ts` via `npm test` (30 passed).
 
 Not in this milestone. The handler that calls `classifyJob`. That is milestone 4.
 
 ## 4. Consume and classify
 
-Status. Left.
+Status. Now.
 
 A worker handler takes the job from milestone 3.
 
