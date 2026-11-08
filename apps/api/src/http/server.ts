@@ -1,4 +1,6 @@
-import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
+import { Server } from "node:http";
+import { createAdaptorServer, type HttpBindings } from "@hono/node-server";
+import { Hono, type Context } from "hono";
 import {
   AUDIT_OBJECT_TYPES,
   FAILURE_CLASSES,
@@ -38,32 +40,58 @@ import {
 
 const RAW_READ_CAP = MAX_BODY_BYTES + 1;
 
+type ApiEnv = { Bindings: HttpBindings };
+type ApiContext = Context<ApiEnv>;
+
 interface AdminSession {
   readonly token: string;
   readonly workspaceId: string;
   readonly actor: string;
 }
 
-interface CompiledRoute {
-  readonly route: Route;
-  readonly match: (pathname: string) => Readonly<Record<string, string>> | null;
-}
-
 type AdminRoute = Extract<Route, { id: AdminRouteId }>;
 type IngestRoute = Extract<Route, { id: "ingest" | "simulateWebhook" }>;
+type HeaderPairs = readonly (readonly [string, string])[];
 
 type Parsed<T> = { ok: true; value: T } | { ok: false; field: string };
+type CommandBody =
+  | { ok: true; value: Record<string, unknown> }
+  | { ok: false; response: Response };
+
+export function createApiApp(): Hono<ApiEnv> {
+  const app = new Hono<ApiEnv>();
+  const mounted = ROUTES.filter(isMounted);
+  const methodsByPath = new Map<string, string[]>();
+  for (const route of mounted) {
+    const methods = methodsByPath.get(route.path) ?? [];
+    if (!methods.includes(route.method)) methods.push(route.method);
+    methodsByPath.set(route.path, methods);
+  }
+  for (const route of mounted) {
+    const allow = (methodsByPath.get(route.path) ?? [route.method]).join(", ");
+    app.on(route.method, route.path, (c) => {
+      if (c.req.method !== route.method) return methodNotAllowed(c, allow);
+      return dispatch(c, route);
+    });
+  }
+  for (const [path, methods] of methodsByPath) {
+    const allow = methods.join(", ");
+    app.on("ALL", path, (c) => methodNotAllowed(c, allow));
+  }
+  app.notFound((c) => c.json({ error: "not_found" }, 404));
+  app.onError((error, c) => {
+    console.error(error);
+    return c.json({ error: "internal" }, 500);
+  });
+  return app;
+}
 
 export function createApiServer(): Server {
-  const compiled = ROUTES.filter(isMounted).map(compile);
-  return createServer((req, res) => {
-    void handle(compiled, req, res).catch((error: unknown) => {
-      console.error(error);
-      if (!res.headersSent && !res.writableEnded) {
-        writeJson(res, 500, { error: "internal" });
-      }
-    });
-  });
+  const server = createAdaptorServer({ fetch: createApiApp().fetch });
+  if (!(server instanceof Server)) {
+    throw new Error("Expected an HTTP server");
+  }
+  return server;
 }
 
 export async function startApiServer(options?: {
@@ -119,42 +147,11 @@ function isMounted(route: Route): boolean {
   }
 }
 
-async function handle(
-  compiled: readonly CompiledRoute[],
-  req: IncomingMessage,
-  res: ServerResponse,
-): Promise<void> {
-  const method = req.method ?? "";
-  let url: URL;
-  try {
-    url = new URL(req.url ?? "/", "http://127.0.0.1");
-  } catch {
-    writeJson(res, 400, { error: "invalid_request", field: "url" });
-    return;
-  }
-
-  const matches: Array<{ route: Route; params: Readonly<Record<string, string>> }> = [];
-  for (const candidate of compiled) {
-    const params = candidate.match(url.pathname);
-    if (params !== null) matches.push({ route: candidate.route, params });
-  }
-  if (matches.length === 0) {
-    writeJson(res, 404, { error: "not_found" });
-    return;
-  }
-
-  const matched = matches.find((candidate) => candidate.route.method === method);
-  if (matched === undefined) {
-    const allow = [...new Set(matches.map((candidate) => candidate.route.method))].join(", ");
-    writeJson(res, 405, { error: "method_not_allowed" }, { Allow: allow });
-    return;
-  }
-
-  switch (matched.route.id) {
+function dispatch(c: ApiContext, route: Route): Promise<Response> {
+  switch (route.id) {
     case "ingest":
     case "simulateWebhook":
-      await handleIngest(matched.route, matched.params, req, res);
-      return;
+      return handleIngest(c, route);
     case "listEvents":
     case "listAttempts":
     case "listIncidents":
@@ -163,26 +160,21 @@ async function handle(
     case "rateFinding":
     case "listFindingFeedback":
     case "listAuditEvents":
-      await handleAdmin(matched.route, matched.params, url, req, res);
-      return;
+      return handleAdmin(c, route);
     default: {
-      const unreachable: never = matched.route;
+      const unreachable: never = route;
       throw new Error(`Unhandled route ${JSON.stringify(unreachable)}`);
     }
   }
 }
 
-async function handleIngest(
-  route: IngestRoute,
-  params: Readonly<Record<string, string>>,
-  req: IncomingMessage,
-  res: ServerResponse,
-): Promise<void> {
-  const rawBody = await readCapped(req, RAW_READ_CAP);
+async function handleIngest(c: ApiContext, route: IngestRoute): Promise<Response> {
+  const pairs = headerPairs(c);
+  const rawBody = await readCapped(c.req.raw, RAW_READ_CAP);
   const result = await ingest({
-    token: ingestCredential(route, params, req),
+    token: ingestCredential(route, c, pairs),
     rawBody,
-    headers: flatHeaders(req),
+    headers: flatHeaders(pairs),
   });
   switch (result.outcome) {
     case "stored":
@@ -192,8 +184,7 @@ async function handleIngest(
     case "schema-error":
     case "oversized":
     case "unknown-token":
-      writeJson(res, INGEST_STATUS[result.outcome], result);
-      return;
+      return c.json(result, INGEST_STATUS[result.outcome]);
     default: {
       const unreachable: never = result;
       throw new Error(`Unhandled ingest result ${JSON.stringify(unreachable)}`);
@@ -201,16 +192,12 @@ async function handleIngest(
   }
 }
 
-function ingestCredential(
-  route: IngestRoute,
-  params: Readonly<Record<string, string>>,
-  req: IncomingMessage,
-): string {
+function ingestCredential(route: IngestRoute, c: ApiContext, pairs: HeaderPairs): string {
   switch (route.access.credential) {
     case "bearer":
-      return bearerToken(req) ?? "";
+      return bearerToken(pairs) ?? "";
     case "path":
-      return requiredParam(params, "token");
+      return requiredParam(c.req.param(), "token");
     default: {
       const unreachable: never = route.access;
       return unreachable;
@@ -218,31 +205,20 @@ function ingestCredential(
   }
 }
 
-async function handleAdmin(
-  route: AdminRoute,
-  params: Readonly<Record<string, string>>,
-  url: URL,
-  req: IncomingMessage,
-  res: ServerResponse,
-): Promise<void> {
-  const session = adminSession(req);
-  if (session === null) {
-    writeJson(res, 401, UNAUTHORIZED_BODY, { "WWW-Authenticate": "Bearer" });
-    return;
-  }
-  const queryField = queryProblem(url.searchParams, ADMIN_QUERY_KEYS[route.id]);
+async function handleAdmin(c: ApiContext, route: AdminRoute): Promise<Response> {
+  const pairs = headerPairs(c);
+  const session = adminSession(pairs);
+  if (session === null) return unauthorized(c, 401);
+  const params = new URL(c.req.url).searchParams;
+  const queryField = queryProblem(params, ADMIN_QUERY_KEYS[route.id]);
   if (queryField !== null) {
-    writeJson(res, 400, { error: "invalid_request", field: queryField });
-    return;
+    return c.json({ error: "invalid_request", field: queryField }, 400);
   }
 
   switch (route.id) {
     case "listEvents": {
-      const parsed = parseEventQuery(url.searchParams);
-      if (!parsed.ok) {
-        writeJson(res, 400, { error: "invalid_request", field: parsed.field });
-        return;
-      }
+      const parsed = parseEventQuery(params);
+      if (!parsed.ok) return c.json({ error: "invalid_request", field: parsed.field }, 400);
       const result = await listEvents({
         adminToken: session.token,
         workspaceId: session.workspaceId,
@@ -252,11 +228,9 @@ async function handleAdmin(
       });
       switch (result.kind) {
         case "unauthorized":
-          writeUnauthorized(res, LIST_EVENTS_STATUS.unauthorized);
-          return;
+          return unauthorized(c, LIST_EVENTS_STATUS.unauthorized);
         case "ok":
-          writeJson(res, LIST_EVENTS_STATUS.ok, result);
-          return;
+          return c.json(result, LIST_EVENTS_STATUS.ok);
         default: {
           const unreachable: never = result;
           throw new Error(`Unhandled listEvents result ${JSON.stringify(unreachable)}`);
@@ -267,15 +241,13 @@ async function handleAdmin(
       const result = await listAttempts({
         adminToken: session.token,
         workspaceId: session.workspaceId,
-        eventId: requiredParam(params, "eventId"),
+        eventId: requiredParam(c.req.param(), "eventId"),
       });
       switch (result.kind) {
         case "unauthorized":
-          writeUnauthorized(res, LIST_ATTEMPTS_STATUS.unauthorized);
-          return;
+          return unauthorized(c, LIST_ATTEMPTS_STATUS.unauthorized);
         case "ok":
-          writeJson(res, LIST_ATTEMPTS_STATUS.ok, result);
-          return;
+          return c.json(result, LIST_ATTEMPTS_STATUS.ok);
         default: {
           const unreachable: never = result;
           throw new Error(`Unhandled listAttempts result ${JSON.stringify(unreachable)}`);
@@ -283,11 +255,8 @@ async function handleAdmin(
       }
     }
     case "listIncidents": {
-      const failureClass = optionalMember(url.searchParams, "failureClass", FAILURE_CLASSES);
-      if (!failureClass.ok) {
-        writeJson(res, 400, { error: "invalid_request", field: failureClass.field });
-        return;
-      }
+      const failureClass = optionalMember(params, "failureClass", FAILURE_CLASSES);
+      if (!failureClass.ok) return c.json({ error: "invalid_request", field: failureClass.field }, 400);
       const result = await listIncidents({
         adminToken: session.token,
         workspaceId: session.workspaceId,
@@ -295,11 +264,9 @@ async function handleAdmin(
       });
       switch (result.kind) {
         case "unauthorized":
-          writeUnauthorized(res, LIST_INCIDENTS_STATUS.unauthorized);
-          return;
+          return unauthorized(c, LIST_INCIDENTS_STATUS.unauthorized);
         case "ok":
-          writeJson(res, LIST_INCIDENTS_STATUS.ok, result);
-          return;
+          return c.json(result, LIST_INCIDENTS_STATUS.ok);
         default: {
           const unreachable: never = result;
           throw new Error(`Unhandled listIncidents result ${JSON.stringify(unreachable)}`);
@@ -310,18 +277,15 @@ async function handleAdmin(
       const result = await exportIncident({
         adminToken: session.token,
         workspaceId: session.workspaceId,
-        incidentId: requiredParam(params, "incidentId"),
+        incidentId: requiredParam(c.req.param(), "incidentId"),
       });
       switch (result.kind) {
         case "unauthorized":
-          writeUnauthorized(res, EXPORT_INCIDENT_STATUS.unauthorized);
-          return;
+          return unauthorized(c, EXPORT_INCIDENT_STATUS.unauthorized);
         case "missing":
-          writeJson(res, EXPORT_INCIDENT_STATUS.missing, result);
-          return;
+          return c.json(result, EXPORT_INCIDENT_STATUS.missing);
         case "ok":
-          writeJson(res, EXPORT_INCIDENT_STATUS.ok, result);
-          return;
+          return c.json(result, EXPORT_INCIDENT_STATUS.ok);
         default: {
           const unreachable: never = result;
           throw new Error(`Unhandled exportIncident result ${JSON.stringify(unreachable)}`);
@@ -329,16 +293,13 @@ async function handleAdmin(
       }
     }
     case "transitionIncident": {
-      const body = await readCommand(req, res);
-      if (body === undefined) return;
-      const parsed = parseStatusBody(body);
-      if (!parsed.ok) {
-        writeJson(res, 400, { error: "invalid_request", field: parsed.field });
-        return;
-      }
+      const body = await readCommand(c, pairs);
+      if (!body.ok) return body.response;
+      const parsed = parseStatusBody(body.value);
+      if (!parsed.ok) return c.json({ error: "invalid_request", field: parsed.field }, 400);
       const result = await transitionIncident({
         workspaceId: session.workspaceId,
-        incidentId: requiredParam(params, "incidentId"),
+        incidentId: requiredParam(c.req.param(), "incidentId"),
         status: parsed.value,
         actor: session.actor,
       });
@@ -347,8 +308,7 @@ async function handleAdmin(
         case "unchanged":
         case "illegal":
         case "missing":
-          writeJson(res, TRANSITION_STATUS[result.outcome], result);
-          return;
+          return c.json(result, TRANSITION_STATUS[result.outcome]);
         default: {
           const unreachable: never = result;
           throw new Error(`Unhandled transition result ${JSON.stringify(unreachable)}`);
@@ -356,16 +316,13 @@ async function handleAdmin(
       }
     }
     case "rateFinding": {
-      const body = await readCommand(req, res);
-      if (body === undefined) return;
-      const parsed = parseRatingBody(body);
-      if (!parsed.ok) {
-        writeJson(res, 400, { error: "invalid_request", field: parsed.field });
-        return;
-      }
+      const body = await readCommand(c, pairs);
+      if (!body.ok) return body.response;
+      const parsed = parseRatingBody(body.value);
+      if (!parsed.ok) return c.json({ error: "invalid_request", field: parsed.field }, 400);
       const result = await rateFinding({
         workspaceId: session.workspaceId,
-        findingId: requiredParam(params, "findingId"),
+        findingId: requiredParam(c.req.param(), "findingId"),
         actor: session.actor,
         rating: parsed.value.rating,
         note: parsed.value.note,
@@ -374,8 +331,7 @@ async function handleAdmin(
         case "rated":
         case "replaced":
         case "missing":
-          writeJson(res, RATE_FINDING_STATUS[result.outcome], result);
-          return;
+          return c.json(result, RATE_FINDING_STATUS[result.outcome]);
         default: {
           const unreachable: never = result;
           throw new Error(`Unhandled rateFinding result ${JSON.stringify(unreachable)}`);
@@ -386,15 +342,13 @@ async function handleAdmin(
       const result = await listFindingFeedback({
         adminToken: session.token,
         workspaceId: session.workspaceId,
-        findingId: requiredParam(params, "findingId"),
+        findingId: requiredParam(c.req.param(), "findingId"),
       });
       switch (result.kind) {
         case "unauthorized":
-          writeUnauthorized(res, LIST_FEEDBACK_STATUS.unauthorized);
-          return;
+          return unauthorized(c, LIST_FEEDBACK_STATUS.unauthorized);
         case "ok":
-          writeJson(res, LIST_FEEDBACK_STATUS.ok, result);
-          return;
+          return c.json(result, LIST_FEEDBACK_STATUS.ok);
         default: {
           const unreachable: never = result;
           throw new Error(`Unhandled listFindingFeedback result ${JSON.stringify(unreachable)}`);
@@ -402,16 +356,10 @@ async function handleAdmin(
       }
     }
     case "listAuditEvents": {
-      const objectType = optionalMember(url.searchParams, "objectType", AUDIT_OBJECT_TYPES);
-      if (!objectType.ok) {
-        writeJson(res, 400, { error: "invalid_request", field: objectType.field });
-        return;
-      }
-      const objectId = optionalText(url.searchParams, "objectId");
-      if (!objectId.ok) {
-        writeJson(res, 400, { error: "invalid_request", field: objectId.field });
-        return;
-      }
+      const objectType = optionalMember(params, "objectType", AUDIT_OBJECT_TYPES);
+      if (!objectType.ok) return c.json({ error: "invalid_request", field: objectType.field }, 400);
+      const objectId = optionalText(params, "objectId");
+      if (!objectId.ok) return c.json({ error: "invalid_request", field: objectId.field }, 400);
       const result = await listAuditEvents({
         adminToken: session.token,
         workspaceId: session.workspaceId,
@@ -420,11 +368,9 @@ async function handleAdmin(
       });
       switch (result.kind) {
         case "unauthorized":
-          writeUnauthorized(res, LIST_AUDIT_STATUS.unauthorized);
-          return;
+          return unauthorized(c, LIST_AUDIT_STATUS.unauthorized);
         case "ok":
-          writeJson(res, LIST_AUDIT_STATUS.ok, result);
-          return;
+          return c.json(result, LIST_AUDIT_STATUS.ok);
         default: {
           const unreachable: never = result;
           throw new Error(`Unhandled listAuditEvents result ${JSON.stringify(unreachable)}`);
@@ -438,8 +384,8 @@ async function handleAdmin(
   }
 }
 
-function adminSession(req: IncomingMessage): AdminSession | null {
-  const token = bearerToken(req);
+function adminSession(pairs: HeaderPairs): AdminSession | null {
+  const token = bearerToken(pairs);
   const workspaceId = config.workspaceId;
   if (token === null || !verifyAdminToken(token) || workspaceId.trim().length === 0) {
     return null;
@@ -575,25 +521,19 @@ function queryProblem(params: URLSearchParams, allowed: readonly string[]): stri
   return null;
 }
 
-async function readCommand(
-  req: IncomingMessage,
-  res: ServerResponse,
-): Promise<Record<string, unknown> | undefined> {
-  if (!isJsonContentType(firstHeader(req, "content-type"))) {
-    writeJson(res, 415, { error: "unsupported_media_type" });
-    return undefined;
+async function readCommand(c: ApiContext, pairs: HeaderPairs): Promise<CommandBody> {
+  if (!isJsonContentType(firstHeader(pairs, "content-type"))) {
+    return { ok: false, response: c.json({ error: "unsupported_media_type" }, 415) };
   }
-  const bytes = await readCapped(req, JSON_BODY_LIMIT + 1);
+  const bytes = await readCapped(c.req.raw, JSON_BODY_LIMIT + 1);
   if (bytes.length > JSON_BODY_LIMIT) {
-    writeJson(res, 413, { error: "payload_too_large" });
-    return undefined;
+    return { ok: false, response: c.json({ error: "payload_too_large" }, 413) };
   }
   const parsed = parseJsonObject(bytes);
   if (!parsed.ok) {
-    writeJson(res, 400, { error: "invalid_request", field: parsed.field });
-    return undefined;
+    return { ok: false, response: c.json({ error: "invalid_request", field: parsed.field }, 400) };
   }
-  return parsed.value;
+  return { ok: true, value: parsed.value };
 }
 
 function parseJsonObject(bytes: Buffer): Parsed<Record<string, unknown>> {
@@ -619,84 +559,52 @@ function isJsonContentType(value: string | undefined): boolean {
   return media === "application/json";
 }
 
-function compile(route: Route): CompiledRoute {
-  const pattern = route.path.split("/").filter((segment) => segment.length > 0);
-  return {
-    route,
-    match(pathname: string): Readonly<Record<string, string>> | null {
-      const parts = pathname.split("/").filter((segment) => segment.length > 0);
-      if (parts.length !== pattern.length) return null;
-      const params: Record<string, string> = {};
-      for (let index = 0; index < pattern.length; index += 1) {
-        const expected = pattern[index];
-        const actual = parts[index];
-        if (expected === undefined || actual === undefined) return null;
-        if (expected.startsWith(":")) {
-          let value: string;
-          try {
-            value = decodeURIComponent(actual);
-          } catch {
-            return null;
-          }
-          if (value.length === 0) return null;
-          params[expected.slice(1)] = value;
-        } else if (actual !== expected) {
-          return null;
-        }
-      }
-      return params;
-    },
-  };
-}
-
-function readCapped(req: IncomingMessage, cap: number): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    let total = 0;
-    let settled = false;
-    const finish = (bytes: Buffer) => {
-      if (settled) return;
-      settled = true;
-      req.removeListener("data", onData);
-      req.removeListener("end", onEnd);
-      req.removeListener("error", onError);
-      resolve(bytes);
-    };
-    const fail = (error: Error) => {
-      if (settled) return;
-      settled = true;
-      req.removeListener("data", onData);
-      req.removeListener("end", onEnd);
-      req.removeListener("error", onError);
-      reject(error);
-    };
-    const onData = (chunk: Buffer | string) => {
-      if (settled || total >= cap) return;
-      const buf = typeof chunk === "string" ? Buffer.from(chunk) : chunk;
+function readCapped(request: Request, cap: number): Promise<Buffer> {
+  const body = request.body;
+  if (body === null) return Promise.resolve(Buffer.alloc(0));
+  const reader = body.getReader();
+  const chunks: Buffer[] = [];
+  let total = 0;
+  const finish = (): Buffer => Buffer.concat(chunks, total);
+  const pull = async (): Promise<Buffer> => {
+    while (total < cap) {
+      const { done, value } = await reader.read();
+      if (done || value === undefined) break;
       const room = cap - total;
-      if (buf.length > room) {
-        chunks.push(buf.subarray(0, room));
+      if (value.byteLength > room) {
+        chunks.push(Buffer.from(value.subarray(0, room)));
         total = cap;
-        return;
+        await reader.cancel();
+        break;
       }
-      chunks.push(buf);
-      total += buf.length;
-    };
-    const onEnd = () => finish(Buffer.concat(chunks, total));
-    const onError = (error: Error) => fail(error);
-    req.on("data", onData);
-    req.on("end", onEnd);
-    req.on("error", onError);
+      chunks.push(Buffer.from(value));
+      total += value.byteLength;
+    }
+    return finish();
+  };
+  return pull().finally(() => {
+    reader.releaseLock();
   });
 }
 
-function flatHeaders(req: IncomingMessage): Readonly<Record<string, string>> {
+function headerPairs(c: ApiContext): HeaderPairs {
+  const raw = c.env?.incoming?.rawHeaders;
+  if (raw !== undefined) {
+    const pairs: Array<readonly [string, string]> = [];
+    for (let index = 0; index < raw.length; index += 2) {
+      const name = raw[index];
+      const value = raw[index + 1];
+      if (name === undefined || value === undefined) continue;
+      pairs.push([name, value]);
+    }
+    return pairs;
+  }
+  return [...c.req.raw.headers];
+}
+
+function flatHeaders(pairs: HeaderPairs): Readonly<Record<string, string>> {
   const headers: Record<string, string> = {};
-  const raw = req.rawHeaders;
-  for (let index = 0; index < raw.length; index += 2) {
-    const name = raw[index];
-    const value = raw[index + 1];
-    if (name === undefined || value === undefined) continue;
+  for (const [name, value] of pairs) {
     const key = name.toLowerCase();
     if (key === "authorization" || key === "cookie") continue;
     if (headers[key] === undefined) headers[key] = value;
@@ -704,18 +612,16 @@ function flatHeaders(req: IncomingMessage): Readonly<Record<string, string>> {
   return headers;
 }
 
-function firstHeader(req: IncomingMessage, name: string): string | undefined {
+function firstHeader(pairs: HeaderPairs, name: string): string | undefined {
   const wanted = name.toLowerCase();
-  const raw = req.rawHeaders;
-  for (let index = 0; index < raw.length; index += 2) {
-    const key = raw[index];
-    if (key !== undefined && key.toLowerCase() === wanted) return raw[index + 1];
+  for (const [key, value] of pairs) {
+    if (key.toLowerCase() === wanted) return value;
   }
   return undefined;
 }
 
-function bearerToken(req: IncomingMessage): string | null {
-  const raw = firstHeader(req, "authorization");
+function bearerToken(pairs: HeaderPairs): string | null {
+  const raw = firstHeader(pairs, "authorization");
   if (raw === undefined) return null;
   const matched = /^Bearer (\S+)$/i.exec(raw);
   const token = matched?.[1];
@@ -731,27 +637,12 @@ function requiredParam(params: Readonly<Record<string, string>>, name: string): 
   return value;
 }
 
-function writeUnauthorized(res: ServerResponse, status: number): void {
-  writeJson(res, status, UNAUTHORIZED_BODY, { "WWW-Authenticate": "Bearer" });
+function unauthorized(c: ApiContext, status: 401): Response {
+  return c.json(UNAUTHORIZED_BODY, status, { "WWW-Authenticate": "Bearer" });
 }
 
-function writeJson(
-  res: ServerResponse,
-  status: number,
-  body: unknown,
-  extra?: Readonly<Record<string, string>>,
-): void {
-  if (res.headersSent || res.writableEnded) return;
-  const payload = JSON.stringify(body);
-  const headers: Record<string, string | number> = {
-    "content-type": "application/json; charset=utf-8",
-    "content-length": Buffer.byteLength(payload),
-  };
-  if (extra !== undefined) {
-    for (const [key, value] of Object.entries(extra)) headers[key] = value;
-  }
-  res.writeHead(status, headers);
-  res.end(payload);
+function methodNotAllowed(c: ApiContext, allow: string): Response {
+  return c.json({ error: "method_not_allowed" }, 405, { Allow: allow });
 }
 
 function formatHost(host: string): string {

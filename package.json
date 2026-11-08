@@ -16,9 +16,11 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@hono/node-server": "^2.1.6",
     "@prisma/orm-postgres": "^8.0.0-rc.23",
     "bullmq": "^6.7.2",
     "dotenv": "^18.0.9",
+    "hono": "^4.13.17",
     "ioredis": "^6.0.0"
   },
   "scripts": {

@@ -149,11 +149,13 @@ Checked on 8 Nov 2026 by `apps/api/src/feedback/feedback.test.ts` via `npm run t
 
 Status. Done.
 
-The route list is `apps/api/src/http/routes.ts`. `docs/http-routes.md` lists the same routes, and `apps/api/src/http/routes.test.ts` fails when a heading and a `ROUTES` entry disagree. `apps/api/src/http/server.ts` is a `node:http` shell. It matches that list, checks the admin token before it reads a body, and calls one domain function per route.
+The route list is `apps/api/src/http/routes.ts`. `docs/http-routes.md` lists the same routes, and `apps/api/src/http/routes.test.ts` fails when a heading and a `ROUTES` entry disagree. `apps/api/src/http/server.ts` uses Hono (`hono` and `@hono/node-server`) as the HTTP adapter. It registers that list, checks the admin token before it reads a body, and calls one domain function per route. Those functions do not import Hono.
 
 `POST /v1/ingest` takes the ingest credential as `Authorization: Bearer`. `stored` and `duplicate` respond 200, which matches the `httpStatus` `ingest` stores on the attempt. `POST /hooks/:token` is mounted only when `WIRESLEUTH_SIMULATED_WEBHOOKS` is `1`. Admin routes use `WIRESLEUTH_ADMIN_TOKEN`. The workspace id is `WIRESLEUTH_WORKSPACE_ID` and the actor on a write is `WIRESLEUTH_ADMIN_ACTOR`. A `workspaceId` query parameter is 400.
 
 Checked on 8 Nov 2026 by `apps/api/src/http/server.test.ts` via `npm run typecheck` and `npm test` (65 passed, 0 failed). A tokened `GET /v1/events?limit=1` returns one page, and the next page does not repeat that id. The same path with no token or a wrong token is 401.
+
+Checked again on 8 Nov 2026, after `apps/api/src/http/server.ts` moved to Hono, by `npm run typecheck` and `node --import tsx --test --test-concurrency=1 apps/api/src/http/routes.test.ts apps/api/src/http/server.test.ts` (10 passed, 0 failed).
 
 ## 12. Hashed ingest keys
 
