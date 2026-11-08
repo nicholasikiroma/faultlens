@@ -4,12 +4,20 @@
   "target": "postgres",
   "profileHash": "3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2",
   "roots": {
+    "audit_events": {
+      "model": "AuditEvent",
+      "namespace": "public"
+    },
     "delivery_attempts": {
       "model": "DeliveryAttempt",
       "namespace": "public"
     },
     "evidence": {
       "model": "Evidence",
+      "namespace": "public"
+    },
+    "feedback": {
+      "model": "Feedback",
       "namespace": "public"
     },
     "finding_evidence": {
@@ -49,6 +57,116 @@
     "namespaces": {
       "public": {
         "models": {
+          "AuditEvent": {
+            "fields": {
+              "action": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/enum@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "typeName": "AuditAction"
+                  }
+                }
+              },
+              "actor": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "newState": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "objectId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "objectType": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/enum@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "typeName": "AuditObjectType"
+                  }
+                }
+              },
+              "oldState": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "timestamp": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamp-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "workspaceId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {},
+            "storage": {
+              "fields": {
+                "action": {
+                  "column": "action"
+                },
+                "actor": {
+                  "column": "actor"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "newState": {
+                  "column": "new_state"
+                },
+                "objectId": {
+                  "column": "object_id"
+                },
+                "objectType": {
+                  "column": "object_type"
+                },
+                "oldState": {
+                  "column": "old_state"
+                },
+                "timestamp": {
+                  "column": "timestamp"
+                },
+                "workspaceId": {
+                  "column": "workspace_id"
+                }
+              },
+              "namespaceId": "public",
+              "table": "audit_events"
+            }
+          },
           "DeliveryAttempt": {
             "fields": {
               "correlationId": {
@@ -340,6 +458,110 @@
               "table": "evidence"
             }
           },
+          "Feedback": {
+            "fields": {
+              "actor": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamp-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "findingId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "note": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "rating": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/enum@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "typeName": "FeedbackRating"
+                  }
+                }
+              },
+              "workspaceId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "finding": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "findingId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Finding",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "actor": {
+                  "column": "actor"
+                },
+                "createdAt": {
+                  "column": "created_at"
+                },
+                "findingId": {
+                  "column": "finding_id"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "note": {
+                  "column": "note"
+                },
+                "rating": {
+                  "column": "rating"
+                },
+                "workspaceId": {
+                  "column": "workspace_id"
+                }
+              },
+              "namespaceId": "public",
+              "table": "feedback"
+            }
+          },
           "Finding": {
             "fields": {
               "certainty": {
@@ -438,6 +660,21 @@
                 },
                 "to": {
                   "model": "FindingEvidence",
+                  "namespace": "public"
+                }
+              },
+              "feedback": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "findingId"
+                  ]
+                },
+                "to": {
+                  "model": "Feedback",
                   "namespace": "public"
                 }
               },
@@ -1378,6 +1615,22 @@
       "public": {
         "entries": {
           "native_enum": {
+            "AuditAction": {
+              "kind": "postgres-enum",
+              "members": [
+                "INCIDENT_STATUS_CHANGED",
+                "FINDING_RATED"
+              ],
+              "typeName": "AuditAction"
+            },
+            "AuditObjectType": {
+              "kind": "postgres-enum",
+              "members": [
+                "INCIDENT",
+                "FINDING"
+              ],
+              "typeName": "AuditObjectType"
+            },
             "FailureClass": {
               "kind": "postgres-enum",
               "members": [
@@ -1392,6 +1645,14 @@
                 "UNKNOWN"
               ],
               "typeName": "FailureClass"
+            },
+            "FeedbackRating": {
+              "kind": "postgres-enum",
+              "members": [
+                "USEFUL",
+                "INCORRECT"
+              ],
+              "typeName": "FeedbackRating"
             },
             "HandlerState": {
               "kind": "postgres-enum",
@@ -1472,6 +1733,95 @@
             }
           },
           "table": {
+            "audit_events": {
+              "columns": {
+                "action": {
+                  "codecId": "pg/enum@1",
+                  "dataType": "pg/enum",
+                  "nullable": false,
+                  "typeParams": {
+                    "typeName": "AuditAction"
+                  },
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "AuditAction",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "actor": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "new_state": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "object_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "object_type": {
+                  "codecId": "pg/enum@1",
+                  "dataType": "pg/enum",
+                  "nullable": false,
+                  "typeParams": {
+                    "typeName": "AuditObjectType"
+                  },
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "AuditObjectType",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "old_state": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
+                "timestamp": {
+                  "codecId": "pg/timestamp-date@1",
+                  "dataType": "pg/timestamp",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "workspace_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [],
+              "indexes": [
+                {
+                  "columns": [
+                    "workspace_id",
+                    "object_type",
+                    "object_id",
+                    "timestamp"
+                  ],
+                  "name": "audit_events_workspace_id_object_type_object_id_timestamp_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
             "delivery_attempts": {
               "columns": {
                 "correlation_id": {
@@ -1660,6 +2010,104 @@
               },
               "foreignKeys": [],
               "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
+            "feedback": {
+              "columns": {
+                "actor": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "created_at": {
+                  "codecId": "pg/timestamp-date@1",
+                  "dataType": "pg/timestamp",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "finding_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "note": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
+                "rating": {
+                  "codecId": "pg/enum@1",
+                  "dataType": "pg/enum",
+                  "nullable": false,
+                  "typeParams": {
+                    "typeName": "FeedbackRating"
+                  },
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "FeedbackRating",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "workspace_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "index": {
+                    "name": "feedback_finding_id_actor_key"
+                  },
+                  "onDelete": "restrict",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "finding_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "feedback"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "findings"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "finding_id",
+                    "actor"
+                  ],
+                  "name": "feedback_finding_id_actor_key",
+                  "unique": true
+                },
+                {
+                  "columns": [
+                    "workspace_id",
+                    "finding_id"
+                  ],
+                  "name": "feedback_workspace_id_finding_id_idx",
+                  "unique": false
+                }
+              ],
               "primaryKey": {
                 "columns": [
                   "id"
@@ -2389,6 +2837,20 @@
             }
           },
           "valueSet": {
+            "AuditAction": {
+              "kind": "valueSet",
+              "values": [
+                "INCIDENT_STATUS_CHANGED",
+                "FINDING_RATED"
+              ]
+            },
+            "AuditObjectType": {
+              "kind": "valueSet",
+              "values": [
+                "INCIDENT",
+                "FINDING"
+              ]
+            },
             "FailureClass": {
               "kind": "valueSet",
               "values": [
@@ -2401,6 +2863,13 @@
                 "DUPLICATE_DELIVERY",
                 "OUT_OF_ORDER",
                 "UNKNOWN"
+              ]
+            },
+            "FeedbackRating": {
+              "kind": "valueSet",
+              "values": [
+                "USEFUL",
+                "INCORRECT"
               ]
             },
             "HandlerState": {
@@ -2478,12 +2947,23 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "4c9acb24de3aae5df7013120ee427d662d4e1c0da68bb0a18823f31d0d81535a"
+    "storageHash": "550abe7d3161095409a9ec24dcdb674c2ab6c031e8fc4abe55c121c65915a1f6"
   },
   "execution": {
-    "executionHash": "59c821dd76f6d83e0190e80958a8b8b17c2e6556cb5c669d9428ca8b59687637",
+    "executionHash": "7d86d22fa249cc8d9e46fc9e40cf42853fb03a9d46bdc907277162e38e1b578a",
     "mutations": {
       "defaults": [
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "entry": "audit_events",
+            "field": "id",
+            "namespace": "public"
+          }
+        },
         {
           "onCreate": {
             "id": "uuidv4",
@@ -2502,6 +2982,17 @@
           },
           "ref": {
             "entry": "evidence",
+            "field": "id",
+            "namespace": "public"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "entry": "feedback",
             "field": "id",
             "namespace": "public"
           }

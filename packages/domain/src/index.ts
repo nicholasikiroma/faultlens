@@ -1,7 +1,17 @@
-export { FAILURE_CLASSES, INCIDENT_TRANSITIONS } from './states.ts';
+export {
+  AUDIT_ACTIONS,
+  AUDIT_OBJECT_TYPE,
+  AUDIT_OBJECT_TYPES,
+  FAILURE_CLASSES,
+  FEEDBACK_RATINGS,
+  INCIDENT_TRANSITIONS,
+} from './states.ts';
 export type {
+  AuditAction,
+  AuditObjectType,
   EpistemicStatus,
   FailureClass,
+  FeedbackRating,
   IncidentStatus,
   HandlerState,
   ProcessingState,
@@ -12,10 +22,14 @@ export type {
   VerificationState,
 } from './states.ts';
 export type {
+  AuditEvent,
   ClassificationRule,
   DeliveryAttempt,
   Evidence,
+  Feedback,
+  FindingRatedAuditEvent,
   IncidentContext,
+  IncidentStatusAuditEvent,
   RuleMatch,
   WebhookEvent,
 } from './entities.ts';

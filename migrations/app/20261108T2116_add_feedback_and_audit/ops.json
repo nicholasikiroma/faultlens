@@ -1,0 +1,362 @@
+[
+  {
+    "id": "createNativeEnumType.AuditAction",
+    "label": "Create enum type \"AuditAction\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "type",
+        "name": "AuditAction"
+      }
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "create enum type \"AuditAction\"",
+        "sql": "CREATE TYPE \"public\".\"AuditAction\" AS ENUM ('INCIDENT_STATUS_CHANGED', 'FINDING_RATED')",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "createNativeEnumType.AuditObjectType",
+    "label": "Create enum type \"AuditObjectType\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "type",
+        "name": "AuditObjectType"
+      }
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "create enum type \"AuditObjectType\"",
+        "sql": "CREATE TYPE \"public\".\"AuditObjectType\" AS ENUM ('INCIDENT', 'FINDING')",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "createNativeEnumType.FeedbackRating",
+    "label": "Create enum type \"FeedbackRating\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "type",
+        "name": "FeedbackRating"
+      }
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "create enum type \"FeedbackRating\"",
+        "sql": "CREATE TYPE \"public\".\"FeedbackRating\" AS ENUM ('USEFUL', 'INCORRECT')",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "table.audit_events",
+    "label": "Create table \"audit_events\"",
+    "summary": "Creates table \"audit_events\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "audit_events"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"audit_events\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"audit_events\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"audit_events\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"audit_events\"",
+        "sql": "CREATE TABLE \"public\".\"audit_events\" (\n  \"action\" \"AuditAction\" NOT NULL,\n  \"actor\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"new_state\" text NOT NULL,\n  \"object_id\" text NOT NULL,\n  \"object_type\" \"AuditObjectType\" NOT NULL,\n  \"old_state\" text,\n  \"timestamp\" timestamp(3) NOT NULL,\n  \"workspace_id\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"audit_events\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"audit_events\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"audit_events\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "table.feedback",
+    "label": "Create table \"feedback\"",
+    "summary": "Creates table \"feedback\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "feedback"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"feedback\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"feedback\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"feedback\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"feedback\"",
+        "sql": "CREATE TABLE \"public\".\"feedback\" (\n  \"actor\" text NOT NULL,\n  \"created_at\" timestamp(3) NOT NULL,\n  \"finding_id\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"note\" text,\n  \"rating\" \"FeedbackRating\" NOT NULL,\n  \"workspace_id\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"feedback\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"feedback\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"feedback\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "index.audit_events.audit_events_workspace_id_object_type_object_id_timestamp_idx",
+    "label": "Create index \"audit_events_workspace_id_object_type_object_id_timestamp_idx\" on \"audit_events\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "audit_events_workspace_id_object_type_object_id_timestamp_idx",
+        "table": "audit_events"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"audit_events_workspace_id_object_type_object_id_timestamp_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"audit_events_workspace_id_object_type_object_id_timestamp_idx\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"audit_events_workspace_id_object_type_object_id_timestamp_idx\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"audit_events_workspace_id_object_type_object_id_timestamp_idx\"",
+        "sql": "CREATE INDEX \"audit_events_workspace_id_object_type_object_id_timestamp_idx\" ON \"public\".\"audit_events\" (\"workspace_id\", \"object_type\", \"object_id\", \"timestamp\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"audit_events_workspace_id_object_type_object_id_timestamp_idx\" exists on \"audit_events\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"audit_events_workspace_id_object_type_object_id_timestamp_idx\"",
+          "i",
+          "I",
+          "\"public\".\"audit_events\"",
+          "btree",
+          "[\"workspace_id\",\"object_type\",\"object_id\",\"timestamp\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.feedback.feedback_finding_id_actor_key",
+    "label": "Create index \"feedback_finding_id_actor_key\" on \"feedback\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "feedback_finding_id_actor_key",
+        "table": "feedback"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"feedback_finding_id_actor_key\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"feedback_finding_id_actor_key\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"feedback_finding_id_actor_key\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"feedback_finding_id_actor_key\"",
+        "sql": "CREATE UNIQUE INDEX \"feedback_finding_id_actor_key\" ON \"public\".\"feedback\" (\"finding_id\", \"actor\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"feedback_finding_id_actor_key\" exists on \"feedback\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND \"i\".\"indisunique\" AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"feedback_finding_id_actor_key\"",
+          "i",
+          "I",
+          "\"public\".\"feedback\"",
+          "btree",
+          "[\"finding_id\",\"actor\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.feedback.feedback_workspace_id_finding_id_idx",
+    "label": "Create index \"feedback_workspace_id_finding_id_idx\" on \"feedback\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "feedback_workspace_id_finding_id_idx",
+        "table": "feedback"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"feedback_workspace_id_finding_id_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"feedback_workspace_id_finding_id_idx\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"feedback_workspace_id_finding_id_idx\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"feedback_workspace_id_finding_id_idx\"",
+        "sql": "CREATE INDEX \"feedback_workspace_id_finding_id_idx\" ON \"public\".\"feedback\" (\"workspace_id\", \"finding_id\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"feedback_workspace_id_finding_id_idx\" exists on \"feedback\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"feedback_workspace_id_finding_id_idx\"",
+          "i",
+          "I",
+          "\"public\".\"feedback\"",
+          "btree",
+          "[\"workspace_id\",\"finding_id\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.feedback.feedback_finding_id_fkey",
+    "label": "Add foreign key \"feedback_finding_id_fkey\" on \"feedback\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "feedback_finding_id_fkey",
+        "table": "feedback"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"feedback_finding_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "feedback_finding_id_fkey",
+          "public",
+          "\"public\".\"feedback\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"feedback_finding_id_fkey\" on \"feedback\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"feedback_finding_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"feedback\"\nADD CONSTRAINT \"feedback_finding_id_fkey\"\nFOREIGN KEY (\"finding_id\")\nREFERENCES \"public\".\"findings\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"feedback_finding_id_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "feedback_finding_id_fkey",
+          "public",
+          "\"public\".\"feedback\"",
+          "f",
+          "[\"finding_id\"]",
+          "\"public\".\"findings\"",
+          "[\"id\"]",
+          "r",
+          "c"
+        ]
+      }
+    ]
+  }
+]

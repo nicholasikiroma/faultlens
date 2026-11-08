@@ -57,6 +57,21 @@ enum IncidentStatus {
   ARCHIVED
 }
 
+enum FeedbackRating {
+  USEFUL
+  INCORRECT
+}
+
+enum AuditAction {
+  INCIDENT_STATUS_CHANGED
+  FINDING_RATED
+}
+
+enum AuditObjectType {
+  INCIDENT
+  FINDING
+}
+
 enum RunMode {
   RULES
   AI_ASSISTED
@@ -205,6 +220,7 @@ model Finding {
   incident Incident          @relation(fields: [incidentId], references: [id], onDelete: Restrict)
   event    WebhookEvent      @relation(fields: [eventId], references: [id], onDelete: Restrict)
   evidence FindingEvidence[]
+  feedback Feedback[]
 
   @@unique([eventId, ruleId, ruleVersion])
   @@map("findings")
@@ -236,4 +252,35 @@ model InvestigationRun {
 
   @@unique([eventId, incidentId, mode, rulesetVersion])
   @@map("investigation_runs")
+}
+
+model Feedback {
+  id          String         @id @default(uuid())
+  workspaceId String         @map("workspace_id")
+  findingId   String         @map("finding_id")
+  actor       String
+  rating      FeedbackRating
+  note        String?
+  createdAt   DateTime       @map("created_at")
+
+  finding Finding @relation(fields: [findingId], references: [id], onDelete: Restrict)
+
+  @@unique([findingId, actor])
+  @@index([workspaceId, findingId])
+  @@map("feedback")
+}
+
+model AuditEvent {
+  id          String          @id @default(uuid())
+  workspaceId String          @map("workspace_id")
+  actor       String
+  action      AuditAction
+  objectType  AuditObjectType @map("object_type")
+  objectId    String          @map("object_id")
+  oldState    String?         @map("old_state")
+  newState    String          @map("new_state")
+  timestamp   DateTime
+
+  @@index([workspaceId, objectType, objectId, timestamp])
+  @@map("audit_events")
 }

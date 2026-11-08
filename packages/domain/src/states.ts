@@ -35,3 +35,17 @@ export const INCIDENT_TRANSITIONS: Record<IncidentStatus, readonly IncidentStatu
   RESOLVED: ['ARCHIVED'],
   ARCHIVED: [],
 };
+
+export const FEEDBACK_RATINGS = ['USEFUL', 'INCORRECT'] as const;
+export type FeedbackRating = (typeof FEEDBACK_RATINGS)[number];
+
+export const AUDIT_ACTIONS = ['INCIDENT_STATUS_CHANGED', 'FINDING_RATED'] as const;
+export type AuditAction = (typeof AUDIT_ACTIONS)[number];
+
+export const AUDIT_OBJECT_TYPES = ['INCIDENT', 'FINDING'] as const;
+export type AuditObjectType = (typeof AUDIT_OBJECT_TYPES)[number];
+
+export const AUDIT_OBJECT_TYPE = {
+  INCIDENT_STATUS_CHANGED: 'INCIDENT',
+  FINDING_RATED: 'FINDING',
+} as const satisfies Record<AuditAction, AuditObjectType>;

@@ -139,3 +139,57 @@ ALTER TABLE investigation_runs
   FOREIGN KEY (event_id) REFERENCES webhook_events (id) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 DROP INDEX IF EXISTS investigation_runs_event_incident_mode_version_key;
+
+DO $$ BEGIN
+  CREATE TYPE "FeedbackRating" AS ENUM ('USEFUL', 'INCORRECT');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE "AuditAction" AS ENUM ('INCIDENT_STATUS_CHANGED', 'FINDING_RATED');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE "AuditObjectType" AS ENUM ('INCIDENT', 'FINDING');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+CREATE TABLE IF NOT EXISTS feedback (
+  id text PRIMARY KEY,
+  workspace_id text NOT NULL,
+  finding_id text NOT NULL,
+  actor text NOT NULL,
+  rating "FeedbackRating" NOT NULL,
+  note text,
+  created_at timestamp(3) NOT NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS feedback_finding_id_actor_key
+  ON feedback (finding_id, actor);
+
+CREATE INDEX IF NOT EXISTS feedback_workspace_id_finding_id_idx
+  ON feedback (workspace_id, finding_id);
+
+CREATE TABLE IF NOT EXISTS audit_events (
+  id text PRIMARY KEY,
+  workspace_id text NOT NULL,
+  actor text NOT NULL,
+  action "AuditAction" NOT NULL,
+  object_type "AuditObjectType" NOT NULL,
+  object_id text NOT NULL,
+  old_state text,
+  new_state text NOT NULL,
+  "timestamp" timestamp(3) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS audit_events_workspace_id_object_type_object_id_timestamp_idx
+  ON audit_events (workspace_id, object_type, object_id, "timestamp");
+
+ALTER TABLE feedback DROP CONSTRAINT IF EXISTS feedback_finding_id_fkey;
+ALTER TABLE feedback
+  ADD CONSTRAINT feedback_finding_id_fkey
+  FOREIGN KEY (finding_id) REFERENCES findings (id) ON DELETE RESTRICT ON UPDATE CASCADE;

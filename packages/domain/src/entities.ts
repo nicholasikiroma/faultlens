@@ -1,6 +1,8 @@
 import type {
   FailureClass,
+  FeedbackRating,
   HandlerState,
+  IncidentStatus,
   ProcessingState,
   SourceKind,
   TrustTier,
@@ -64,4 +66,40 @@ export interface ClassificationRule {
   version: string;
   evaluate(ctx: Readonly<IncidentContext>): Promise<RuleMatch[]>;
 }
+
+export interface Feedback {
+  id: string;
+  workspaceId: string;
+  findingId: string;
+  actor: string;
+  rating: FeedbackRating;
+  note: string | null;
+  createdAt: Date;
+}
+
+export interface IncidentStatusAuditEvent {
+  id: string;
+  workspaceId: string;
+  actor: string;
+  action: 'INCIDENT_STATUS_CHANGED';
+  objectType: 'INCIDENT';
+  objectId: string;
+  oldState: IncidentStatus;
+  newState: IncidentStatus;
+  timestamp: Date;
+}
+
+export interface FindingRatedAuditEvent {
+  id: string;
+  workspaceId: string;
+  actor: string;
+  action: 'FINDING_RATED';
+  objectType: 'FINDING';
+  objectId: string;
+  oldState: FeedbackRating | null;
+  newState: FeedbackRating;
+  timestamp: Date;
+}
+
+export type AuditEvent = IncidentStatusAuditEvent | FindingRatedAuditEvent;
 
