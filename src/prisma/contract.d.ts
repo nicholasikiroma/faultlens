@@ -23,7 +23,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'b34168499028a08c57d0b23c5456220acb24cb7344d1435037262f7219a8bc5e'>;
+  StorageHashBase<'4c9acb24de3aae5df7013120ee427d662d4e1c0da68bb0a18823f31d0d81535a'>;
 export type ExecutionHash =
   ExecutionHashBase<'59c821dd76f6d83e0190e80958a8b8b17c2e6556cb5c669d9428ca8b59687637'>;
 export type ProfileHash =
@@ -525,6 +525,7 @@ export namespace Models {
     id: FieldOutputTypes['public']['DeliveryAttempt']['id'];
     integrationId: FieldOutputTypes['public']['DeliveryAttempt']['integrationId'];
     receivedAt: FieldOutputTypes['public']['DeliveryAttempt']['receivedAt'];
+    senderWaitMs: FieldOutputTypes['public']['DeliveryAttempt']['senderWaitMs'];
     verificationState: FieldOutputTypes['public']['DeliveryAttempt']['verificationState'];
     workspaceId: FieldOutputTypes['public']['DeliveryAttempt']['workspaceId'];
     event: public_WebhookEvent | null;
@@ -741,6 +742,12 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/timestamp-date@1';
                   readonly nullable: false;
                   readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly sender_wait_ms: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
                   readonly many: false;
                 };
                 readonly verification_state: {
@@ -1569,6 +1576,10 @@ type ContractBase = Omit<
                   readonly typeParams: { readonly precision: 3 };
                 };
               };
+              readonly senderWaitMs: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
               readonly verificationState: {
                 readonly nullable: false;
                 readonly type: {
@@ -1632,6 +1643,7 @@ type ContractBase = Omit<
                 readonly id: { readonly column: 'id' };
                 readonly integrationId: { readonly column: 'integration_id' };
                 readonly receivedAt: { readonly column: 'received_at' };
+                readonly senderWaitMs: { readonly column: 'sender_wait_ms' };
                 readonly verificationState: { readonly column: 'verification_state' };
                 readonly workspaceId: { readonly column: 'workspace_id' };
               };

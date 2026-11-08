@@ -1,0 +1,1623 @@
+[
+  {
+    "id": "schema.public",
+    "label": "Create schema \"public\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "Create schema \"public\"",
+        "sql": "CREATE SCHEMA IF NOT EXISTS \"public\"",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "createNativeEnumType.FailureClass",
+    "label": "Create enum type \"FailureClass\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "type",
+        "name": "FailureClass"
+      }
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "create enum type \"FailureClass\"",
+        "sql": "CREATE TYPE \"public\".\"FailureClass\" AS ENUM ('AUTH_FAILURE', 'RATE_LIMIT', 'NETWORK_TIMEOUT', 'UPSTREAM_5XX', 'SCHEMA_MISMATCH', 'INVALID_SIGNATURE', 'DUPLICATE_DELIVERY', 'OUT_OF_ORDER', 'UNKNOWN')",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "createNativeEnumType.HandlerState",
+    "label": "Create enum type \"HandlerState\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "type",
+        "name": "HandlerState"
+      }
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "create enum type \"HandlerState\"",
+        "sql": "CREATE TYPE \"public\".\"HandlerState\" AS ENUM ('PENDING', 'PROCESSED', 'FAILED')",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "createNativeEnumType.IncidentStatus",
+    "label": "Create enum type \"IncidentStatus\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "type",
+        "name": "IncidentStatus"
+      }
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "create enum type \"IncidentStatus\"",
+        "sql": "CREATE TYPE \"public\".\"IncidentStatus\" AS ENUM ('OPEN', 'INVESTIGATING', 'RESOLVED', 'ARCHIVED')",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "createNativeEnumType.ProcessingState",
+    "label": "Create enum type \"ProcessingState\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "type",
+        "name": "ProcessingState"
+      }
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "create enum type \"ProcessingState\"",
+        "sql": "CREATE TYPE \"public\".\"ProcessingState\" AS ENUM ('RECEIVED', 'QUEUED', 'PROCESSED', 'FAILED')",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "createNativeEnumType.RunMode",
+    "label": "Create enum type \"RunMode\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "type",
+        "name": "RunMode"
+      }
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "create enum type \"RunMode\"",
+        "sql": "CREATE TYPE \"public\".\"RunMode\" AS ENUM ('RULES', 'AI_ASSISTED')",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "createNativeEnumType.RunState",
+    "label": "Create enum type \"RunState\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "type",
+        "name": "RunState"
+      }
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "create enum type \"RunState\"",
+        "sql": "CREATE TYPE \"public\".\"RunState\" AS ENUM ('NOT_STARTED', 'QUEUED', 'RUNNING', 'NEEDS_REVIEW', 'COMPLETED', 'FAILED', 'CANCELLED')",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "createNativeEnumType.SourceKind",
+    "label": "Create enum type \"SourceKind\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "type",
+        "name": "SourceKind"
+      }
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "create enum type \"SourceKind\"",
+        "sql": "CREATE TYPE \"public\".\"SourceKind\" AS ENUM ('DELIVERY_ATTEMPT', 'WEBHOOK_EVENT', 'FIXTURE')",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "createNativeEnumType.TrustTier",
+    "label": "Create enum type \"TrustTier\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "type",
+        "name": "TrustTier"
+      }
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "create enum type \"TrustTier\"",
+        "sql": "CREATE TYPE \"public\".\"TrustTier\" AS ENUM ('A', 'B', 'C')",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "createNativeEnumType.VerificationState",
+    "label": "Create enum type \"VerificationState\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "type",
+        "name": "VerificationState"
+      }
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "create enum type \"VerificationState\"",
+        "sql": "CREATE TYPE \"public\".\"VerificationState\" AS ENUM ('RECEIVED', 'VERIFIED', 'REJECTED')",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "table.delivery_attempts",
+    "label": "Create table \"delivery_attempts\"",
+    "summary": "Creates table \"delivery_attempts\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "delivery_attempts"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"delivery_attempts\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"delivery_attempts\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"delivery_attempts\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"delivery_attempts\"",
+        "sql": "CREATE TABLE \"public\".\"delivery_attempts\" (\n  \"correlation_id\" text NOT NULL,\n  \"duration_ms\" int4,\n  \"error_code\" text,\n  \"event_id\" text,\n  \"handler_state\" \"HandlerState\" NOT NULL,\n  \"http_status\" int4,\n  \"id\" text NOT NULL,\n  \"integration_id\" text NOT NULL,\n  \"received_at\" timestamp(3) NOT NULL,\n  \"verification_state\" \"VerificationState\" NOT NULL,\n  \"workspace_id\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"delivery_attempts\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"delivery_attempts\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"delivery_attempts\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "table.evidence",
+    "label": "Create table \"evidence\"",
+    "summary": "Creates table \"evidence\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "evidence"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"evidence\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"evidence\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"evidence\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"evidence\"",
+        "sql": "CREATE TABLE \"public\".\"evidence\" (\n  \"id\" text NOT NULL,\n  \"sha256_digest\" text NOT NULL,\n  \"source_kind\" \"SourceKind\" NOT NULL,\n  \"source_record_id\" text NOT NULL,\n  \"summary\" text NOT NULL,\n  \"trust_tier\" \"TrustTier\" NOT NULL,\n  \"workspace_id\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"evidence\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"evidence\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"evidence\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "table.finding_evidence",
+    "label": "Create table \"finding_evidence\"",
+    "summary": "Creates table \"finding_evidence\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "finding_evidence"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"finding_evidence\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"finding_evidence\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"finding_evidence\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"finding_evidence\"",
+        "sql": "CREATE TABLE \"public\".\"finding_evidence\" (\n  \"evidence_id\" text NOT NULL,\n  \"finding_id\" text NOT NULL,\n  PRIMARY KEY (\"finding_id\", \"evidence_id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"finding_evidence\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"finding_evidence\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"finding_evidence\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "table.findings",
+    "label": "Create table \"findings\"",
+    "summary": "Creates table \"findings\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "findings"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"findings\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"findings\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"findings\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"findings\"",
+        "sql": "CREATE TABLE \"public\".\"findings\" (\n  \"certainty\" text NOT NULL,\n  \"event_id\" text NOT NULL,\n  \"explanation\" text NOT NULL,\n  \"failure_class\" \"FailureClass\" NOT NULL,\n  \"id\" text NOT NULL,\n  \"incident_id\" text NOT NULL,\n  \"rule_id\" text NOT NULL,\n  \"rule_version\" text NOT NULL,\n  \"workspace_id\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"findings\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"findings\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"findings\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "table.incident_events",
+    "label": "Create table \"incident_events\"",
+    "summary": "Creates table \"incident_events\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "incident_events"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"incident_events\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incident_events\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"incident_events\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"incident_events\"",
+        "sql": "CREATE TABLE \"public\".\"incident_events\" (\n  \"event_id\" text NOT NULL,\n  \"incident_id\" text NOT NULL,\n  \"linked_at\" timestamp(3) NOT NULL,\n  PRIMARY KEY (\"incident_id\", \"event_id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"incident_events\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"incident_events\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"incident_events\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "table.incidents",
+    "label": "Create table \"incidents\"",
+    "summary": "Creates table \"incidents\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "incidents"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"incidents\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incidents\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"incidents\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"incidents\"",
+        "sql": "CREATE TABLE \"public\".\"incidents\" (\n  \"endpoint\" text NOT NULL,\n  \"environment\" text NOT NULL,\n  \"event_count\" int4 NOT NULL,\n  \"failure_class\" \"FailureClass\" NOT NULL,\n  \"fingerprint\" text NOT NULL,\n  \"first_seen_at\" timestamp(3) NOT NULL,\n  \"id\" text NOT NULL,\n  \"integration_id\" text NOT NULL,\n  \"last_seen_at\" timestamp(3) NOT NULL,\n  \"rule_version\" text NOT NULL,\n  \"status\" \"IncidentStatus\" NOT NULL,\n  \"workspace_id\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"incidents\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"incidents\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"incidents\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "table.integrations",
+    "label": "Create table \"integrations\"",
+    "summary": "Creates table \"integrations\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "integrations"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"integrations\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"integrations\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"integrations\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"integrations\"",
+        "sql": "CREATE TABLE \"public\".\"integrations\" (\n  \"endpoint\" text DEFAULT '/' NOT NULL,\n  \"endpoint_token\" text NOT NULL,\n  \"environment\" text DEFAULT 'local' NOT NULL,\n  \"id\" text NOT NULL,\n  \"signing_secret\" text NOT NULL,\n  \"workspace_id\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"integrations\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"integrations\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"integrations\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "table.investigation_runs",
+    "label": "Create table \"investigation_runs\"",
+    "summary": "Creates table \"investigation_runs\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "investigation_runs"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"investigation_runs\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"investigation_runs\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"investigation_runs\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"investigation_runs\"",
+        "sql": "CREATE TABLE \"public\".\"investigation_runs\" (\n  \"ended_at\" timestamp(3) NOT NULL,\n  \"event_id\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"incident_id\" text NOT NULL,\n  \"mode\" \"RunMode\" NOT NULL,\n  \"ruleset_version\" text NOT NULL,\n  \"started_at\" timestamp(3) NOT NULL,\n  \"state\" \"RunState\" NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"investigation_runs\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"investigation_runs\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"investigation_runs\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "table.outbox",
+    "label": "Create table \"outbox\"",
+    "summary": "Creates table \"outbox\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "outbox"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"outbox\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"outbox\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"outbox\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"outbox\"",
+        "sql": "CREATE TABLE \"public\".\"outbox\" (\n  \"attempt_id\" text NOT NULL,\n  \"enqueued_at\" timestamp(3),\n  \"event_id\" text,\n  \"id\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"outbox\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"outbox\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"outbox\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "table.webhook_events",
+    "label": "Create table \"webhook_events\"",
+    "summary": "Creates table \"webhook_events\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "webhook_events"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"webhook_events\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"webhook_events\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"webhook_events\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"webhook_events\"",
+        "sql": "CREATE TABLE \"public\".\"webhook_events\" (\n  \"event_type\" text,\n  \"external_event_id\" text,\n  \"first_received_at\" timestamp(3) NOT NULL,\n  \"id\" text NOT NULL,\n  \"integration_id\" text NOT NULL,\n  \"occurred_at\" timestamp(3),\n  \"payload_digest\" text NOT NULL,\n  \"processing_state\" \"ProcessingState\" NOT NULL,\n  \"redacted_payload_json\" jsonb,\n  \"trace_id\" text,\n  \"workspace_id\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"webhook_events\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"webhook_events\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"webhook_events\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "index.findings.findings_event_id_rule_id_rule_version_key",
+    "label": "Create index \"findings_event_id_rule_id_rule_version_key\" on \"findings\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "findings_event_id_rule_id_rule_version_key",
+        "table": "findings"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"findings_event_id_rule_id_rule_version_key\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"findings_event_id_rule_id_rule_version_key\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"findings_event_id_rule_id_rule_version_key\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"findings_event_id_rule_id_rule_version_key\"",
+        "sql": "CREATE UNIQUE INDEX \"findings_event_id_rule_id_rule_version_key\" ON \"public\".\"findings\" (\"event_id\", \"rule_id\", \"rule_version\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"findings_event_id_rule_id_rule_version_key\" exists on \"findings\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND \"i\".\"indisunique\" AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"findings_event_id_rule_id_rule_version_key\"",
+          "i",
+          "I",
+          "\"public\".\"findings\"",
+          "btree",
+          "[\"event_id\",\"rule_id\",\"rule_version\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.incidents.incidents_workspace_id_fingerprint_rule_version_key",
+    "label": "Create index \"incidents_workspace_id_fingerprint_rule_version_key\" on \"incidents\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "incidents_workspace_id_fingerprint_rule_version_key",
+        "table": "incidents"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"incidents_workspace_id_fingerprint_rule_version_key\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incidents_workspace_id_fingerprint_rule_version_key\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"incidents_workspace_id_fingerprint_rule_version_key\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"incidents_workspace_id_fingerprint_rule_version_key\"",
+        "sql": "CREATE UNIQUE INDEX \"incidents_workspace_id_fingerprint_rule_version_key\" ON \"public\".\"incidents\" (\"workspace_id\", \"fingerprint\", \"rule_version\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"incidents_workspace_id_fingerprint_rule_version_key\" exists on \"incidents\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND \"i\".\"indisunique\" AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"incidents_workspace_id_fingerprint_rule_version_key\"",
+          "i",
+          "I",
+          "\"public\".\"incidents\"",
+          "btree",
+          "[\"workspace_id\",\"fingerprint\",\"rule_version\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.integrations.integrations_endpoint_token_key",
+    "label": "Create index \"integrations_endpoint_token_key\" on \"integrations\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "integrations_endpoint_token_key",
+        "table": "integrations"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"integrations_endpoint_token_key\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"integrations_endpoint_token_key\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"integrations_endpoint_token_key\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"integrations_endpoint_token_key\"",
+        "sql": "CREATE UNIQUE INDEX \"integrations_endpoint_token_key\" ON \"public\".\"integrations\" (\"endpoint_token\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"integrations_endpoint_token_key\" exists on \"integrations\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND \"i\".\"indisunique\" AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"integrations_endpoint_token_key\"",
+          "i",
+          "I",
+          "\"public\".\"integrations\"",
+          "btree",
+          "[\"endpoint_token\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.investigation_runs.investigation_runs_event_id_incident_id_mode_ruleset_versio_key",
+    "label": "Create index \"investigation_runs_event_id_incident_id_mode_ruleset_versio_key\" on \"investigation_runs\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "investigation_runs_event_id_incident_id_mode_ruleset_versio_key",
+        "table": "investigation_runs"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"investigation_runs_event_id_incident_id_mode_ruleset_versio_key\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"investigation_runs_event_id_incident_id_mode_ruleset_versio_key\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"investigation_runs_event_id_incident_id_mode_ruleset_versio_key\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"investigation_runs_event_id_incident_id_mode_ruleset_versio_key\"",
+        "sql": "CREATE UNIQUE INDEX \"investigation_runs_event_id_incident_id_mode_ruleset_versio_key\" ON \"public\".\"investigation_runs\" (\"event_id\", \"incident_id\", \"mode\", \"ruleset_version\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"investigation_runs_event_id_incident_id_mode_ruleset_versio_key\" exists on \"investigation_runs\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND \"i\".\"indisunique\" AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"investigation_runs_event_id_incident_id_mode_ruleset_versio_key\"",
+          "i",
+          "I",
+          "\"public\".\"investigation_runs\"",
+          "btree",
+          "[\"event_id\",\"incident_id\",\"mode\",\"ruleset_version\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.webhook_events.webhook_events_integration_id_external_event_id_key",
+    "label": "Create index \"webhook_events_integration_id_external_event_id_key\" on \"webhook_events\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "webhook_events_integration_id_external_event_id_key",
+        "table": "webhook_events"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"webhook_events_integration_id_external_event_id_key\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"webhook_events_integration_id_external_event_id_key\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"webhook_events_integration_id_external_event_id_key\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"webhook_events_integration_id_external_event_id_key\"",
+        "sql": "CREATE UNIQUE INDEX \"webhook_events_integration_id_external_event_id_key\" ON \"public\".\"webhook_events\" (\"integration_id\", \"external_event_id\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"webhook_events_integration_id_external_event_id_key\" exists on \"webhook_events\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND \"i\".\"indisunique\" AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"webhook_events_integration_id_external_event_id_key\"",
+          "i",
+          "I",
+          "\"public\".\"webhook_events\"",
+          "btree",
+          "[\"integration_id\",\"external_event_id\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.delivery_attempts.delivery_attempts_event_id_fkey",
+    "label": "Add foreign key \"delivery_attempts_event_id_fkey\" on \"delivery_attempts\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "delivery_attempts_event_id_fkey",
+        "table": "delivery_attempts"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"delivery_attempts_event_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "delivery_attempts_event_id_fkey",
+          "public",
+          "\"public\".\"delivery_attempts\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"delivery_attempts_event_id_fkey\" on \"delivery_attempts\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"delivery_attempts_event_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"delivery_attempts\"\nADD CONSTRAINT \"delivery_attempts_event_id_fkey\"\nFOREIGN KEY (\"event_id\")\nREFERENCES \"public\".\"webhook_events\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"delivery_attempts_event_id_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "delivery_attempts_event_id_fkey",
+          "public",
+          "\"public\".\"delivery_attempts\"",
+          "f",
+          "[\"event_id\"]",
+          "\"public\".\"webhook_events\"",
+          "[\"id\"]",
+          "r",
+          "c"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.delivery_attempts.delivery_attempts_integration_id_fkey",
+    "label": "Add foreign key \"delivery_attempts_integration_id_fkey\" on \"delivery_attempts\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "delivery_attempts_integration_id_fkey",
+        "table": "delivery_attempts"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"delivery_attempts_integration_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "delivery_attempts_integration_id_fkey",
+          "public",
+          "\"public\".\"delivery_attempts\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"delivery_attempts_integration_id_fkey\" on \"delivery_attempts\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"delivery_attempts_integration_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"delivery_attempts\"\nADD CONSTRAINT \"delivery_attempts_integration_id_fkey\"\nFOREIGN KEY (\"integration_id\")\nREFERENCES \"public\".\"integrations\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"delivery_attempts_integration_id_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "delivery_attempts_integration_id_fkey",
+          "public",
+          "\"public\".\"delivery_attempts\"",
+          "f",
+          "[\"integration_id\"]",
+          "\"public\".\"integrations\"",
+          "[\"id\"]",
+          "r",
+          "c"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.finding_evidence.finding_evidence_finding_id_fkey",
+    "label": "Add foreign key \"finding_evidence_finding_id_fkey\" on \"finding_evidence\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "finding_evidence_finding_id_fkey",
+        "table": "finding_evidence"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"finding_evidence_finding_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "finding_evidence_finding_id_fkey",
+          "public",
+          "\"public\".\"finding_evidence\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"finding_evidence_finding_id_fkey\" on \"finding_evidence\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"finding_evidence_finding_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"finding_evidence\"\nADD CONSTRAINT \"finding_evidence_finding_id_fkey\"\nFOREIGN KEY (\"finding_id\")\nREFERENCES \"public\".\"findings\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"finding_evidence_finding_id_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "finding_evidence_finding_id_fkey",
+          "public",
+          "\"public\".\"finding_evidence\"",
+          "f",
+          "[\"finding_id\"]",
+          "\"public\".\"findings\"",
+          "[\"id\"]",
+          "r",
+          "c"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.finding_evidence.finding_evidence_evidence_id_fkey",
+    "label": "Add foreign key \"finding_evidence_evidence_id_fkey\" on \"finding_evidence\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "finding_evidence_evidence_id_fkey",
+        "table": "finding_evidence"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"finding_evidence_evidence_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "finding_evidence_evidence_id_fkey",
+          "public",
+          "\"public\".\"finding_evidence\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"finding_evidence_evidence_id_fkey\" on \"finding_evidence\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"finding_evidence_evidence_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"finding_evidence\"\nADD CONSTRAINT \"finding_evidence_evidence_id_fkey\"\nFOREIGN KEY (\"evidence_id\")\nREFERENCES \"public\".\"evidence\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"finding_evidence_evidence_id_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "finding_evidence_evidence_id_fkey",
+          "public",
+          "\"public\".\"finding_evidence\"",
+          "f",
+          "[\"evidence_id\"]",
+          "\"public\".\"evidence\"",
+          "[\"id\"]",
+          "r",
+          "c"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.findings.findings_incident_id_fkey",
+    "label": "Add foreign key \"findings_incident_id_fkey\" on \"findings\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "findings_incident_id_fkey",
+        "table": "findings"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"findings_incident_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "findings_incident_id_fkey",
+          "public",
+          "\"public\".\"findings\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"findings_incident_id_fkey\" on \"findings\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"findings_incident_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"findings\"\nADD CONSTRAINT \"findings_incident_id_fkey\"\nFOREIGN KEY (\"incident_id\")\nREFERENCES \"public\".\"incidents\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"findings_incident_id_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "findings_incident_id_fkey",
+          "public",
+          "\"public\".\"findings\"",
+          "f",
+          "[\"incident_id\"]",
+          "\"public\".\"incidents\"",
+          "[\"id\"]",
+          "r",
+          "c"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.findings.findings_event_id_fkey",
+    "label": "Add foreign key \"findings_event_id_fkey\" on \"findings\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "findings_event_id_fkey",
+        "table": "findings"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"findings_event_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "findings_event_id_fkey",
+          "public",
+          "\"public\".\"findings\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"findings_event_id_fkey\" on \"findings\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"findings_event_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"findings\"\nADD CONSTRAINT \"findings_event_id_fkey\"\nFOREIGN KEY (\"event_id\")\nREFERENCES \"public\".\"webhook_events\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"findings_event_id_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "findings_event_id_fkey",
+          "public",
+          "\"public\".\"findings\"",
+          "f",
+          "[\"event_id\"]",
+          "\"public\".\"webhook_events\"",
+          "[\"id\"]",
+          "r",
+          "c"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.incident_events.incident_events_incident_id_fkey",
+    "label": "Add foreign key \"incident_events_incident_id_fkey\" on \"incident_events\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "incident_events_incident_id_fkey",
+        "table": "incident_events"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"incident_events_incident_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "incident_events_incident_id_fkey",
+          "public",
+          "\"public\".\"incident_events\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"incident_events_incident_id_fkey\" on \"incident_events\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"incident_events_incident_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"incident_events\"\nADD CONSTRAINT \"incident_events_incident_id_fkey\"\nFOREIGN KEY (\"incident_id\")\nREFERENCES \"public\".\"incidents\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"incident_events_incident_id_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "incident_events_incident_id_fkey",
+          "public",
+          "\"public\".\"incident_events\"",
+          "f",
+          "[\"incident_id\"]",
+          "\"public\".\"incidents\"",
+          "[\"id\"]",
+          "r",
+          "c"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.incident_events.incident_events_event_id_fkey",
+    "label": "Add foreign key \"incident_events_event_id_fkey\" on \"incident_events\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "incident_events_event_id_fkey",
+        "table": "incident_events"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"incident_events_event_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "incident_events_event_id_fkey",
+          "public",
+          "\"public\".\"incident_events\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"incident_events_event_id_fkey\" on \"incident_events\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"incident_events_event_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"incident_events\"\nADD CONSTRAINT \"incident_events_event_id_fkey\"\nFOREIGN KEY (\"event_id\")\nREFERENCES \"public\".\"webhook_events\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"incident_events_event_id_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "incident_events_event_id_fkey",
+          "public",
+          "\"public\".\"incident_events\"",
+          "f",
+          "[\"event_id\"]",
+          "\"public\".\"webhook_events\"",
+          "[\"id\"]",
+          "r",
+          "c"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.investigation_runs.investigation_runs_incident_id_fkey",
+    "label": "Add foreign key \"investigation_runs_incident_id_fkey\" on \"investigation_runs\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "investigation_runs_incident_id_fkey",
+        "table": "investigation_runs"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"investigation_runs_incident_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "investigation_runs_incident_id_fkey",
+          "public",
+          "\"public\".\"investigation_runs\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"investigation_runs_incident_id_fkey\" on \"investigation_runs\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"investigation_runs_incident_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"investigation_runs\"\nADD CONSTRAINT \"investigation_runs_incident_id_fkey\"\nFOREIGN KEY (\"incident_id\")\nREFERENCES \"public\".\"incidents\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"investigation_runs_incident_id_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "investigation_runs_incident_id_fkey",
+          "public",
+          "\"public\".\"investigation_runs\"",
+          "f",
+          "[\"incident_id\"]",
+          "\"public\".\"incidents\"",
+          "[\"id\"]",
+          "r",
+          "c"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.investigation_runs.investigation_runs_event_id_fkey",
+    "label": "Add foreign key \"investigation_runs_event_id_fkey\" on \"investigation_runs\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "investigation_runs_event_id_fkey",
+        "table": "investigation_runs"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"investigation_runs_event_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "investigation_runs_event_id_fkey",
+          "public",
+          "\"public\".\"investigation_runs\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"investigation_runs_event_id_fkey\" on \"investigation_runs\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"investigation_runs_event_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"investigation_runs\"\nADD CONSTRAINT \"investigation_runs_event_id_fkey\"\nFOREIGN KEY (\"event_id\")\nREFERENCES \"public\".\"webhook_events\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"investigation_runs_event_id_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "investigation_runs_event_id_fkey",
+          "public",
+          "\"public\".\"investigation_runs\"",
+          "f",
+          "[\"event_id\"]",
+          "\"public\".\"webhook_events\"",
+          "[\"id\"]",
+          "r",
+          "c"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.outbox.outbox_event_id_fkey",
+    "label": "Add foreign key \"outbox_event_id_fkey\" on \"outbox\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "outbox_event_id_fkey",
+        "table": "outbox"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"outbox_event_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "outbox_event_id_fkey",
+          "public",
+          "\"public\".\"outbox\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"outbox_event_id_fkey\" on \"outbox\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"outbox_event_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"outbox\"\nADD CONSTRAINT \"outbox_event_id_fkey\"\nFOREIGN KEY (\"event_id\")\nREFERENCES \"public\".\"webhook_events\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"outbox_event_id_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "outbox_event_id_fkey",
+          "public",
+          "\"public\".\"outbox\"",
+          "f",
+          "[\"event_id\"]",
+          "\"public\".\"webhook_events\"",
+          "[\"id\"]",
+          "r",
+          "c"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.outbox.outbox_attempt_id_fkey",
+    "label": "Add foreign key \"outbox_attempt_id_fkey\" on \"outbox\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "outbox_attempt_id_fkey",
+        "table": "outbox"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"outbox_attempt_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "outbox_attempt_id_fkey",
+          "public",
+          "\"public\".\"outbox\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"outbox_attempt_id_fkey\" on \"outbox\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"outbox_attempt_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"outbox\"\nADD CONSTRAINT \"outbox_attempt_id_fkey\"\nFOREIGN KEY (\"attempt_id\")\nREFERENCES \"public\".\"delivery_attempts\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"outbox_attempt_id_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "outbox_attempt_id_fkey",
+          "public",
+          "\"public\".\"outbox\"",
+          "f",
+          "[\"attempt_id\"]",
+          "\"public\".\"delivery_attempts\"",
+          "[\"id\"]",
+          "r",
+          "c"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.webhook_events.webhook_events_integration_id_fkey",
+    "label": "Add foreign key \"webhook_events_integration_id_fkey\" on \"webhook_events\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "webhook_events_integration_id_fkey",
+        "table": "webhook_events"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"webhook_events_integration_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "webhook_events_integration_id_fkey",
+          "public",
+          "\"public\".\"webhook_events\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"webhook_events_integration_id_fkey\" on \"webhook_events\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"webhook_events_integration_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"webhook_events\"\nADD CONSTRAINT \"webhook_events_integration_id_fkey\"\nFOREIGN KEY (\"integration_id\")\nREFERENCES \"public\".\"integrations\" (\"id\")\nON DELETE RESTRICT\nON UPDATE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"webhook_events_integration_id_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "webhook_events_integration_id_fkey",
+          "public",
+          "\"public\".\"webhook_events\"",
+          "f",
+          "[\"integration_id\"]",
+          "\"public\".\"integrations\"",
+          "[\"id\"]",
+          "r",
+          "c"
+        ]
+      }
+    ]
+  }
+]

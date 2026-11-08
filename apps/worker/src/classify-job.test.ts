@@ -86,6 +86,69 @@ test('two calls for one event leave one finding', async () => {
   );
 });
 
+test('a timeout fixture creates an inferred finding that cites the attempt', async () => {
+  await reset();
+  const integrationId = randomUUID();
+  const eventId = randomUUID();
+  const attemptId = randomUUID();
+  const evidenceId = randomUUID();
+
+  await db.orm.public.Integration.create({
+    id: integrationId,
+    workspaceId: 'workspace-1',
+    endpointToken: `token-${integrationId}`,
+    signingSecret: 'secret',
+    environment: 'production',
+    endpoint: '/hooks/billing',
+  });
+  await db.orm.public.WebhookEvent.create({
+    id: eventId,
+    integrationId,
+    externalEventId: 'evt-timeout',
+    eventType: 'invoice.paid',
+    occurredAt: new Date('2026-11-07T20:00:00.000Z'),
+    firstReceivedAt: new Date('2026-11-07T20:00:01.000Z'),
+    traceId: null,
+    payloadDigest: 'a'.repeat(64),
+    processingState: 'RECEIVED',
+    workspaceId: 'workspace-1',
+  });
+  await db.orm.public.DeliveryAttempt.create({
+    id: attemptId,
+    eventId,
+    integrationId,
+    receivedAt: new Date('2026-11-07T20:00:01.000Z'),
+    httpStatus: null,
+    durationMs: 2_100,
+    senderWaitMs: 2_000,
+    verificationState: 'VERIFIED',
+    handlerState: 'PENDING',
+    errorCode: null,
+    correlationId: randomUUID(),
+    workspaceId: 'workspace-1',
+  });
+  await db.orm.public.Evidence.create({
+    id: evidenceId,
+    sourceKind: 'DELIVERY_ATTEMPT',
+    sourceRecordId: attemptId,
+    summary: 'Receiver processing took 2100 ms while the sender waited 2000 ms',
+    sha256Digest: 'b'.repeat(64),
+    trustTier: 'A',
+    workspaceId: 'workspace-1',
+  });
+
+  await classifyJob(eventId);
+
+  const findings = (await db.orm.public.Finding.all()).filter((row) => row.eventId === eventId);
+  assert.equal(findings.length, 1);
+  assert.equal(findings[0]?.failureClass, 'NETWORK_TIMEOUT');
+  assert.equal(findings[0]?.certainty, 'inferred');
+  const links = (await db.orm.public.FindingEvidence.all()).filter(
+    (row) => row.findingId === findings[0]?.id,
+  );
+  assert.deepEqual(links.map((row) => row.evidenceId), [evidenceId]);
+});
+
 test('two events with one fingerprint share one incident', async () => {
   await reset();
   const integrationId = randomUUID();

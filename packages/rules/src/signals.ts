@@ -8,6 +8,17 @@ export function rateLimits(ctx: Readonly<IncidentContext>): readonly DeliveryAtt
   return ctx.attempts.filter((attempt) => attempt.httpStatus === 429);
 }
 
+export function networkTimeouts(ctx: Readonly<IncidentContext>): readonly DeliveryAttempt[] {
+  return ctx.attempts.filter(
+    (attempt) =>
+      attempt.durationMs !== null &&
+      attempt.senderWaitMs !== null &&
+      attempt.durationMs >= 0 &&
+      attempt.senderWaitMs > 0 &&
+      attempt.durationMs >= attempt.senderWaitMs,
+  );
+}
+
 export function upstreamFailures(ctx: Readonly<IncidentContext>): readonly DeliveryAttempt[] {
   return ctx.attempts.filter(
     (attempt) => attempt.httpStatus !== null && attempt.httpStatus >= 500 && attempt.httpStatus <= 599,
@@ -38,6 +49,7 @@ export function anySpecific(ctx: Readonly<IncidentContext>): boolean {
   return (
     authFailures(ctx).length > 0 ||
     rateLimits(ctx).length > 0 ||
+    networkTimeouts(ctx).length > 0 ||
     upstreamFailures(ctx).length > 0 ||
     schemaMismatches(ctx).length > 0 ||
     invalidSignatures(ctx).length > 0 ||

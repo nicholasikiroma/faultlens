@@ -39,7 +39,7 @@ Rules read `IncidentContext` only. They do not query the database and they do no
 
 `classifyJob` stores one finding per event, rule id, and rule version. The finding belongs to an incident. A second call does not insert another finding. The incident is unique on workspace, fingerprint, and rule version. Group with `fingerprint` from `#rules`. `environment` and `endpoint` come from the integration.
 
-`NETWORK_TIMEOUT` and `OUT_OF_ORDER` stay empty until the context can show the comparison. Do not compare clocks from two machines.
+`NETWORK_TIMEOUT` compares receiver processing duration (`durationMs`) against a positive sender wait threshold (`senderWaitMs`) on the same attempt. `OUT_OF_ORDER` stays empty until the context can show the comparison. Do not compare clocks from two machines.
 
 `npm test` runs one file at a time. The database tests share one Postgres database. A parallel run deletes another file's rows.
 

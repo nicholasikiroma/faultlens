@@ -326,6 +326,7 @@ function toAttempt(row: {
   receivedAt: Date;
   httpStatus: number | null;
   durationMs: number | null;
+  senderWaitMs: number | null;
   verificationState: DeliveryAttempt["verificationState"];
   handlerState: DeliveryAttempt["handlerState"];
   errorCode: string | null;
@@ -338,6 +339,7 @@ function toAttempt(row: {
     receivedAt: row.receivedAt,
     httpStatus: row.httpStatus,
     durationMs: row.durationMs,
+    senderWaitMs: row.senderWaitMs,
     verificationState: row.verificationState,
     handlerState: row.handlerState,
     errorCode: row.errorCode,

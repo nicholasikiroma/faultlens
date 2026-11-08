@@ -18,7 +18,7 @@ A finished milestone that still says `Left` will be built twice.
 
 ## At a glance
 
-Last checked against the source on 8 Nov 2026. Earlier that day `npm test` was green and `npx prisma db sign` signed space `app` as `b34168499028a08c57d0b23c5456220acb24cb7344d1435037262f7219a8bc5e`. This pass did not re-run those commands.
+Last checked against the source on 8 Nov 2026. `npm run typecheck` and `npm test` were green (43 passed), and `npx prisma db migrate` and `npx prisma db sign` advanced space `app` to `4c9acb24de3aae5df7013120ee427d662d4e1c0da68bb0a18823f31d0d81535a`.
 
 | | Milestone | Status | Done when |
 | --- | --- | --- | --- |
@@ -28,8 +28,8 @@ Last checked against the source on 8 Nov 2026. Earlier that day `npm test` was g
 | 4 | Consume and classify | Done | One verified ingest, one publish, and the handler leave one finding. Running that path again leaves the same finding. |
 | 5 | Crash and queue tests | Done | Duplicate delivery, database interruption, worker crash, queue downtime, and a rejected signature are covered by tests. |
 | 6 | Payload bounds and schema errors | Done | An oversized body is refused. A malformed body returns a schema error with a field path and no secret. |
-| 7 | Timeout finding | Now | A timeout scenario creates a `NETWORK_TIMEOUT` finding that cites the attempt. |
-| 8 | Incident lifecycle | Left | A legal transition changes status. An illegal one does not. A manual override is recorded. |
+| 7 | Timeout finding | Done | A timeout scenario creates a `NETWORK_TIMEOUT` finding that cites the attempt. |
+| 8 | Incident lifecycle | Now | A legal transition changes status. An illegal one does not. A manual override is recorded. |
 | 9 | Authenticated read | Left | Page two repeats no id from page one. Search filters match the P0 list. An export has evidence ids and no signing secret. A bad token is `unauthorized`. |
 | 10 | Feedback and audit | Left | A rating is stored for a finding. An audit row records who changed an incident status and when. |
 | 11 | HTTP shell | Left | The route list is in the repo. A tokened request returns one page. A request without a token is unauthorized. |
@@ -101,17 +101,13 @@ Checked on 8 Nov 2026 by `apps/api/src/ingest/ingest.test.ts` via `npm test` (42
 
 ## 7. Timeout finding
 
-Status. Left.
+Status. Done.
 
-PRD P0-05 and AC-04 require a timeout finding that cites the attempt. `packages/rules/src/classes/network-timeout.ts` returns no match. One `durationMs` cannot show a timeout. The lab compares in-flight time on the same row with how long the sender waited. Do not subtract clocks from two machines.
+`DeliveryAttempt` now stores receiver processing time in `durationMs` and the sender's wait threshold in `senderWaitMs`. Both values are durations recorded independently; the rule does not subtract timestamps from different machines. `NETWORK_TIMEOUT` matches when receiver processing meets or exceeds the sender wait, returns `certainty: inferred`, and only cites evidence linked to the matching attempts. Missing durations and processing completed before the sender deadline do not match.
 
-Work.
+The database change is in `migrations/app/20261108T2003_add_sender_wait_duration`. `classifyJob` carries both stored values into `IncidentContext`.
 
-1. Extend `IncidentContext` with the two durations the comparison needs. Both come from stored columns, not from a second machine's clock.
-2. Return one `NETWORK_TIMEOUT` match when the comparison says the attempt timed out. `evidenceIds` are ids already on the context. `certainty` is `inferred` because this compares two durations.
-3. Leave the rule empty if those two values are absent. Do not guess.
-
-Done when a fixture with both durations creates one timeout finding that cites that attempt, and a context without them creates none.
+Checked on 8 Nov 2026 by `packages/rules/src/rules.test.ts` and `apps/worker/src/classify-job.test.ts` via `npm run typecheck` and `npm test` (43 passed, 0 failed). The integration fixture creates one `NETWORK_TIMEOUT` finding linked to its delivery-attempt evidence.
 
 `OUT_OF_ORDER` stays empty. It is not in the P0 class list. It is under Later.
 

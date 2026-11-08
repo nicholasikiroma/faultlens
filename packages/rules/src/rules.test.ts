@@ -83,10 +83,48 @@ test('an empty context is UNKNOWN', async () => {
   );
 });
 
-test('timeout and out of order stay empty until the context can show them', async () => {
+test('a timeout requires both stored durations and cites its attempt evidence', async () => {
+  const missingSenderWait = context({
+    attempts: [attempt({ id: 'attempt-1', durationMs: 50 })],
+  });
+  assert.deepEqual(
+    (await evaluateRules(missingSenderWait)).map((match) => match.failureClass),
+    ['UNKNOWN'],
+  );
+
+  const zeroSenderWait = context({
+    attempts: [attempt({ id: 'attempt-1', durationMs: 0, senderWaitMs: 0 })],
+  });
+  assert.deepEqual(
+    (await evaluateRules(zeroSenderWait)).map((match) => match.failureClass),
+    ['UNKNOWN'],
+  );
+
+  const completedBeforeDeadline = context({
+    attempts: [attempt({ id: 'attempt-1', durationMs: 49, senderWaitMs: 50 })],
+  });
+  assert.deepEqual(
+    (await evaluateRules(completedBeforeDeadline)).map((match) => match.failureClass),
+    ['UNKNOWN'],
+  );
+
+  const timedOut = context({
+    attempts: [attempt({ id: 'attempt-1', durationMs: 50, senderWaitMs: 50 })],
+    evidence: [evidence('evidence-1', 'attempt-1')],
+  });
+  const matches = await evaluateRules(timedOut);
+  assert.deepEqual(
+    matches.map((match) => match.failureClass),
+    ['NETWORK_TIMEOUT'],
+  );
+  assert.deepEqual(matches[0]?.evidenceIds, ['evidence-1']);
+  assert.equal(matches[0]?.certainty, 'inferred');
+});
+
+test('out of order stays empty until the context can show arrival order across events', async () => {
   const ctx = context({
     event: event({ occurredAt: new Date('2026-11-07T00:00:00.000Z') }),
-    attempts: [attempt({ id: 'attempt-1', durationMs: 50, httpStatus: null })],
+    attempts: [attempt({ id: 'attempt-1', httpStatus: null })],
   });
   const matches = await evaluateRules(ctx);
   assert.deepEqual(
@@ -155,6 +193,7 @@ function attempt(overrides: Partial<DeliveryAttempt> & { id: string }): Delivery
     receivedAt: new Date('2026-11-07T00:00:01.000Z'),
     httpStatus: null,
     durationMs: null,
+    senderWaitMs: null,
     verificationState: 'VERIFIED',
     handlerState: 'PENDING',
     errorCode: null,

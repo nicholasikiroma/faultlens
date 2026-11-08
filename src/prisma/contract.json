@@ -120,6 +120,13 @@
                   }
                 }
               },
+              "senderWaitMs": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
               "verificationState": {
                 "nullable": false,
                 "type": {
@@ -215,6 +222,9 @@
                 },
                 "receivedAt": {
                   "column": "received_at"
+                },
+                "senderWaitMs": {
+                  "column": "sender_wait_ms"
                 },
                 "verificationState": {
                   "column": "verification_state"
@@ -1521,6 +1531,11 @@
                     "precision": 3
                   }
                 },
+                "sender_wait_ms": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
+                },
                 "verification_state": {
                   "codecId": "pg/enum@1",
                   "dataType": "pg/enum",
@@ -2463,7 +2478,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "b34168499028a08c57d0b23c5456220acb24cb7344d1435037262f7219a8bc5e"
+    "storageHash": "4c9acb24de3aae5df7013120ee427d662d4e1c0da68bb0a18823f31d0d81535a"
   },
   "execution": {
     "executionHash": "59c821dd76f6d83e0190e80958a8b8b17c2e6556cb5c669d9428ca8b59687637",

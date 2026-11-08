@@ -117,6 +117,7 @@ model DeliveryAttempt {
   receivedAt        DateTime          @map("received_at")
   httpStatus        Int?              @map("http_status")
   durationMs        Int?              @map("duration_ms")
+  senderWaitMs      Int?              @map("sender_wait_ms")
   verificationState VerificationState @map("verification_state")
   handlerState      HandlerState      @map("handler_state")
   errorCode         String?           @map("error_code")

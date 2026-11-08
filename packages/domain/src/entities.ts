@@ -27,6 +27,7 @@ export interface DeliveryAttempt {
   receivedAt: Date;
   httpStatus: number | null;
   durationMs: number | null;
+  senderWaitMs: number | null;
   verificationState: VerificationState;
   handlerState: HandlerState;
   errorCode: string | null;

@@ -2,6 +2,9 @@ ALTER TABLE integrations
   ADD COLUMN IF NOT EXISTS environment text NOT NULL DEFAULT 'local',
   ADD COLUMN IF NOT EXISTS endpoint text NOT NULL DEFAULT '/';
 
+ALTER TABLE delivery_attempts
+  ADD COLUMN IF NOT EXISTS sender_wait_ms integer;
+
 DO $$ BEGIN
   CREATE TYPE "FailureClass" AS ENUM (
     'AUTH_FAILURE',

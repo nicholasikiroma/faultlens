@@ -1,0 +1,62 @@
+[
+  {
+    "id": "column.public.delivery_attempts.sender_wait_ms",
+    "label": "Add column \"sender_wait_ms\" to \"delivery_attempts\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "sender_wait_ms",
+        "table": "delivery_attempts"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"sender_wait_ms\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "delivery_attempts",
+          "sender_wait_ms"
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "column \"sender_wait_ms\" on \"delivery_attempts\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"sender_wait_ms\"",
+        "sql": "ALTER TABLE \"public\".\"delivery_attempts\" ADD COLUMN \"sender_wait_ms\" int4"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"sender_wait_ms\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "delivery_attempts",
+          "sender_wait_ms"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"sender_wait_ms\" on \"delivery_attempts\""
+        }
+      },
+      {
+        "description": "verify column \"sender_wait_ms\" has type \"integer\"",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_attribute\" AS \"a\" INNER JOIN \"pg_class\" AS \"c\" ON \"c\".\"oid\" = \"a\".\"attrelid\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"relnamespace\" WHERE (\"n\".\"nspname\" = $1 AND \"c\".\"relname\" = $2 AND \"a\".\"attname\" = $3 AND (format_type(\"a\".\"atttypid\", \"a\".\"atttypmod\")) = $4 AND NOT (\"a\".\"attisdropped\"))) AS \"result\"",
+        "params": [
+          "public",
+          "delivery_attempts",
+          "sender_wait_ms",
+          "integer"
+        ]
+      }
+    ]
+  }
+]
