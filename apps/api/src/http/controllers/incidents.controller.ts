@@ -27,16 +27,8 @@ export async function handleListIncidents(
     workspaceId: session.workspaceId,
     failureClass: failureClass.value,
   });
-  switch (result.kind) {
-    case "unauthorized":
-      return unauthorized(c, LIST_INCIDENTS_STATUS.unauthorized);
-    case "ok":
-      return c.json(result, LIST_INCIDENTS_STATUS.ok);
-    default: {
-      const unreachable: never = result;
-      throw new Error(`Unhandled listIncidents result ${JSON.stringify(unreachable)}`);
-    }
-  }
+  if (result.kind === "unauthorized") return unauthorized(c, LIST_INCIDENTS_STATUS.unauthorized);
+  return c.json(result, LIST_INCIDENTS_STATUS[result.kind]);
 }
 
 export async function handleExportIncident(
@@ -48,18 +40,8 @@ export async function handleExportIncident(
     workspaceId: session.workspaceId,
     incidentId: requiredParam(c.req.param(), "incidentId"),
   });
-  switch (result.kind) {
-    case "unauthorized":
-      return unauthorized(c, EXPORT_INCIDENT_STATUS.unauthorized);
-    case "missing":
-      return c.json(result, EXPORT_INCIDENT_STATUS.missing);
-    case "ok":
-      return c.json(result, EXPORT_INCIDENT_STATUS.ok);
-    default: {
-      const unreachable: never = result;
-      throw new Error(`Unhandled exportIncident result ${JSON.stringify(unreachable)}`);
-    }
-  }
+  if (result.kind === "unauthorized") return unauthorized(c, EXPORT_INCIDENT_STATUS.unauthorized);
+  return c.json(result, EXPORT_INCIDENT_STATUS[result.kind]);
 }
 
 export async function handleTransitionIncident(
@@ -76,17 +58,7 @@ export async function handleTransitionIncident(
     status: parsed.value,
     actor: session.actor,
   });
-  switch (result.outcome) {
-    case "transitioned":
-    case "unchanged":
-    case "illegal":
-    case "missing":
-      return c.json(result, TRANSITION_STATUS[result.outcome]);
-    default: {
-      const unreachable: never = result;
-      throw new Error(`Unhandled transition result ${JSON.stringify(unreachable)}`);
-    }
-  }
+  return c.json(result, TRANSITION_STATUS[result.outcome]);
 }
 
 function parseStatusBody(body: Record<string, unknown>): Parsed<IncidentStatus> {
@@ -94,7 +66,9 @@ function parseStatusBody(body: Record<string, unknown>): Parsed<IncidentStatus> 
     if (key !== "status") return { ok: false, field: key };
   }
   const raw = body["status"];
-  if (typeof raw !== "string") return { ok: false, field: "status" };
+  if (!Object.hasOwn(body, "status") || typeof raw !== "string") {
+    return { ok: false, field: "status" };
+  }
   const status = INCIDENT_STATUSES.find((item) => item === raw);
   if (status === undefined) return { ok: false, field: "status" };
   return { ok: true, value: status };

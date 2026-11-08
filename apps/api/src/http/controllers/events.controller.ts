@@ -28,16 +28,8 @@ export async function handleListEvents(
     limit: parsed.value.limit,
     filters: parsed.value.filters,
   });
-  switch (result.kind) {
-    case "unauthorized":
-      return unauthorized(c, LIST_EVENTS_STATUS.unauthorized);
-    case "ok":
-      return c.json(result, LIST_EVENTS_STATUS.ok);
-    default: {
-      const unreachable: never = result;
-      throw new Error(`Unhandled listEvents result ${JSON.stringify(unreachable)}`);
-    }
-  }
+  if (result.kind === "unauthorized") return unauthorized(c, LIST_EVENTS_STATUS.unauthorized);
+  return c.json(result, LIST_EVENTS_STATUS[result.kind]);
 }
 
 export async function handleListAttempts(c: ApiContext, session: AdminSession): Promise<Response> {
@@ -46,16 +38,8 @@ export async function handleListAttempts(c: ApiContext, session: AdminSession): 
     workspaceId: session.workspaceId,
     eventId: requiredParam(c.req.param(), "eventId"),
   });
-  switch (result.kind) {
-    case "unauthorized":
-      return unauthorized(c, LIST_ATTEMPTS_STATUS.unauthorized);
-    case "ok":
-      return c.json(result, LIST_ATTEMPTS_STATUS.ok);
-    default: {
-      const unreachable: never = result;
-      throw new Error(`Unhandled listAttempts result ${JSON.stringify(unreachable)}`);
-    }
-  }
+  if (result.kind === "unauthorized") return unauthorized(c, LIST_ATTEMPTS_STATUS.unauthorized);
+  return c.json(result, LIST_ATTEMPTS_STATUS[result.kind]);
 }
 
 function parseEventQuery(

@@ -2,7 +2,11 @@ import type { HttpBindings } from "@hono/node-server";
 import type { Context } from "hono";
 import { config } from "../config.ts";
 import { verifyAdminToken } from "../read/auth.ts";
-import { JSON_BODY_LIMIT, MAX_EVENT_PAGE_SIZE, UNAUTHORIZED_BODY } from "./routes.ts";
+import {
+  JSON_BODY_LIMIT,
+  MAX_EVENT_PAGE_SIZE,
+  UNAUTHORIZED_BODY,
+} from "./routes.ts";
 
 export type ApiEnv = { Bindings: HttpBindings };
 export type ApiContext = Context<ApiEnv>;
@@ -36,7 +40,9 @@ export function headerPairs(c: ApiContext): HeaderPairs {
   return [...c.req.raw.headers];
 }
 
-export function flatHeaders(pairs: HeaderPairs): Readonly<Record<string, string>> {
+export function flatHeaders(
+  pairs: HeaderPairs,
+): Readonly<Record<string, string>> {
   const headers: Record<string, string> = {};
   for (const [name, value] of pairs) {
     const key = name.toLowerCase();
@@ -46,7 +52,10 @@ export function flatHeaders(pairs: HeaderPairs): Readonly<Record<string, string>
   return headers;
 }
 
-export function firstHeader(pairs: HeaderPairs, name: string): string | undefined {
+export function firstHeader(
+  pairs: HeaderPairs,
+  name: string,
+): string | undefined {
   const wanted = name.toLowerCase();
   for (const [key, value] of pairs) {
     if (key.toLowerCase() === wanted) return value;
@@ -66,7 +75,11 @@ export function bearerToken(pairs: HeaderPairs): string | null {
 export function adminSession(pairs: HeaderPairs): AdminSession | null {
   const token = bearerToken(pairs);
   const workspaceId = config.workspaceId;
-  if (token === null || !verifyAdminToken(token) || workspaceId.trim().length === 0) {
+  if (
+    token === null ||
+    !verifyAdminToken(token) ||
+    workspaceId.trim().length === 0
+  ) {
     return null;
   }
   return { token, workspaceId, actor: config.adminActor };
@@ -100,20 +113,30 @@ export function readCapped(request: Request, cap: number): Promise<Buffer> {
   });
 }
 
-export async function readCommand(c: ApiContext, pairs: HeaderPairs): Promise<CommandBody> {
+export async function readCommand(
+  c: ApiContext,
+  pairs: HeaderPairs,
+): Promise<CommandBody> {
   if (!isJsonContentType(firstHeader(pairs, "content-type"))) {
-    return { ok: false, response: c.json({ error: "unsupported_media_type" }, 415) };
+    return {
+      ok: false,
+      response: c.json({ error: "unsupported_media_type" }, 415),
+    };
   }
   const bytes = await readCapped(c.req.raw, JSON_BODY_LIMIT + 1);
   if (bytes.length > JSON_BODY_LIMIT) {
     return { ok: false, response: c.json({ error: "payload_too_large" }, 413) };
   }
   const parsed = parseJsonObject(bytes);
-  if (!parsed.ok) return { ok: false, response: invalidRequest(c, parsed.field) };
+  if (!parsed.ok)
+    return { ok: false, response: invalidRequest(c, parsed.field) };
   return { ok: true, value: parsed.value };
 }
 
-export function queryProblem(params: URLSearchParams, allowed: readonly string[]): string | null {
+export function queryProblem(
+  params: URLSearchParams,
+  allowed: readonly string[],
+): string | null {
   const seen = new Set<string>();
   for (const key of params.keys()) {
     if (seen.has(key) || !allowed.some((item) => item === key)) return key;
@@ -122,19 +145,24 @@ export function queryProblem(params: URLSearchParams, allowed: readonly string[]
   return null;
 }
 
-export function optionalText(params: URLSearchParams, key: string): Parsed<string | null> {
+export function optionalText(
+  params: URLSearchParams,
+  key: string,
+): Parsed<string | null> {
   if (!params.has(key)) return { ok: true, value: null };
   const raw = params.get(key);
-  if (raw === null || raw.length === 0 || raw !== raw.trim()) return { ok: false, field: key };
+  if (raw === null || raw.length === 0 || raw !== raw.trim())
+    return { ok: false, field: key };
   return { ok: true, value: raw };
 }
 
-export function optionalInstant(params: URLSearchParams, key: string): Parsed<Date | null> {
+export function optionalInstant(
+  params: URLSearchParams,
+  key: string,
+): Parsed<Date | null> {
   if (!params.has(key)) return { ok: true, value: null };
   const raw = params.get(key);
-  if (raw === null || raw.length === 0 || raw !== raw.trim() || Number.isNaN(Date.parse(raw))) {
-    return { ok: false, field: key };
-  }
+  if (raw === null || !isInstant(raw)) return { ok: false, field: key };
   return { ok: true, value: new Date(raw) };
 }
 
@@ -151,10 +179,13 @@ export function optionalMember<T extends string>(
   return { ok: true, value: found };
 }
 
-export function parseLimit(params: URLSearchParams): Parsed<number | undefined> {
+export function parseLimit(
+  params: URLSearchParams,
+): Parsed<number | undefined> {
   if (!params.has("limit")) return { ok: true, value: undefined };
   const raw = params.get("limit");
-  if (raw === null || !/^[1-9]\d*$/.test(raw)) return { ok: false, field: "limit" };
+  if (raw === null || !/^[1-9]\d*$/.test(raw))
+    return { ok: false, field: "limit" };
   const limit = Number(raw);
   if (!Number.isInteger(limit) || limit < 1 || limit > MAX_EVENT_PAGE_SIZE) {
     return { ok: false, field: "limit" };
@@ -162,7 +193,10 @@ export function parseLimit(params: URLSearchParams): Parsed<number | undefined> 
   return { ok: true, value: limit };
 }
 
-export function requiredParam(params: Readonly<Record<string, string>>, name: string): string {
+export function requiredParam(
+  params: Readonly<Record<string, string>>,
+  name: string,
+): string {
   const value = params[name];
   if (value === undefined || value.length === 0) {
     throw new Error(`Missing path parameter ${name}`);
@@ -192,11 +226,29 @@ function parseJsonObject(bytes: Buffer): Parsed<Record<string, unknown>> {
   if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
     return { ok: false, field: "$" };
   }
-  const value: Record<string, unknown> = {};
-  for (const [key, entry] of Object.entries(parsed)) {
-    value[key] = entry;
-  }
-  return { ok: true, value };
+  // JSON.parse creates own data properties, including for "__proto__".
+  // Copying into {} with assignment would instead invoke its prototype setter.
+  return { ok: true, value: parsed as Record<string, unknown> };
+}
+
+function isInstant(value: string): boolean {
+  const match =
+    /^(\d{4})-(\d{2})-(\d{2})T([01]\d|2[0-3]):([0-5]\d):([0-5]\d)(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/i.exec(
+      value,
+    );
+  if (match === null) return false;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  return (
+    month >= 1 &&
+    month <= 12 &&
+    day >= 1 &&
+    day <= days[month - 1]! &&
+    Number.isFinite(Date.parse(value))
+  );
 }
 
 function isJsonContentType(value: string | undefined): boolean {

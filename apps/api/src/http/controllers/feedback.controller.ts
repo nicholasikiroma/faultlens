@@ -24,16 +24,7 @@ export async function handleRateFinding(c: ApiContext, session: AdminSession): P
     rating: parsed.value.rating,
     note: parsed.value.note,
   });
-  switch (result.outcome) {
-    case "rated":
-    case "replaced":
-    case "missing":
-      return c.json(result, RATE_FINDING_STATUS[result.outcome]);
-    default: {
-      const unreachable: never = result;
-      throw new Error(`Unhandled rateFinding result ${JSON.stringify(unreachable)}`);
-    }
-  }
+  return c.json(result, RATE_FINDING_STATUS[result.outcome]);
 }
 
 export async function handleListFindingFeedback(
@@ -45,16 +36,8 @@ export async function handleListFindingFeedback(
     workspaceId: session.workspaceId,
     findingId: requiredParam(c.req.param(), "findingId"),
   });
-  switch (result.kind) {
-    case "unauthorized":
-      return unauthorized(c, LIST_FEEDBACK_STATUS.unauthorized);
-    case "ok":
-      return c.json(result, LIST_FEEDBACK_STATUS.ok);
-    default: {
-      const unreachable: never = result;
-      throw new Error(`Unhandled listFindingFeedback result ${JSON.stringify(unreachable)}`);
-    }
-  }
+  if (result.kind === "unauthorized") return unauthorized(c, LIST_FEEDBACK_STATUS.unauthorized);
+  return c.json(result, LIST_FEEDBACK_STATUS[result.kind]);
 }
 
 function parseRatingBody(
@@ -64,7 +47,9 @@ function parseRatingBody(
     if (key !== "rating" && key !== "note") return { ok: false, field: key };
   }
   const raw = body["rating"];
-  if (typeof raw !== "string") return { ok: false, field: "rating" };
+  if (!Object.hasOwn(body, "rating") || typeof raw !== "string") {
+    return { ok: false, field: "rating" };
+  }
   const rating = FEEDBACK_RATINGS.find((item) => item === raw);
   if (rating === undefined) return { ok: false, field: "rating" };
   let note: string | null = null;

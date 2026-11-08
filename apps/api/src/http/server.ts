@@ -3,8 +3,14 @@ import { createAdaptorServer } from "@hono/node-server";
 import { Hono } from "hono";
 import { config } from "../config.ts";
 import { handleListAuditEvents } from "./controllers/audit.controller.ts";
-import { handleListAttempts, handleListEvents } from "./controllers/events.controller.ts";
-import { handleListFindingFeedback, handleRateFinding } from "./controllers/feedback.controller.ts";
+import {
+  handleListAttempts,
+  handleListEvents,
+} from "./controllers/events.controller.ts";
+import {
+  handleListFindingFeedback,
+  handleRateFinding,
+} from "./controllers/feedback.controller.ts";
 import { handleIngest } from "./controllers/ingest.controller.ts";
 import {
   handleExportIncident,
@@ -18,12 +24,33 @@ import {
   methodNotAllowed,
   queryProblem,
   unauthorized,
+  type AdminSession,
   type ApiContext,
   type ApiEnv,
 } from "./request.ts";
-import { ADMIN_QUERY_KEYS, ROUTES, type AdminRouteId, type Route } from "./routes.ts";
+import {
+  ADMIN_QUERY_KEYS,
+  ROUTES,
+  type AdminRouteId,
+  type Route,
+} from "./routes.ts";
 
-type AdminRoute = Extract<Route, { id: AdminRouteId }>;
+type AdminHandler = (
+  c: ApiContext,
+  session: AdminSession,
+  params: URLSearchParams,
+) => Promise<Response>;
+
+const adminHandlers = {
+  listEvents: handleListEvents,
+  listAttempts: handleListAttempts,
+  listIncidents: handleListIncidents,
+  exportIncident: handleExportIncident,
+  transitionIncident: handleTransitionIncident,
+  rateFinding: handleRateFinding,
+  listFindingFeedback: handleListFindingFeedback,
+  listAuditEvents: handleListAuditEvents,
+} satisfies Record<AdminRouteId, AdminHandler>;
 
 export function createApiApp(): Hono<ApiEnv> {
   const app = new Hono<ApiEnv>();
@@ -64,7 +91,11 @@ export function createApiServer(): Server {
 export async function startApiServer(options?: {
   port?: number;
   host?: string;
-}): Promise<{ server: Server; url: string; close: () => Promise<void> }> {
+}): Promise<{
+  server: Server;
+  url: string;
+  close: (graceMs?: number) => Promise<void>;
+}> {
   const host = options?.host ?? config.httpHost;
   const port = options?.port ?? config.httpPort;
   if (!Number.isInteger(port) || port < 0 || port > 65535) {
@@ -90,14 +121,7 @@ export async function startApiServer(options?: {
   return {
     server,
     url,
-    close: () =>
-      new Promise((resolve, reject) => {
-        server.closeAllConnections();
-        server.close((error) => {
-          if (error) reject(error);
-          else resolve();
-        });
-      }),
+    close: (graceMs = 10_000) => closeServer(server, graceMs),
   };
 }
 
@@ -115,56 +139,40 @@ function isMounted(route: Route): boolean {
 }
 
 function dispatch(c: ApiContext, route: Route): Promise<Response> {
-  switch (route.id) {
-    case "ingest":
-    case "simulateWebhook":
-      return handleIngest(c, route);
-    case "listEvents":
-    case "listAttempts":
-    case "listIncidents":
-    case "exportIncident":
-    case "transitionIncident":
-    case "rateFinding":
-    case "listFindingFeedback":
-    case "listAuditEvents":
-      return dispatchAdmin(c, route);
-    default: {
-      const unreachable: never = route;
-      throw new Error(`Unhandled route ${JSON.stringify(unreachable)}`);
-    }
+  if (route.id === "ingest" || route.id === "simulateWebhook") {
+    return handleIngest(c, route);
   }
+  return dispatchAdmin(c, route.id);
 }
 
-async function dispatchAdmin(c: ApiContext, route: AdminRoute): Promise<Response> {
+async function dispatchAdmin(
+  c: ApiContext,
+  id: AdminRouteId,
+): Promise<Response> {
   const pairs = headerPairs(c);
   const session = adminSession(pairs);
   if (session === null) return unauthorized(c, 401);
   const params = new URL(c.req.url).searchParams;
-  const queryField = queryProblem(params, ADMIN_QUERY_KEYS[route.id]);
+  const queryField = queryProblem(params, ADMIN_QUERY_KEYS[id]);
   if (queryField !== null) return invalidRequest(c, queryField);
 
-  switch (route.id) {
-    case "listEvents":
-      return handleListEvents(c, session, params);
-    case "listAttempts":
-      return handleListAttempts(c, session);
-    case "listIncidents":
-      return handleListIncidents(c, session, params);
-    case "exportIncident":
-      return handleExportIncident(c, session);
-    case "transitionIncident":
-      return handleTransitionIncident(c, session);
-    case "rateFinding":
-      return handleRateFinding(c, session);
-    case "listFindingFeedback":
-      return handleListFindingFeedback(c, session);
-    case "listAuditEvents":
-      return handleListAuditEvents(c, session, params);
-    default: {
-      const unreachable: never = route;
-      throw new Error(`Unhandled admin route ${JSON.stringify(unreachable)}`);
-    }
+  return adminHandlers[id](c, session, params);
+}
+
+export function closeServer(server: Server, graceMs = 10_000): Promise<void> {
+  if (!Number.isFinite(graceMs) || graceMs < 0) {
+    return Promise.reject(new Error("Invalid shutdown grace period"));
   }
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => server.closeAllConnections(), graceMs);
+    timer.unref();
+    server.close((error) => {
+      clearTimeout(timer);
+      if (error) reject(error);
+      else resolve();
+    });
+    if (graceMs === 0) server.closeAllConnections();
+  });
 }
 
 function formatHost(host: string): string {

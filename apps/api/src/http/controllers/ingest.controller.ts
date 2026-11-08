@@ -22,20 +22,7 @@ export async function handleIngest(c: ApiContext, route: IngestRoute): Promise<R
     rawBody,
     headers: flatHeaders(pairs),
   });
-  switch (result.outcome) {
-    case "stored":
-    case "duplicate":
-    case "conflict":
-    case "rejected":
-    case "schema-error":
-    case "oversized":
-    case "unknown-token":
-      return c.json(result, INGEST_STATUS[result.outcome]);
-    default: {
-      const unreachable: never = result;
-      throw new Error(`Unhandled ingest result ${JSON.stringify(unreachable)}`);
-    }
-  }
+  return c.json(result, INGEST_STATUS[result.outcome]);
 }
 
 function ingestCredential(route: IngestRoute, c: ApiContext, pairs: HeaderPairs): string {

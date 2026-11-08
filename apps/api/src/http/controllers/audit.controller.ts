@@ -25,14 +25,6 @@ export async function handleListAuditEvents(
     ...(objectType.value === null ? {} : { objectType: objectType.value }),
     ...(objectId.value === null ? {} : { objectId: objectId.value }),
   });
-  switch (result.kind) {
-    case "unauthorized":
-      return unauthorized(c, LIST_AUDIT_STATUS.unauthorized);
-    case "ok":
-      return c.json(result, LIST_AUDIT_STATUS.ok);
-    default: {
-      const unreachable: never = result;
-      throw new Error(`Unhandled listAuditEvents result ${JSON.stringify(unreachable)}`);
-    }
-  }
+  if (result.kind === "unauthorized") return unauthorized(c, LIST_AUDIT_STATUS.unauthorized);
+  return c.json(result, LIST_AUDIT_STATUS[result.kind]);
 }

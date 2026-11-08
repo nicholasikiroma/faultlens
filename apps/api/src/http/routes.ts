@@ -1,5 +1,8 @@
 import type { ListAuditEventsResult } from "../audit/audit.ts";
-import type { ListFindingFeedbackResult, RateFindingResult } from "../feedback/feedback.ts";
+import type {
+  ListFindingFeedbackResult,
+  RateFindingResult,
+} from "../feedback/feedback.ts";
 import type { TransitionIncidentResult } from "../incidents/lifecycle.ts";
 import type { IngestResult } from "../ingest/ingest.ts";
 import type { ListAttemptsResult, ListEventsResult } from "../read/events.ts";
@@ -7,50 +10,25 @@ import type { ExportIncidentResult } from "../read/export.ts";
 import type { ListIncidentsResult } from "../read/incidents.ts";
 
 export type HttpMethod = "GET" | "POST" | "PUT";
-export type BodyKind = "none" | "raw" | "json";
 
 export type Access =
   | { readonly kind: "admin" }
-  | { readonly kind: "ingest"; readonly credential: "bearer"; readonly traffic: "real" }
-  | { readonly kind: "ingest"; readonly credential: "path"; readonly traffic: "simulated" };
+  | {
+      readonly kind: "ingest";
+      readonly credential: "bearer";
+      readonly traffic: "real";
+    }
+  | {
+      readonly kind: "ingest";
+      readonly credential: "path";
+      readonly traffic: "simulated";
+    };
 
 export interface HttpRoute {
-  readonly id:
-    | "ingest"
-    | "simulateWebhook"
-    | "listEvents"
-    | "listAttempts"
-    | "listIncidents"
-    | "exportIncident"
-    | "transitionIncident"
-    | "rateFinding"
-    | "listFindingFeedback"
-    | "listAuditEvents";
+  readonly id: string;
   readonly method: HttpMethod;
   readonly path: string;
   readonly access: Access;
-  readonly body: BodyKind;
-}
-
-type IngestReal = {
-  readonly access: { readonly kind: "ingest"; readonly credential: "bearer"; readonly traffic: "real" };
-  readonly body: "raw";
-};
-
-type IngestSimulated = {
-  readonly access: { readonly kind: "ingest"; readonly credential: "path"; readonly traffic: "simulated" };
-  readonly body: "raw";
-};
-
-type AdminRoute = {
-  readonly access: { readonly kind: "admin" };
-  readonly body: "none" | "json";
-};
-
-type Enforce<R> = R extends IngestReal ? R : R extends IngestSimulated ? R : R extends AdminRoute ? R : never;
-
-function route<const R extends HttpRoute>(spec: Enforce<R>): R {
-  return spec;
 }
 
 export const JSON_BODY_LIMIT = 16 * 1024;
@@ -79,86 +57,86 @@ export const ADMIN_QUERY_KEYS = {
 } as const;
 
 export const ROUTES = [
-  route({
+  {
     id: "ingest",
     method: "POST",
     path: "/v1/ingest",
     access: { kind: "ingest", credential: "bearer", traffic: "real" },
-    body: "raw",
-  }),
-  route({
+  },
+  {
     id: "simulateWebhook",
     method: "POST",
     path: "/hooks/:token",
     access: { kind: "ingest", credential: "path", traffic: "simulated" },
-    body: "raw",
-  }),
-  route({
+  },
+  {
     id: "listEvents",
     method: "GET",
     path: "/v1/events",
     access: { kind: "admin" },
-    body: "none",
-  }),
-  route({
+  },
+  {
     id: "listAttempts",
     method: "GET",
     path: "/v1/events/:eventId/attempts",
     access: { kind: "admin" },
-    body: "none",
-  }),
-  route({
+  },
+  {
     id: "listIncidents",
     method: "GET",
     path: "/v1/incidents",
     access: { kind: "admin" },
-    body: "none",
-  }),
-  route({
+  },
+  {
     id: "exportIncident",
     method: "GET",
     path: "/v1/incidents/:incidentId/export",
     access: { kind: "admin" },
-    body: "none",
-  }),
-  route({
+  },
+  {
     id: "transitionIncident",
     method: "PUT",
     path: "/v1/incidents/:incidentId/status",
     access: { kind: "admin" },
-    body: "json",
-  }),
-  route({
+  },
+  {
     id: "rateFinding",
     method: "PUT",
     path: "/v1/findings/:findingId/feedback",
     access: { kind: "admin" },
-    body: "json",
-  }),
-  route({
+  },
+  {
     id: "listFindingFeedback",
     method: "GET",
     path: "/v1/findings/:findingId/feedback",
     access: { kind: "admin" },
-    body: "none",
-  }),
-  route({
+  },
+  {
     id: "listAuditEvents",
     method: "GET",
     path: "/v1/audit-events",
     access: { kind: "admin" },
-    body: "none",
-  }),
+  },
 ] as const satisfies readonly HttpRoute[];
 
 export const HTTP_ROUTES = ROUTES;
 
 export type Route = (typeof ROUTES)[number];
 export type RouteId = Route["id"];
-export type AdminRouteId = Exclude<RouteId, "ingest" | "simulateWebhook">;
+export type AdminRouteId = Extract<Route, { access: { kind: "admin" } }>["id"];
 
-true satisfies Exclude<AdminRouteId, keyof typeof ADMIN_QUERY_KEYS> extends never ? true : never;
-true satisfies Exclude<keyof typeof ADMIN_QUERY_KEYS, AdminRouteId> extends never ? true : never;
+true satisfies Exclude<
+  AdminRouteId,
+  keyof typeof ADMIN_QUERY_KEYS
+> extends never
+  ? true
+  : never;
+true satisfies Exclude<
+  keyof typeof ADMIN_QUERY_KEYS,
+  AdminRouteId
+> extends never
+  ? true
+  : never;
 
 export const INGEST_STATUS = {
   stored: 200,

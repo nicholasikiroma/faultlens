@@ -50,7 +50,7 @@ Query keys are `cursor`, `limit`, `integrationId`, `from`, `to`, `externalEventI
 
 `limit` is an integer from 1 to 100. An omitted `limit` leaves the domain default, `DEFAULT_EVENT_PAGE_SIZE`, which is 20. `cursor` is the previous page's `nextCursor`. An unknown cursor is an empty page from the domain, not a 400.
 
-`from` and `to` are ISO-8601 instants on `firstReceivedAt`. If both are present and `from` is later than `to`, the response is 400 and the field is `from`.
+`from` and `to` are ISO-8601 instants on `firstReceivedAt`: `YYYY-MM-DDTHH:mm:ss`, optional fractional seconds, and a required `Z` or numeric offset such as `+02:00`. Calendar dates must be valid; timezone-less timestamps and dates normalized by JavaScript (such as February 30) are rejected. If both are present and `from` is later than `to`, the response is 400 and the field is `from`.
 
 `status` is a `PROCESSING_STATES` label. The labels are `RECEIVED`, `QUEUED`, `PROCESSED`, and `FAILED`.
 
@@ -135,6 +135,12 @@ Admin. Calls `listAuditEvents`. Query keys are `objectType` and `objectId`. `obj
 | --- | --- |
 | `ok` | 200 |
 | `unauthorized` | 401 |
+
+## Testing and shutdown
+
+`npm run test:http` runs the route-contract and transport-validation tests without querying or resetting the database. The real-socket/database integration tests remain in `server.test.ts` and run with `npm test`.
+
+The API entry point handles `SIGINT` and `SIGTERM`: it stops accepting requests, allows active requests up to ten seconds to finish, force-closes remaining HTTP connections, and closes the database. The server's `close(graceMs)` method allows callers to override that grace period; `close(0)` is immediate cleanup.
 
 ## Shell errors
 
