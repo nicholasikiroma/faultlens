@@ -1,34 +1,42 @@
-import { randomUUID } from 'node:crypto';
-import type { PostgresTransactionContext } from '@prisma/orm-postgres/runtime';
-import { db, type Contract } from '#db';
+import { randomUUID } from "node:crypto";
+import type { PostgresTransactionContext } from "@prisma/orm-postgres/runtime";
+import { db, type Contract } from "#db";
 import type {
   DeliveryAttempt,
   Evidence,
   FailureClass,
   IncidentContext,
   WebhookEvent,
-} from '#domain';
-import { RULES, fingerprint } from '#rules';
+} from "#domain";
+import { RULES, fingerprint } from "#rules";
 
 type Tx = PostgresTransactionContext<Contract>;
 
 export async function classifyJob(eventId: string): Promise<void> {
   await db.transaction(async (tx) => {
-    const event = await tx.orm.public.WebhookEvent.where({ id: eventId }).first();
+    const event = await tx.orm.public.WebhookEvent.where({
+      id: eventId,
+    }).first();
     if (event === null) {
       throw new Error(`missing event ${eventId}`);
     }
-    const integration = await tx.orm.public.Integration.where({ id: event.integrationId }).first();
+    const integration = await tx.orm.public.Integration.where({
+      id: event.integrationId,
+    }).first();
     if (integration === null) {
       throw new Error(`missing integration ${event.integrationId}`);
     }
-    const attemptRows = (await tx.orm.public.DeliveryAttempt.all()).filter((row) => row.eventId === eventId);
+    const attemptRows = (await tx.orm.public.DeliveryAttempt.all()).filter(
+      (row) => row.eventId === eventId,
+    );
     const attemptIds = new Set(attemptRows.map((row) => row.id));
     const evidenceRows = (await tx.orm.public.Evidence.all()).filter(
       (row) =>
         row.workspaceId === event.workspaceId &&
-        ((row.sourceKind === 'WEBHOOK_EVENT' && row.sourceRecordId === eventId) ||
-          (row.sourceKind === 'DELIVERY_ATTEMPT' && attemptIds.has(row.sourceRecordId))),
+        ((row.sourceKind === "WEBHOOK_EVENT" &&
+          row.sourceRecordId === eventId) ||
+          (row.sourceKind === "DELIVERY_ATTEMPT" &&
+            attemptIds.has(row.sourceRecordId))),
     );
     const ctx: IncidentContext = {
       integrationId: event.integrationId,
@@ -50,7 +58,11 @@ export async function classifyJob(eventId: string): Promise<void> {
           ruleVersion: rule.version,
           seenAt,
         });
-        const linked = await linkEvent(tx, { incidentId: incident.id, eventId, seenAt });
+        const linked = await linkEvent(tx, {
+          incidentId: incident.id,
+          eventId,
+          seenAt,
+        });
         if (linked && !incident.created) {
           await countEvent(tx, { incidentId: incident.id, seenAt });
         }
@@ -112,7 +124,7 @@ async function placeIncident(
         CAST(${input.failureClass} AS "FailureClass"),
         ${input.endpoint},
         ${input.ruleVersion},
-        CAST(${'OPEN'} AS "IncidentStatus"),
+        CAST(${"OPEN"} AS "IncidentStatus"),
         CAST(${input.seenAt.toISOString()} AS timestamptz),
         CAST(${input.seenAt.toISOString()} AS timestamptz),
         1
@@ -120,7 +132,7 @@ async function placeIncident(
       ON CONFLICT (workspace_id, fingerprint, rule_version) DO NOTHING
       RETURNING id
     `
-      .returnsRow({ id: 'pg/text@1' })
+      .returnsRow({ id: "pg/text@1" })
       .build(),
   );
   const row = inserted[0];
@@ -132,7 +144,7 @@ async function placeIncident(
         AND fingerprint = ${key}
         AND rule_version = ${input.ruleVersion}
     `
-      .returnsRow({ id: 'pg/text@1' })
+      .returnsRow({ id: "pg/text@1" })
       .build(),
   );
   const found = existing[0];
@@ -157,13 +169,16 @@ async function linkEvent(
       ON CONFLICT (incident_id, event_id) DO NOTHING
       RETURNING incident_id
     `
-      .returnsRow({ incident_id: 'pg/text@1' })
+      .returnsRow({ incident_id: "pg/text@1" })
       .build(),
   );
   return inserted[0] !== undefined;
 }
 
-async function countEvent(tx: Tx, input: { incidentId: string; seenAt: Date }): Promise<void> {
+async function countEvent(
+  tx: Tx,
+  input: { incidentId: string; seenAt: Date },
+): Promise<void> {
   await tx.query(
     tx.raw.sql`
       UPDATE incidents
@@ -185,7 +200,7 @@ async function placeFinding(
     ruleVersion: string;
     failureClass: FailureClass;
     explanation: string;
-    certainty: 'observed' | 'inferred';
+    certainty: "observed" | "inferred";
     workspaceId: string;
   },
 ): Promise<string> {
@@ -210,7 +225,7 @@ async function placeFinding(
       ON CONFLICT (event_id, rule_id, rule_version) DO NOTHING
       RETURNING id
     `
-      .returnsRow({ id: 'pg/text@1' })
+      .returnsRow({ id: "pg/text@1" })
       .build(),
   );
   const row = inserted[0];
@@ -222,7 +237,7 @@ async function placeFinding(
         AND rule_id = ${input.ruleId}
         AND rule_version = ${input.ruleVersion}
     `
-      .returnsRow({ id: 'pg/text@1' })
+      .returnsRow({ id: "pg/text@1" })
       .build(),
   );
   const found = existing[0];
@@ -249,7 +264,12 @@ async function placeFindingEvidence(
 
 async function placeRun(
   tx: Tx,
-  input: { incidentId: string; eventId: string; rulesetVersion: string; seenAt: Date },
+  input: {
+    incidentId: string;
+    eventId: string;
+    rulesetVersion: string;
+    seenAt: Date;
+  },
 ): Promise<void> {
   await tx.query(
     tx.raw.sql`
@@ -260,8 +280,8 @@ async function placeRun(
         ${randomUUID()},
         ${input.incidentId},
         ${input.eventId},
-        CAST(${'RULES'} AS "RunMode"),
-        CAST(${'COMPLETED'} AS "RunState"),
+        CAST(${"RULES"} AS "RunMode"),
+        CAST(${"COMPLETED"} AS "RunState"),
         ${input.rulesetVersion},
         CAST(${input.seenAt.toISOString()} AS timestamptz),
         CAST(${input.seenAt.toISOString()} AS timestamptz)
@@ -283,7 +303,7 @@ function toEvent(row: {
   traceId: string | null;
   payloadDigest: string;
   redactedPayloadJson: unknown;
-  processingState: WebhookEvent['processingState'];
+  processingState: WebhookEvent["processingState"];
 }): WebhookEvent {
   return {
     id: row.id,
@@ -306,8 +326,8 @@ function toAttempt(row: {
   receivedAt: Date;
   httpStatus: number | null;
   durationMs: number | null;
-  verificationState: DeliveryAttempt['verificationState'];
-  handlerState: DeliveryAttempt['handlerState'];
+  verificationState: DeliveryAttempt["verificationState"];
+  handlerState: DeliveryAttempt["handlerState"];
   errorCode: string | null;
   correlationId: string;
 }): DeliveryAttempt {
@@ -327,11 +347,11 @@ function toAttempt(row: {
 
 function toEvidence(row: {
   id: string;
-  sourceKind: Evidence['sourceKind'];
+  sourceKind: Evidence["sourceKind"];
   sourceRecordId: string;
   summary: string;
   sha256Digest: string;
-  trustTier: Evidence['trustTier'];
+  trustTier: Evidence["trustTier"];
 }): Evidence {
   return {
     id: row.id,

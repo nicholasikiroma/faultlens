@@ -25,8 +25,8 @@ Last checked against the source on 8 Nov 2026. Earlier that day `npm test` was g
 | 1 | Verified ingest | Done | A known body is stored once. A bad signature stores an attempt and no event. A forced rollback leaves the tables unchanged. |
 | 2 | Classify and group | Done | Two calls for one event leave one finding. Two events with one fingerprint share one incident. |
 | 3 | Publish the outbox | Done | A second `dispatchPending` does not enqueue the same row. Redis down leaves `enqueuedAt` null. |
-| 4 | Consume and classify | Now | One verified ingest, one publish, and the handler leave one finding. Running that path again leaves the same finding. |
-| 5 | Crash and queue tests | Left | Duplicate delivery, database interruption, worker crash, queue downtime, and a rejected signature are covered by tests. |
+| 4 | Consume and classify | Done | One verified ingest, one publish, and the handler leave one finding. Running that path again leaves the same finding. |
+| 5 | Crash and queue tests | Now | Duplicate delivery, database interruption, worker crash, queue downtime, and a rejected signature are covered by tests. |
 | 6 | Payload bounds and schema errors | Left | An oversized body is refused. A malformed body returns a schema error with a field path and no secret. |
 | 7 | Timeout finding | Left | A timeout scenario creates a `NETWORK_TIMEOUT` finding that cites the attempt. |
 | 8 | Incident lifecycle | Left | A legal transition changes status. An illegal one does not. A manual override is recorded. |
@@ -73,19 +73,17 @@ Not in this milestone. The handler that calls `classifyJob`. That is milestone 4
 
 ## 4. Consume and classify
 
-Status. Now.
+Status. Done.
 
-A worker handler takes the job from milestone 3.
+A worker handler in `apps/worker/src/consumer.ts` (`handleOutboxJob` and `createOutboxWorker`) consumes jobs from `outbox`. Jobs with an `eventId` invoke `classifyJob(eventId)`. Jobs with only an `attemptId` represent rejected deliveries and are completed without classification. A second delivery of the same job id is deduplicated by BullMQ, and `classifyJob` idempotently preserves existing findings.
 
-A job with an event id calls `classifyJob`. A job with only an attempt id is a rejected delivery. The handler finishes it and does not classify. A second delivery of the same job id is a no-op in BullMQ, and `classifyJob` already refuses a second finding.
-
-Done when one verified ingest, one `dispatchPending` call, and the handler leave one finding, and running that path again leaves the same finding.
+Checked on 8 Nov 2026 by `apps/worker/src/classify-job.test.ts` via `npm test` (32 passed: `one verified ingest, one dispatchPending call, and the handler leave one finding; running that path again leaves the same finding`, and `a job with only an attempt id is a rejected delivery and finishes without classifying`).
 
 Not in this milestone. The crash matrix. That is milestone 5.
 
 ## 5. Crash and queue tests
 
-Status. Left.
+Status. Now.
 
 The M1 exit is that a duplicate delivery does not duplicate logical processing, and source history survives crashes. The duplicate and rollback cases already pass in `ingest.test.ts`. The rest do not exist yet.
 

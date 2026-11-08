@@ -45,4 +45,14 @@ Rules read `IncidentContext` only. They do not query the database and they do no
 
 Update this file in the same change. A practice that is no longer true and is left here will be copied into the next implementation.
 
+## Configuration & Queues
+
+Read environment variables and their fallback defaults in `config.ts`. Do not inline `process.env` reads with hardcoded connection fallback strings across domain or handler files.
+
+Queue connection lifecycle, BullMQ `Queue` instances, and worker connection pooling belong in `apps/worker/src/queue.ts`. Dispatchers and job handlers import from `queue.ts` rather than managing their own Redis connections.
+
+## Branches & Milestones
+
+Each milestone begins on a new branch named `be-<number>-<milestone-slug>` branched from the previous milestone.
+
 Failure to avoid: a second copy of `verify` under `packages/domain` that only throws, while `apps/api` has the real one. Callers then import the wrong function.

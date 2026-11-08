@@ -1,8 +1,11 @@
 import assert from 'node:assert/strict';
-import { randomUUID } from 'node:crypto';
+import { createHmac, randomUUID } from 'node:crypto';
 import { after, test } from 'node:test';
 import { db } from '#db';
+import { ingest } from '../../api/src/ingest/ingest.ts';
+import { SIGNATURE_HEADER } from '../../api/src/ingest/verify.ts';
 import { classifyJob } from './classify-job.ts';
+import { createOutboxWorker, handleOutboxJob } from './consumer.ts';
 import { dispatchPending } from './dispatcher.ts';
 import { closeQueue, getQueue } from './queue.ts';
 
@@ -274,6 +277,118 @@ test('a failed Redis connection leaves enqueuedAt null', async () => {
 
   const row = await db.orm.public.Outbox.where({ id: outboxId }).first();
   assert.equal(row?.enqueuedAt, null);
+});
+
+test('one verified ingest, one dispatchPending call, and the handler leave one finding; running that path again leaves the same finding', async () => {
+  await reset();
+  const queue = getQueue();
+  await queue.obliterate({ force: true });
+
+  const integrationId = randomUUID();
+  const endpointToken = `token-${integrationId}`;
+  const signingSecret = 'secret-signing-key-1';
+
+  await db.orm.public.Integration.create({
+    id: integrationId,
+    workspaceId: 'workspace-1',
+    endpointToken,
+    signingSecret,
+    environment: 'production',
+    endpoint: '/hooks/billing',
+  });
+
+  const rawBody = Buffer.from(
+    JSON.stringify({
+      event_id: 'evt-m4-1',
+      type: 'invoice.failed',
+      occurred_at: '2026-11-07T20:00:00.000Z',
+    }),
+  );
+  const signature = createHmac('sha256', signingSecret).update(rawBody).digest('hex');
+  const headers = { [SIGNATURE_HEADER]: signature };
+
+  // 1. One verified ingest
+  const firstIngest = await ingest({ token: endpointToken, rawBody, headers });
+  assert.equal(firstIngest.outcome, 'stored');
+  assert.ok(firstIngest.eventId);
+
+  // 2. One dispatchPending call
+  const markedFirst = await dispatchPending();
+  assert.equal(markedFirst, 1);
+
+  // 3. Worker handler takes the job
+  const worker = createOutboxWorker();
+  await new Promise((resolve) => worker.on('completed', resolve));
+  await worker.close();
+
+  // Leaves one finding
+  const findingsFirst = await db.orm.public.Finding.all();
+  assert.equal(findingsFirst.length, 1);
+  assert.equal(findingsFirst[0]?.eventId, firstIngest.eventId);
+  const incidentsFirst = await db.orm.public.Incident.all();
+  assert.equal(incidentsFirst.length, 1);
+  assert.equal(incidentsFirst[0]?.eventCount, 1);
+
+  // 4. Running that path again
+  const secondIngest = await ingest({ token: endpointToken, rawBody, headers });
+  assert.equal(secondIngest.outcome, 'duplicate');
+  assert.equal(secondIngest.eventId, firstIngest.eventId);
+
+  const markedSecond = await dispatchPending();
+  assert.equal(markedSecond, 1);
+
+  const secondWorker = createOutboxWorker();
+  await new Promise((resolve) => setTimeout(resolve, 200));
+  await secondWorker.close();
+
+  // Leaves the same finding
+  const findingsSecond = await db.orm.public.Finding.all();
+  assert.equal(findingsSecond.length, 1);
+  assert.equal(findingsSecond[0]?.id, findingsFirst[0]?.id);
+  const incidentsSecond = await db.orm.public.Incident.all();
+  assert.equal(incidentsSecond.length, 1);
+  assert.equal(incidentsSecond[0]?.eventCount, 1);
+});
+
+test('a job with only an attempt id is a rejected delivery and finishes without classifying', async () => {
+  await reset();
+  const queue = getQueue();
+  await queue.obliterate({ force: true });
+
+  const integrationId = randomUUID();
+  const endpointToken = `token-${integrationId}`;
+  const signingSecret = 'secret-signing-key-1';
+
+  await db.orm.public.Integration.create({
+    id: integrationId,
+    workspaceId: 'workspace-1',
+    endpointToken,
+    signingSecret,
+    environment: 'production',
+    endpoint: '/hooks/billing',
+  });
+
+  const rawBody = Buffer.from(JSON.stringify({ event_id: 'evt-m4-rejected' }));
+  const headers = { [SIGNATURE_HEADER]: 'wrong-signature-hex' };
+
+  // Ingest with wrong signature -> rejected (eventId is null)
+  const rejectedIngest = await ingest({ token: endpointToken, rawBody, headers });
+  assert.equal(rejectedIngest.outcome, 'rejected');
+  assert.equal(rejectedIngest.eventId, null);
+  assert.ok(rejectedIngest.attemptId);
+
+  const marked = await dispatchPending();
+  assert.equal(marked, 1);
+
+  const worker = createOutboxWorker();
+  await new Promise((resolve) => worker.on('completed', resolve));
+  await worker.close();
+
+  // No finding or incident should be created
+  const findings = await db.orm.public.Finding.all();
+  assert.equal(findings.length, 0);
+  const incidents = await db.orm.public.Incident.all();
+  assert.equal(incidents.length, 0);
 });
 
 async function reset(): Promise<void> {
