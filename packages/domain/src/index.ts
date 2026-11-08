@@ -4,7 +4,9 @@ export {
   AUDIT_OBJECT_TYPES,
   FAILURE_CLASSES,
   FEEDBACK_RATINGS,
+  INCIDENT_STATUSES,
   INCIDENT_TRANSITIONS,
+  PROCESSING_STATES,
 } from './states.ts';
 export type {
   AuditAction,

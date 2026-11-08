@@ -12,11 +12,13 @@ export const FAILURE_CLASSES = [
 
 export type FailureClass = (typeof FAILURE_CLASSES)[number];
 
-export type ProcessingState = 'RECEIVED' | 'QUEUED' | 'PROCESSED' | 'FAILED';
+export const PROCESSING_STATES = ['RECEIVED', 'QUEUED', 'PROCESSED', 'FAILED'] as const;
+export type ProcessingState = (typeof PROCESSING_STATES)[number];
 export type VerificationState = 'RECEIVED' | 'VERIFIED' | 'REJECTED';
 export type HandlerState = 'PENDING' | 'PROCESSED' | 'FAILED';
 export type SourceKind = 'DELIVERY_ATTEMPT' | 'WEBHOOK_EVENT' | 'FIXTURE';
-export type IncidentStatus = 'OPEN' | 'INVESTIGATING' | 'RESOLVED' | 'ARCHIVED';
+export const INCIDENT_STATUSES = ['OPEN', 'INVESTIGATING', 'RESOLVED', 'ARCHIVED'] as const;
+export type IncidentStatus = (typeof INCIDENT_STATUSES)[number];
 export type EpistemicStatus = 'OBSERVED' | 'INFERRED' | 'HYPOTHESIS' | 'UNVERIFIED';
 export type RunMode = 'RULES' | 'AI_ASSISTED';
 export type RunState =
