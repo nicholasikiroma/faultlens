@@ -1,17 +1,35 @@
-import { randomUUID } from 'node:crypto';
-import type { PostgresTransactionContext } from '@prisma/orm-postgres/runtime';
-import { db, type Contract } from '#db';
-import type { VerificationState } from '#domain';
-import { sqlText, sqlTimestamp } from '#sql';
-import { redact } from './redact.ts';
-import { verify } from './verify.ts';
+import { randomUUID } from "node:crypto";
+import type { PostgresTransactionContext } from "@prisma/orm-postgres/runtime";
+import { db, type Contract } from "#db";
+import type { VerificationState } from "#domain";
+import { sqlText, sqlTimestamp } from "#sql";
+import { redact } from "./redact.ts";
+import { validateEventSchema, type ValidEventFields } from "./schema.ts";
+import { verify } from "./verify.ts";
 
 type Tx = PostgresTransactionContext<Contract>;
 
+/**
+ * Maximum accepted payload body size in bytes (1 MiB = 1,048,576 bytes).
+ * Payloads exceeding this limit are refused before persistence.
+ */
+export const MAX_BODY_BYTES = 1_048_576;
+
 export type IngestResult =
-  | { outcome: 'unknown-token' }
-  | { outcome: 'rejected'; eventId: null; attemptId: string }
-  | { outcome: 'stored' | 'duplicate' | 'conflict'; eventId: string; attemptId: string };
+  | { outcome: "unknown-token" }
+  | { outcome: "oversized" }
+  | {
+      outcome: "schema-error";
+      fieldPath: string;
+      message: string;
+      attemptId: string;
+    }
+  | { outcome: "rejected"; eventId: null; attemptId: string }
+  | {
+      outcome: "stored" | "duplicate" | "conflict";
+      eventId: string;
+      attemptId: string;
+    };
 
 const TRACEPARENT = /^[\da-f]{2}-([\da-f]{32})-[\da-f]{16}-[\da-f]{2}$/;
 
@@ -20,33 +38,63 @@ export async function ingest(input: {
   rawBody: Buffer;
   headers: Readonly<Record<string, string>>;
 }): Promise<IngestResult> {
+  if (input.rawBody.length > MAX_BODY_BYTES) {
+    return { outcome: "oversized" };
+  }
+
   const receivedAt = new Date();
   return db.transaction(async (tx) => {
-    const integration = await tx.orm.public.Integration.where({ endpointToken: input.token }).first();
+    const integration = await tx.orm.public.Integration.where({
+      endpointToken: input.token,
+    }).first();
     if (integration === null) {
-      return { outcome: 'unknown-token' };
+      return { outcome: "unknown-token" };
     }
 
-    const verification = verify(input.rawBody, input.headers, integration.signingSecret);
+    const verification = verify(
+      input.rawBody,
+      input.headers,
+      integration.signingSecret,
+    );
     switch (verification) {
-      case 'REJECTED': {
+      case "REJECTED": {
         const attemptId = await insertAttempt(tx, {
           eventId: null,
           integrationId: integration.id,
           workspaceId: integration.workspaceId,
           receivedAt,
-          verificationState: 'REJECTED',
+          verificationState: "REJECTED",
           errorCode: null,
         });
         await insertOutbox(tx, { eventId: null, attemptId });
-        return { outcome: 'rejected', eventId: null, attemptId };
+        return { outcome: "rejected", eventId: null, attemptId };
       }
-      case 'VERIFIED': {
+      case "VERIFIED": {
+        const validation = validateEventSchema(input.rawBody);
+        if (!validation.ok) {
+          const attemptId = await insertAttempt(tx, {
+            eventId: null,
+            integrationId: integration.id,
+            workspaceId: integration.workspaceId,
+            receivedAt,
+            verificationState: "VERIFIED",
+            httpStatus: 400,
+            errorCode: "schema_error",
+          });
+          await insertOutbox(tx, { eventId: null, attemptId });
+          return {
+            outcome: "schema-error",
+            fieldPath: validation.fieldPath,
+            message: validation.message,
+            attemptId,
+          };
+        }
+
         const { digest } = redact(input.rawBody);
         const placed = await placeEvent(tx, {
           integrationId: integration.id,
           workspaceId: integration.workspaceId,
-          fields: eventFields(input.rawBody),
+          fields: validation.fields,
           digest,
           receivedAt,
           traceId: traceIdFrom(input.headers),
@@ -56,8 +104,9 @@ export async function ingest(input: {
           integrationId: integration.id,
           workspaceId: integration.workspaceId,
           receivedAt,
-          verificationState: 'VERIFIED',
-          errorCode: placed.outcome === 'conflict' ? 'conflict' : null,
+          verificationState: "VERIFIED",
+          httpStatus: placed.outcome === "conflict" ? 409 : 200,
+          errorCode: placed.outcome === "conflict" ? "conflict" : null,
         });
         await insertOutbox(tx, { eventId: placed.eventId, attemptId });
         return { outcome: placed.outcome, eventId: placed.eventId, attemptId };
@@ -75,12 +124,12 @@ async function placeEvent(
   input: {
     integrationId: string;
     workspaceId: string;
-    fields: EventFields;
+    fields: ValidEventFields;
     digest: string;
     receivedAt: Date;
     traceId: string | null;
   },
-): Promise<{ eventId: string; outcome: 'stored' | 'duplicate' | 'conflict' }> {
+): Promise<{ eventId: string; outcome: "stored" | "duplicate" | "conflict" }> {
   const eventId = randomUUID();
   const inserted = await tx.query(
     tx.raw.sql`
@@ -105,21 +154,18 @@ async function placeEvent(
         CAST(${input.receivedAt.toISOString()} AS timestamptz),
         ${sqlText(input.traceId)},
         ${input.digest},
-        CAST(${'RECEIVED'} AS "ProcessingState"),
+        CAST(${"RECEIVED"} AS "ProcessingState"),
         ${input.workspaceId}
       )
       ON CONFLICT (integration_id, external_event_id) DO NOTHING
       RETURNING id
     `
-      .returnsRow({ id: 'pg/text@1' })
+      .returnsRow({ id: "pg/text@1" })
       .build(),
   );
   const row = inserted[0];
   if (row !== undefined) {
-    return { eventId: row.id, outcome: 'stored' };
-  }
-  if (input.fields.externalEventId === null) {
-    throw new Error('event insert conflicted without an external event id');
+    return { eventId: row.id, outcome: "stored" };
   }
   const existing = await tx.orm.public.WebhookEvent.where({
     integrationId: input.integrationId,
@@ -132,7 +178,7 @@ async function placeEvent(
   }
   return {
     eventId: existing.id,
-    outcome: existing.payloadDigest === input.digest ? 'duplicate' : 'conflict',
+    outcome: existing.payloadDigest === input.digest ? "duplicate" : "conflict",
   };
 }
 
@@ -143,7 +189,8 @@ async function insertAttempt(
     integrationId: string;
     workspaceId: string;
     receivedAt: Date;
-    verificationState: Exclude<VerificationState, 'RECEIVED'>;
+    verificationState: Exclude<VerificationState, "RECEIVED">;
+    httpStatus?: number | null;
     errorCode: string | null;
   },
 ): Promise<string> {
@@ -153,8 +200,9 @@ async function insertAttempt(
     eventId: input.eventId,
     integrationId: input.integrationId,
     receivedAt: input.receivedAt,
+    httpStatus: input.httpStatus ?? null,
     verificationState: input.verificationState,
-    handlerState: 'PENDING',
+    handlerState: "PENDING",
     errorCode: input.errorCode,
     correlationId: randomUUID(),
     workspaceId: input.workspaceId,
@@ -162,7 +210,10 @@ async function insertAttempt(
   return id;
 }
 
-async function insertOutbox(tx: Tx, input: { eventId: string | null; attemptId: string }): Promise<void> {
+async function insertOutbox(
+  tx: Tx,
+  input: { eventId: string | null; attemptId: string },
+): Promise<void> {
   await tx.orm.public.Outbox.create({
     id: randomUUID(),
     eventId: input.eventId,
@@ -171,55 +222,23 @@ async function insertOutbox(tx: Tx, input: { eventId: string | null; attemptId: 
   });
 }
 
-interface EventFields {
-  externalEventId: string | null;
-  eventType: string | null;
-  occurredAt: Date | null;
-}
-
-function eventFields(rawBody: Buffer): EventFields {
-  let value: unknown;
-  try {
-    value = JSON.parse(rawBody.toString('utf8')) as unknown;
-  } catch {
-    return { externalEventId: null, eventType: null, occurredAt: null };
-  }
-  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
-    return { externalEventId: null, eventType: null, occurredAt: null };
-  }
-  const record = value as Record<string, unknown>;
-  return {
-    externalEventId: text(record.event_id),
-    eventType: text(record.type),
-    occurredAt: time(record.occurred_at),
-  };
-}
-
 function traceIdFrom(headers: Readonly<Record<string, string>>): string | null {
-  const value = headerValue(headers, 'traceparent');
+  const value = headerValue(headers, "traceparent");
   if (value === null) return null;
   const match = TRACEPARENT.exec(value.trim().toLowerCase());
   const traceId = match?.[1];
-  if (traceId === undefined || traceId === '00000000000000000000000000000000') return null;
+  if (traceId === undefined || traceId === "00000000000000000000000000000000")
+    return null;
   return traceId;
 }
 
-function headerValue(headers: Readonly<Record<string, string>>, name: string): string | null {
+function headerValue(
+  headers: Readonly<Record<string, string>>,
+  name: string,
+): string | null {
   const wanted = name.toLowerCase();
   for (const [key, value] of Object.entries(headers)) {
     if (key.toLowerCase() === wanted && value.length > 0) return value;
   }
   return null;
-}
-
-function text(value: unknown): string | null {
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  return trimmed.length === 0 ? null : trimmed;
-}
-
-function time(value: unknown): Date | null {
-  if (typeof value !== 'string') return null;
-  const parsed = Date.parse(value);
-  return Number.isNaN(parsed) ? null : new Date(parsed);
 }

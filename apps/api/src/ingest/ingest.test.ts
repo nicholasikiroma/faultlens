@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { createHash, createHmac, randomUUID } from 'node:crypto';
 import { test } from 'node:test';
 import { db } from '#db';
-import { ingest } from './ingest.ts';
+import { ingest, MAX_BODY_BYTES } from './ingest.ts';
 import { SIGNATURE_HEADER } from './verify.ts';
 
 const secret = 'simulator-secret';
@@ -17,6 +17,21 @@ test('an unknown token writes no row', async () => {
     headers: {},
   });
   assert.deepEqual(result, { outcome: 'unknown-token' });
+  assert.equal(await count('webhook_events'), 0);
+  assert.equal(await count('delivery_attempts'), 0);
+  assert.equal(await count('outbox'), 0);
+});
+
+test('an oversized body writes no event, no attempt, and no outbox row', async () => {
+  await reset();
+  await seed();
+  const oversizedBody = Buffer.alloc(MAX_BODY_BYTES + 1, 'x');
+  const result = await ingest({
+    token,
+    rawBody: oversizedBody,
+    headers: { [SIGNATURE_HEADER]: signature(oversizedBody) },
+  });
+  assert.deepEqual(result, { outcome: 'oversized' });
   assert.equal(await count('webhook_events'), 0);
   assert.equal(await count('delivery_attempts'), 0);
   assert.equal(await count('outbox'), 0);
@@ -68,6 +83,117 @@ test('a verified delivery stores one event, one attempt, and one outbox row', as
   const outbox = await db.orm.public.Outbox.where({ attemptId: result.attemptId }).first();
   assert.equal(outbox?.eventId, result.eventId);
   assert.equal(outbox?.enqueuedAt, null);
+});
+
+test('a malformed json body returns a schema error with fieldPath $ and stores an attempt with httpStatus 400', async () => {
+  await reset();
+  await seed();
+  const malformed = Buffer.from('{not-valid-json');
+  const result = await ingest({
+    token,
+    rawBody: malformed,
+    headers: { [SIGNATURE_HEADER]: signature(malformed) },
+  });
+  assert.equal(result.outcome, 'schema-error');
+  if (result.outcome !== 'schema-error') return;
+  assert.equal(result.fieldPath, '$');
+  assert.equal(await count('webhook_events'), 0);
+  assert.equal(await count('delivery_attempts'), 1);
+  assert.equal(await count('outbox'), 1);
+
+  const attempt = await db.orm.public.DeliveryAttempt.where({ id: result.attemptId }).first();
+  assert.equal(attempt?.verificationState, 'VERIFIED');
+  assert.equal(attempt?.httpStatus, 400);
+  assert.equal(attempt?.errorCode, 'schema_error');
+  assert.equal(attempt?.eventId, null);
+
+  const outbox = await db.orm.public.Outbox.where({ attemptId: result.attemptId }).first();
+  assert.equal(outbox?.eventId, null);
+  assert.equal(outbox?.enqueuedAt, null);
+});
+
+test('a payload missing event_id returns a schema error naming event_id and contains no secrets', async () => {
+  await reset();
+  await seed();
+  const payloadWithSecret = Buffer.from(
+    JSON.stringify({
+      type: 'invoice.paid',
+      secret: 'super-secret-key-12345',
+      authorization: 'Bearer token-abcde',
+    }),
+  );
+  const result = await ingest({
+    token,
+    rawBody: payloadWithSecret,
+    headers: { [SIGNATURE_HEADER]: signature(payloadWithSecret) },
+  });
+  assert.equal(result.outcome, 'schema-error');
+  if (result.outcome !== 'schema-error') return;
+  assert.equal(result.fieldPath, 'event_id');
+
+  // Verify result contains no secrets
+  const serializedResult = JSON.stringify(result);
+  assert.equal(serializedResult.includes('super-secret-key-12345'), false);
+  assert.equal(serializedResult.includes('token-abcde'), false);
+  assert.equal(serializedResult.includes(secret), false);
+
+  assert.equal(await count('webhook_events'), 0);
+  const attempt = await db.orm.public.DeliveryAttempt.where({ id: result.attemptId }).first();
+  assert.equal(attempt?.verificationState, 'VERIFIED');
+  assert.equal(attempt?.httpStatus, 400);
+  assert.equal(attempt?.errorCode, 'schema_error');
+  assert.equal(attempt?.eventId, null);
+});
+
+test('a payload missing type returns a schema error naming type', async () => {
+  await reset();
+  await seed();
+  const rawBody = Buffer.from(JSON.stringify({ event_id: 'evt-missing-type' }));
+  const result = await ingest({
+    token,
+    rawBody,
+    headers: { [SIGNATURE_HEADER]: signature(rawBody) },
+  });
+  assert.equal(result.outcome, 'schema-error');
+  if (result.outcome !== 'schema-error') return;
+  assert.equal(result.fieldPath, 'type');
+  assert.equal(await count('webhook_events'), 0);
+});
+
+test('a payload with invalid occurred_at returns a schema error naming occurred_at', async () => {
+  await reset();
+  await seed();
+  const rawBody = Buffer.from(
+    JSON.stringify({
+      event_id: 'evt-invalid-date',
+      type: 'invoice.paid',
+      occurred_at: 'not-a-valid-timestamp',
+    }),
+  );
+  const result = await ingest({
+    token,
+    rawBody,
+    headers: { [SIGNATURE_HEADER]: signature(rawBody) },
+  });
+  assert.equal(result.outcome, 'schema-error');
+  if (result.outcome !== 'schema-error') return;
+  assert.equal(result.fieldPath, 'occurred_at');
+  assert.equal(await count('webhook_events'), 0);
+});
+
+test('a payload that is not a JSON object returns a schema error with fieldPath $', async () => {
+  await reset();
+  await seed();
+  const rawBody = Buffer.from(JSON.stringify(['an', 'array']));
+  const result = await ingest({
+    token,
+    rawBody,
+    headers: { [SIGNATURE_HEADER]: signature(rawBody) },
+  });
+  assert.equal(result.outcome, 'schema-error');
+  if (result.outcome !== 'schema-error') return;
+  assert.equal(result.fieldPath, '$');
+  assert.equal(await count('webhook_events'), 0);
 });
 
 test('a second delivery of the same body is a duplicate', async () => {

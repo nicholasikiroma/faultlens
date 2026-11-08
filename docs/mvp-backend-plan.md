@@ -27,8 +27,8 @@ Last checked against the source on 8 Nov 2026. Earlier that day `npm test` was g
 | 3 | Publish the outbox | Done | A second `dispatchPending` does not enqueue the same row. Redis down leaves `enqueuedAt` null. |
 | 4 | Consume and classify | Done | One verified ingest, one publish, and the handler leave one finding. Running that path again leaves the same finding. |
 | 5 | Crash and queue tests | Done | Duplicate delivery, database interruption, worker crash, queue downtime, and a rejected signature are covered by tests. |
-| 6 | Payload bounds and schema errors | Now | An oversized body is refused. A malformed body returns a schema error with a field path and no secret. |
-| 7 | Timeout finding | Left | A timeout scenario creates a `NETWORK_TIMEOUT` finding that cites the attempt. |
+| 6 | Payload bounds and schema errors | Done | An oversized body is refused. A malformed body returns a schema error with a field path and no secret. |
+| 7 | Timeout finding | Now | A timeout scenario creates a `NETWORK_TIMEOUT` finding that cites the attempt. |
 | 8 | Incident lifecycle | Left | A legal transition changes status. An illegal one does not. A manual override is recorded. |
 | 9 | Authenticated read | Left | Page two repeats no id from page one. Search filters match the P0 list. An export has evidence ids and no signing secret. A bad token is `unauthorized`. |
 | 10 | Feedback and audit | Left | A rating is stored for a finding. An audit row records who changed an incident status and when. |
@@ -93,18 +93,11 @@ Checked on 8 Nov 2026 by `apps/worker/src/classify-job.test.ts` and `apps/api/sr
 
 ## 6. Payload bounds and schema errors
 
-Status. Now.
+Status. Done.
 
-PRD P0-03 and AC-03. Ingest rejects an invalid signature. It does not yet reject an oversized body, and a malformed body does not return a field path.
+PRD P0-03 and AC-03. Ingest rejects an invalid signature. Payloads over `MAX_BODY_BYTES` (1 MiB = 1,048,576 bytes) are refused before persistence, returning `{ outcome: 'oversized' }` without writing any rows to `webhook_events`, `delivery_attempts`, or `outbox`. Payloads with malformed JSON or invalid schema return `{ outcome: 'schema-error', fieldPath, message, attemptId }` and store a `DeliveryAttempt` with `httpStatus: 400`, `errorCode: 'schema_error'`, `verificationState: 'VERIFIED'`, `eventId: null`, and an outbox row. Secret fields are redacted before persistence, and neither schema error results nor stored attempt records disclose signing secrets or raw secrets. Rejected signatures continue storing the attempt and outbox row with `eventId: null`.
 
-Work.
-
-1. Refuse a body over a fixed byte limit before persistence. Record the limit next to the check.
-2. A body that is not the expected shape returns a schema error that names the field path.
-3. The error and any stored attempt contain no signing secret and no raw secret field.
-4. A rejected signature still stores the attempt and the outbox row, as it does now.
-
-Done when an oversized body writes no event, and a malformed body returns the field path with no secret in the result.
+Checked on 8 Nov 2026 by `apps/api/src/ingest/ingest.test.ts` via `npm test` (42 passed, 0 failed; an oversized body writes no event and a malformed body returns the field path with no secret in the result).
 
 ## 7. Timeout finding
 
