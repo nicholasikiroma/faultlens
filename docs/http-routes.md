@@ -2,7 +2,7 @@
 
 `apps/api/src/http/routes.ts` is the route list. `apps/api/src/http/routes.test.ts` fails when a heading in this file and a `ROUTES` entry disagree.
 
-`apps/api/src/http/server.ts` is the HTTP adapter. It uses Hono (`hono` and `@hono/node-server`). `createApiApp` registers each mounted route with `app.on`. `createApiServer` passes `app.fetch` to `createAdaptorServer`. Each matched route calls one domain function. A success body and a domain-failure body are that function's result. `Date` values are JSON ISO-8601 strings. A refusal that happens before a domain call uses `error`. The domain functions do not import Hono.
+`apps/api/src/http/server.ts` is the HTTP adapter. It uses Hono (`hono` and `@hono/node-server`). `createApiApp` registers each mounted route with `app.on`. `createApiServer` passes `app.fetch` to `createAdaptorServer`. `apps/api/src/http/request.ts` parses headers, query strings, and bodies. A controller in `apps/api/src/http/controllers/` calls one domain function for the matched route. A success body and a domain-failure body are that function's result. `Date` values are JSON ISO-8601 strings. A refusal that happens before a domain call uses `error`. The domain functions do not import Hono.
 
 Admin routes require `Authorization: Bearer <WIRESLEUTH_ADMIN_TOKEN>`. The workspace id is `WIRESLEUTH_WORKSPACE_ID`, and the actor recorded on writes is `WIRESLEUTH_ADMIN_ACTOR`. The server does not read either value from the query string or the JSON body. A missing or wrong admin token is 401 with `WWW-Authenticate: Bearer` and this body.
 

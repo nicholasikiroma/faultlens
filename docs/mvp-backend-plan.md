@@ -149,7 +149,7 @@ Checked on 8 Nov 2026 by `apps/api/src/feedback/feedback.test.ts` via `npm run t
 
 Status. Done.
 
-The route list is `apps/api/src/http/routes.ts`. `docs/http-routes.md` lists the same routes, and `apps/api/src/http/routes.test.ts` fails when a heading and a `ROUTES` entry disagree. `apps/api/src/http/server.ts` uses Hono (`hono` and `@hono/node-server`) as the HTTP adapter. It registers that list, checks the admin token before it reads a body, and calls one domain function per route. Those functions do not import Hono.
+The route list is `apps/api/src/http/routes.ts`. `docs/http-routes.md` lists the same routes, and `apps/api/src/http/routes.test.ts` fails when a heading and a `ROUTES` entry disagree. `apps/api/src/http/server.ts` uses Hono (`hono` and `@hono/node-server`) as the HTTP adapter. It registers that list and checks the admin token before a controller reads a body. A controller in `apps/api/src/http/controllers/` calls one domain function per route. Those functions do not import Hono.
 
 `POST /v1/ingest` takes the ingest credential as `Authorization: Bearer`. `stored` and `duplicate` respond 200, which matches the `httpStatus` `ingest` stores on the attempt. `POST /hooks/:token` is mounted only when `WIRESLEUTH_SIMULATED_WEBHOOKS` is `1`. Admin routes use `WIRESLEUTH_ADMIN_TOKEN`. The workspace id is `WIRESLEUTH_WORKSPACE_ID` and the actor on a write is `WIRESLEUTH_ADMIN_ACTOR`. A `workspaceId` query parameter is 400.
 

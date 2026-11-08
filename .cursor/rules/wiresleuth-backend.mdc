@@ -9,7 +9,7 @@ alwaysApply: true
 
 `docs/mvp-backend-plan.md` is the status of the MVP backend. After a milestone in that file is finished, update the file in the same change. Set the finished row to `Done`, set the next open row to `Now`, and name the check that proved it. A finished milestone left on `Left` will be built twice.
 
-Keep `apps/api` and `apps/worker` lightweight. Domain modules stay framework-agnostic plain TypeScript. `apps/api/src/http/server.ts` uses Hono (`hono` and `@hono/node-server`) as the thin HTTP adapter over those functions. Do not adopt a heavyweight framework such as NestJS. Add a route only in `apps/api/src/http/routes.ts` and `docs/http-routes.md`. `apps/api/src/http/routes.test.ts` fails when they disagree. `POST /hooks/:token` stays unmounted unless `WIRESLEUTH_SIMULATED_WEBHOOKS` is `1`.
+Keep `apps/api` and `apps/worker` lightweight. Domain modules stay framework-agnostic plain TypeScript. `apps/api/src/http/server.ts` uses Hono (`hono` and `@hono/node-server`) as the thin HTTP adapter. It creates the app, mounts `ROUTES`, and dispatches each route id. `apps/api/src/http/request.ts` parses headers, query strings, and bodies. Controllers in `apps/api/src/http/controllers/` call the domain functions. Do not adopt a heavyweight framework such as NestJS. Add a route only in `apps/api/src/http/routes.ts` and `docs/http-routes.md`. `apps/api/src/http/routes.test.ts` fails when they disagree. `POST /hooks/:token` stays unmounted unless `WIRESLEUTH_SIMULATED_WEBHOOKS` is `1`.
 
 ## Modules
 
