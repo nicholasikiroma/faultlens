@@ -1,0 +1,79 @@
+x-backend-env: &backend-env
+  DATABASE_URL: postgresql://lab:lab@postgres:5432/wiresleuth
+  REDIS_URL: redis://redis:6379
+  WIRESLEUTH_ADMIN_TOKEN: local-dev-admin-token
+  WIRESLEUTH_WORKSPACE_ID: workspace-1
+  WIRESLEUTH_ADMIN_ACTOR: local-admin
+  WIRESLEUTH_API_HOST: 0.0.0.0
+  WIRESLEUTH_API_PORT: "3000"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: lab
+      POSTGRES_PASSWORD: lab
+      POSTGRES_DB: wiresleuth
+    volumes:
+      - ./prisma/sql/incidents.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - wiresleuth_pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U lab -d wiresleuth"]
+      interval: 2s
+      retries: 30
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      retries: 30
+
+  seed:
+    build: .
+    command: ["npm", "run", "seed"]
+    environment:
+      <<: *backend-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build: .
+    command: ["npm", "run", "start:api"]
+    environment:
+      <<: *backend-env
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      seed:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/v1/events',{headers:{authorization:'Bearer local-dev-admin-token'}}).then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 2s
+      retries: 30
+
+  worker:
+    build: .
+    command: ["npm", "run", "start:worker"]
+    environment:
+      <<: *backend-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      seed:
+        condition: service_completed_successfully
+
+volumes:
+  wiresleuth_pgdata: {}

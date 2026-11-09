@@ -27,12 +27,16 @@
   "scripts": {
     "contract:emit": "prisma contract emit",
     "typecheck": "tsc --noEmit",
+    "seed": "tsx apps/api/src/seed/seed-cli.ts",
     "start:api": "tsx apps/api/src/http/main.ts",
+    "start:worker": "tsx apps/worker/src/main.ts",
+    "start:local": "tsx apps/api/src/seed/local-start.ts",
     "start:sdk-example": "tsx apps/sdk-example/src/main.ts",
     "test:sdk": "node --import tsx --test packages/sdk/src/sdk.test.ts",
+    "test:seed": "node --import tsx --test apps/api/src/seed/seed.test.ts",
     "ingest-key": "tsx apps/api/src/ingest/keys-cli.ts",
     "test:keys": "node --import tsx --test apps/api/src/ingest/keys.test.ts",
     "test:http": "node --import tsx --test apps/api/src/http/routes.test.ts apps/api/src/http/transport.test.ts",
-    "test": "node --import tsx --test --test-concurrency=1 packages/sdk/src/sdk.test.ts packages/rules/src/rules.test.ts apps/api/src/ingest/verify.test.ts apps/api/src/ingest/redact.test.ts apps/api/src/ingest/ingest.test.ts apps/api/src/ingest/keys.test.ts apps/api/src/incidents/lifecycle.test.ts apps/api/src/feedback/feedback.test.ts apps/api/src/read/read.test.ts apps/worker/src/classify-job.test.ts apps/api/src/http/routes.test.ts apps/api/src/http/transport.test.ts apps/api/src/http/server.test.ts"
+    "test": "node --import tsx --test --test-concurrency=1 packages/sdk/src/sdk.test.ts packages/rules/src/rules.test.ts apps/api/src/ingest/verify.test.ts apps/api/src/ingest/redact.test.ts apps/api/src/ingest/ingest.test.ts apps/api/src/ingest/keys.test.ts apps/api/src/incidents/lifecycle.test.ts apps/api/src/feedback/feedback.test.ts apps/api/src/read/read.test.ts apps/worker/src/classify-job.test.ts apps/api/src/http/routes.test.ts apps/api/src/http/transport.test.ts apps/api/src/http/server.test.ts apps/api/src/seed/seed.test.ts"
   }
 }

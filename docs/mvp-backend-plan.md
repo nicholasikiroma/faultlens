@@ -18,7 +18,7 @@ A finished milestone that still says `Left` will be built twice.
 
 ## At a glance
 
-Last checked against the source on 9 Nov 2026 for milestone 13: typechecking, 13 SDK/sample-host tests, 14 transport/contract tests, and 16 verification/redaction/rule tests passed. Milestone 12 also passed 6 key tests and 25 ingest/key/HTTP integration tests. The 25 integration tests ran in a disposable PostgreSQL database. Space `app` is now `4a8360364ef68361027912468ca5b834e3021eb93e348ba39934c388bb01721b`. The last full `npm test` run recorded here was on 8 Nov 2026 (65 passed).
+Last checked against the source on 9 Nov 2026 for milestone 14: `npm run typecheck`, `npm run test:seed` (2 passed), and `npm test` (97 passed, 0 failed) are green. Space `app` is `4a8360364ef68361027912468ca5b834e3021eb93e348ba39934c388bb01721b`.
 
 | | Milestone | Status | Done when |
 | --- | --- | --- | --- |
@@ -35,7 +35,7 @@ Last checked against the source on 9 Nov 2026 for milestone 13: typechecking, 13
 | 11 | HTTP shell | Done | The route list is in the repo. A tokened request returns one page. A request without a token is unauthorized. |
 | 12 | Hashed ingest keys | Done | A revoked key writes no event. A valid key stores one event, one attempt, and one outbox row. |
 | 13 | SDK | Done | A sample host returns its own response when the SDK post fails. |
-| 14 | Local install | Now | One documented command seeds fixtures and starts the backend with no model key. |
+| 14 | Local install | Done | One documented command seeds fixtures and starts the backend with no model key. |
 
 `Later`, not in the count above. OIDC for dashboard users. `OUT_OF_ORDER`. The UI. OpenTelemetry. Model calls. GitHub. Multiple workspaces, roles, and retention settings. CSV and PDF export.
 
@@ -185,13 +185,13 @@ Not in this milestone. HTTP client instrumentation, queues, and background jobs.
 
 ## 14. Local install
 
-Status. Now.
+Status. Done.
 
-PRD P0-11 and AC-11. A fresh checkout needs one documented command that seeds fixtures and starts the backend with no model key. Today the only compose file is the lab. There is no product seed command.
+PRD P0-11 and AC-11. `docker-compose.yml` and `Dockerfile` at the repository root start `postgres`, `redis`, the `seed` job (`npm run seed`), the `api` server (`npm run start:api`), and the `worker` (`npm run start:worker` in `apps/worker/src/main.ts`) with `docker compose up --build -d` and no model key. When PostgreSQL and Redis are already running locally, `npm run start:local` (`apps/api/src/seed/local-start.ts`) seeds the product database and starts both the API server and worker in one command.
 
-The command starts Postgres, Redis, the API, and the worker. The seed loads the eight lab scenarios into the product database. The docs say how to run it and how to see one incident.
+`seedProductFixtures` in `apps/api/src/seed/seed.ts` (invoked by `apps/api/src/seed/seed-cli.ts`) applies the idempotent schema (`prisma/sql/incidents.sql`), seeds two integrations (`/hooks/billing` and `/hooks/orders`) and their hashed ingest keys, loads the eight deterministic failure scenarios (`auth-401`, `rate-limit-429`, `upstream-503`, `network-timeout`, `schema-mismatch`, `invalid-signature`, `duplicate-delivery`, and `out-of-order`), and runs `classifyJob` to create the eight incidents (`AUTH_FAILURE`, `RATE_LIMIT`, `UPSTREAM_5XX`, `NETWORK_TIMEOUT`, `SCHEMA_MISMATCH`, `INVALID_SIGNATURE`, `DUPLICATE_DELIVERY`, and `UNKNOWN`) and their cited evidence links. Deterministic IDs and `ON CONFLICT DO NOTHING` ensure a second run does not duplicate any seeded events, attempts, evidence rows, findings, or incidents. Setup and incident inspection instructions are in `docs/local-install.md`.
 
-Done when that command is the one in the doc, and a second run does not duplicate the seeded events.
+Checked on 9 Nov 2026 by `apps/api/src/seed/seed.test.ts` via `npm run typecheck`, `npm run test:seed` (2 passed, 0 failed), and `npm test` (97 passed, 0 failed).
 
 ## Later
 

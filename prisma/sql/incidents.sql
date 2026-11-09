@@ -1,9 +1,32 @@
-ALTER TABLE integrations
-  ADD COLUMN IF NOT EXISTS environment text NOT NULL DEFAULT 'local',
-  ADD COLUMN IF NOT EXISTS endpoint text NOT NULL DEFAULT '/';
+DO $$ BEGIN
+  CREATE TYPE "ProcessingState" AS ENUM ('RECEIVED', 'QUEUED', 'PROCESSED', 'FAILED');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
-ALTER TABLE delivery_attempts
-  ADD COLUMN IF NOT EXISTS sender_wait_ms integer;
+DO $$ BEGIN
+  CREATE TYPE "TrustTier" AS ENUM ('A', 'B', 'C');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE "VerificationState" AS ENUM ('RECEIVED', 'VERIFIED', 'REJECTED');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE "HandlerState" AS ENUM ('PENDING', 'PROCESSED', 'FAILED');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE "SourceKind" AS ENUM ('DELIVERY_ATTEMPT', 'WEBHOOK_EVENT', 'FIXTURE');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 DO $$ BEGIN
   CREATE TYPE "FailureClass" AS ENUM (
@@ -40,6 +63,108 @@ DO $$ BEGIN
 EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;
+
+DO $$ BEGIN
+  CREATE TYPE "FeedbackRating" AS ENUM ('USEFUL', 'INCORRECT');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE "AuditAction" AS ENUM ('INCIDENT_STATUS_CHANGED', 'FINDING_RATED');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE "AuditObjectType" AS ENUM ('INCIDENT', 'FINDING');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+CREATE TABLE IF NOT EXISTS integrations (
+  id text PRIMARY KEY,
+  workspace_id text NOT NULL,
+  endpoint_token text NOT NULL,
+  signing_secret text NOT NULL,
+  environment text NOT NULL DEFAULT 'local',
+  endpoint text NOT NULL DEFAULT '/'
+);
+
+ALTER TABLE integrations
+  ADD COLUMN IF NOT EXISTS environment text NOT NULL DEFAULT 'local',
+  ADD COLUMN IF NOT EXISTS endpoint text NOT NULL DEFAULT '/';
+
+CREATE UNIQUE INDEX IF NOT EXISTS integrations_endpoint_token_key
+  ON integrations (endpoint_token);
+
+CREATE TABLE IF NOT EXISTS ingest_keys (
+  id text PRIMARY KEY,
+  integration_id text NOT NULL REFERENCES integrations (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  workspace_id text NOT NULL,
+  environment text NOT NULL,
+  key_hash text NOT NULL,
+  created_at timestamp(3) NOT NULL,
+  revoked_at timestamp(3)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS ingest_keys_key_hash_key
+  ON ingest_keys (key_hash);
+
+CREATE INDEX IF NOT EXISTS ingest_keys_workspace_id_integration_id_idx
+  ON ingest_keys (workspace_id, integration_id);
+
+CREATE TABLE IF NOT EXISTS webhook_events (
+  id text PRIMARY KEY,
+  integration_id text NOT NULL REFERENCES integrations (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  external_event_id text,
+  event_type text,
+  occurred_at timestamp(3),
+  first_received_at timestamp(3) NOT NULL,
+  trace_id text,
+  payload_digest text NOT NULL,
+  redacted_payload_json jsonb,
+  processing_state "ProcessingState" NOT NULL,
+  workspace_id text NOT NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS webhook_events_integration_id_external_event_id_key
+  ON webhook_events (integration_id, external_event_id);
+
+CREATE TABLE IF NOT EXISTS delivery_attempts (
+  id text PRIMARY KEY,
+  event_id text REFERENCES webhook_events (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  integration_id text NOT NULL REFERENCES integrations (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  received_at timestamp(3) NOT NULL,
+  http_status integer,
+  duration_ms integer,
+  sender_wait_ms integer,
+  verification_state "VerificationState" NOT NULL,
+  handler_state "HandlerState" NOT NULL,
+  error_code text,
+  correlation_id text NOT NULL,
+  workspace_id text NOT NULL
+);
+
+ALTER TABLE delivery_attempts
+  ADD COLUMN IF NOT EXISTS sender_wait_ms integer;
+
+CREATE TABLE IF NOT EXISTS evidence (
+  id text PRIMARY KEY,
+  source_kind "SourceKind" NOT NULL,
+  source_record_id text NOT NULL,
+  summary text NOT NULL,
+  sha256_digest text NOT NULL,
+  trust_tier "TrustTier" NOT NULL,
+  workspace_id text NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS outbox (
+  id text PRIMARY KEY,
+  event_id text REFERENCES webhook_events (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  attempt_id text NOT NULL REFERENCES delivery_attempts (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  enqueued_at timestamp(3)
+);
 
 CREATE TABLE IF NOT EXISTS incidents (
   id text PRIMARY KEY,
@@ -139,24 +264,6 @@ ALTER TABLE investigation_runs
   FOREIGN KEY (event_id) REFERENCES webhook_events (id) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 DROP INDEX IF EXISTS investigation_runs_event_incident_mode_version_key;
-
-DO $$ BEGIN
-  CREATE TYPE "FeedbackRating" AS ENUM ('USEFUL', 'INCORRECT');
-EXCEPTION
-  WHEN duplicate_object THEN NULL;
-END $$;
-
-DO $$ BEGIN
-  CREATE TYPE "AuditAction" AS ENUM ('INCIDENT_STATUS_CHANGED', 'FINDING_RATED');
-EXCEPTION
-  WHEN duplicate_object THEN NULL;
-END $$;
-
-DO $$ BEGIN
-  CREATE TYPE "AuditObjectType" AS ENUM ('INCIDENT', 'FINDING');
-EXCEPTION
-  WHEN duplicate_object THEN NULL;
-END $$;
 
 CREATE TABLE IF NOT EXISTS feedback (
   id text PRIMARY KEY,
