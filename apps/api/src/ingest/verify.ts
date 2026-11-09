@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import type { VerificationState } from "#domain";
+import { INGEST_SIGNATURE_HEADER, type VerificationState } from "#domain";
 
-export const SIGNATURE_HEADER = "x-wiresleuth-signature";
+export const SIGNATURE_HEADER = INGEST_SIGNATURE_HEADER;
 
 export function verify(
   rawBody: Buffer,

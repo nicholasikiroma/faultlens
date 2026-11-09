@@ -1,3 +1,4 @@
+export { INGEST_SIGNATURE_HEADER, MAX_INGEST_BODY_BYTES } from './ingest.ts';
 export {
   AUDIT_ACTIONS,
   AUDIT_OBJECT_TYPE,

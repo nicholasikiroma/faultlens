@@ -18,7 +18,7 @@ A finished milestone that still says `Left` will be built twice.
 
 ## At a glance
 
-Last checked against the source on 9 Nov 2026 for milestone 12: typechecking, 6 key tests, 14 transport/contract tests, and 25 ingest/key/HTTP integration tests passed. The 25 integration tests ran in a disposable PostgreSQL database. Space `app` is now `4a8360364ef68361027912468ca5b834e3021eb93e348ba39934c388bb01721b`. The last full `npm test` run recorded here was on 8 Nov 2026 (65 passed).
+Last checked against the source on 9 Nov 2026 for milestone 13: typechecking, 13 SDK/sample-host tests, 14 transport/contract tests, and 16 verification/redaction/rule tests passed. Milestone 12 also passed 6 key tests and 25 ingest/key/HTTP integration tests. The 25 integration tests ran in a disposable PostgreSQL database. Space `app` is now `4a8360364ef68361027912468ca5b834e3021eb93e348ba39934c388bb01721b`. The last full `npm test` run recorded here was on 8 Nov 2026 (65 passed).
 
 | | Milestone | Status | Done when |
 | --- | --- | --- | --- |
@@ -34,8 +34,8 @@ Last checked against the source on 9 Nov 2026 for milestone 12: typechecking, 6 
 | 10 | Feedback and audit | Done | A rating is stored for a finding. An audit row records who changed an incident status and when. |
 | 11 | HTTP shell | Done | The route list is in the repo. A tokened request returns one page. A request without a token is unauthorized. |
 | 12 | Hashed ingest keys | Done | A revoked key writes no event. A valid key stores one event, one attempt, and one outbox row. |
-| 13 | SDK | Now | A sample host returns its own response when the SDK post fails. |
-| 14 | Local install | Left | One documented command seeds fixtures and starts the backend with no model key. |
+| 13 | SDK | Done | A sample host returns its own response when the SDK post fails. |
+| 14 | Local install | Now | One documented command seeds fixtures and starts the backend with no model key. |
 
 `Later`, not in the count above. OIDC for dashboard users. `OUT_OF_ORDER`. The UI. OpenTelemetry. Model calls. GitHub. Multiple workspaces, roles, and retention settings. CSV and PDF export.
 
@@ -171,17 +171,21 @@ Checked on 9 Nov 2026 by `npm run typecheck`, `npm run test:keys` (6 passed), an
 
 ## 13. SDK
 
-Status. Now.
+Status. Done.
 
-`packages/sdk` does not exist. The SDK is a webhook helper for a Node service. It signs the raw body and posts to the versioned ingest route. A failure to deliver does not fail the host handler. The host still returns its own response.
+`createWireSleuthClient` in `packages/sdk/src/index.ts` is the product-level SDK entry point. It creates a shared transport for authentication, deadlines, concurrency bounds, and failure isolation. The optional `webhooks` capability exposes `client.webhooks.capture(rawBody)`, owns webhook signing configuration, signs a byte-for-byte snapshot with HMAC-SHA256, and selects the current `/v1/ingest` route. The shared core requires no webhook signing secret. Shared webhook signature-header and body-limit constants live in `packages/domain/src/ingest.ts`. The SDK has no database, Redis, HTTP-framework, or model dependency and is available through the root `#sdk` import without a nested package manifest. Product scope and SDK boundaries are in `docs/sdk-architecture.md`: incident investigation is the product; webhook investigation is its first capability, not the shape of all future observations.
 
-Done when a sample host returns that response while the SDK post fails.
+Delivery failures resolve as data rather than rejecting. A bounded deadline aborts stalled requests, oversized payloads are dropped locally, and a per-client concurrency bound drops excess calls instead of queueing. Redirects are refused. Response bodies and errors are not exposed or logged. There are no retries or durable-delivery guarantees.
+
+`apps/sdk-example/src/server.ts` is a sample Node webhook host. It sends its own 202 response without awaiting SDK delivery. Run it with `npm run start:sdk-example`; provisioning, usage, failure semantics, and the API-down demonstration are in `docs/webhook-sdk.md`.
+
+Checked on 9 Nov 2026 by `npm run typecheck` and `npm run test:sdk` (13 passed, 0 failed). Tests cover optional capability composition, a webhook-independent shared transport, off-origin path rejection, and exact-byte signature compatibility, mutation safety, API-key headers, error responses, network failures, deadlines, concurrency limits, payload bounds, redirect refusal, and the sample host returning its unchanged response while telemetry fails or is still pending. Regression checks: `npm run test:http` (14 passed) and `node --import tsx --test apps/api/src/ingest/verify.test.ts apps/api/src/ingest/redact.test.ts packages/rules/src/rules.test.ts` (16 passed).
 
 Not in this milestone. HTTP client instrumentation, queues, and background jobs. The decision says those come after webhook instrumentation.
 
 ## 14. Local install
 
-Status. Left.
+Status. Now.
 
 PRD P0-11 and AC-11. A fresh checkout needs one documented command that seeds fixtures and starts the backend with no model key. Today the only compose file is the lab. There is no product seed command.
 

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { PostgresTransactionContext } from "@prisma/orm-postgres/runtime";
 import { db, type Contract } from "#db";
-import type { VerificationState } from "#domain";
+import { MAX_INGEST_BODY_BYTES, type VerificationState } from "#domain";
 import { sqlText, sqlTimestamp } from "#sql";
 import { integrationForKey } from "./keys.ts";
 import { redact } from "./redact.ts";
@@ -14,7 +14,7 @@ type Tx = PostgresTransactionContext<Contract>;
  * Maximum accepted payload body size in bytes (1 MiB = 1,048,576 bytes).
  * Payloads exceeding this limit are refused before persistence.
  */
-export const MAX_BODY_BYTES = 1_048_576;
+export const MAX_BODY_BYTES = MAX_INGEST_BODY_BYTES;
 
 export type IngestResult =
   | { outcome: "unknown-token" }
