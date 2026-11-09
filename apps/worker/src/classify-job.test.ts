@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import { createHmac, randomUUID } from 'node:crypto';
 import { after, test } from 'node:test';
 import { db } from '#db';
-import { ingest } from '../../api/src/ingest/ingest.ts';
+// These fixtures model simulated webhook traffic, not production SDK credentials.
+import { ingestSimulated as ingest } from '../../api/src/ingest/ingest.ts';
 import { SIGNATURE_HEADER } from '../../api/src/ingest/verify.ts';
 import { classifyJob } from './classify-job.ts';
 import { createOutboxWorker, handleOutboxJob } from './consumer.ts';

@@ -1,4 +1,4 @@
-import { ingest, MAX_BODY_BYTES } from "../../ingest/ingest.ts";
+import { ingest, ingestSimulated, MAX_BODY_BYTES } from "../../ingest/ingest.ts";
 import {
   bearerToken,
   flatHeaders,
@@ -17,7 +17,8 @@ type IngestRoute = Extract<Route, { id: "ingest" | "simulateWebhook" }>;
 export async function handleIngest(c: ApiContext, route: IngestRoute): Promise<Response> {
   const pairs = headerPairs(c);
   const rawBody = await readCapped(c.req.raw, RAW_READ_CAP);
-  const result = await ingest({
+  const ingestDelivery = route.access.traffic === "real" ? ingest : ingestSimulated;
+  const result = await ingestDelivery({
     token: ingestCredential(route, c, pairs),
     rawBody,
     headers: flatHeaders(pairs),

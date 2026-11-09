@@ -97,8 +97,24 @@ model Integration {
 
   events   WebhookEvent[]
   attempts DeliveryAttempt[]
+  ingestKeys IngestKey[]
 
   @@map("integrations")
+}
+
+model IngestKey {
+  id            String    @id @default(uuid())
+  integrationId String    @map("integration_id")
+  workspaceId   String    @map("workspace_id")
+  environment   String
+  keyHash       String    @unique @map("key_hash")
+  createdAt     DateTime  @map("created_at")
+  revokedAt     DateTime? @map("revoked_at")
+
+  integration Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, integrationId])
+  @@map("ingest_keys")
 }
 
 model WebhookEvent {

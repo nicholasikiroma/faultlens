@@ -23,9 +23,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'550abe7d3161095409a9ec24dcdb674c2ab6c031e8fc4abe55c121c65915a1f6'>;
+  StorageHashBase<'4a8360364ef68361027912468ca5b834e3021eb93e348ba39934c388bb01721b'>;
 export type ExecutionHash =
-  ExecutionHashBase<'7d86d22fa249cc8d9e46fc9e40cf42853fb03a9d46bdc907277162e38e1b578a'>;
+  ExecutionHashBase<'97c83c21317aad10f28572b191c5c5379ade5037cf6d801aac3f82c41d9d6f99'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -648,6 +648,17 @@ export namespace Models {
     incident: public_Incident;
     readonly [RelationKeys]?: 'event' | 'incident';
   };
+  export type public_IngestKey = {
+    createdAt: FieldOutputTypes['public']['IngestKey']['createdAt'];
+    environment: FieldOutputTypes['public']['IngestKey']['environment'];
+    id: FieldOutputTypes['public']['IngestKey']['id'];
+    integrationId: FieldOutputTypes['public']['IngestKey']['integrationId'];
+    keyHash: FieldOutputTypes['public']['IngestKey']['keyHash'];
+    revokedAt: FieldOutputTypes['public']['IngestKey']['revokedAt'];
+    workspaceId: FieldOutputTypes['public']['IngestKey']['workspaceId'];
+    integration: public_Integration;
+    readonly [RelationKeys]?: 'integration';
+  };
   export type public_Integration = {
     endpoint: FieldOutputTypes['public']['Integration']['endpoint'];
     endpointToken: FieldOutputTypes['public']['Integration']['endpointToken'];
@@ -657,7 +668,8 @@ export namespace Models {
     workspaceId: FieldOutputTypes['public']['Integration']['workspaceId'];
     attempts: public_DeliveryAttempt[];
     events: public_WebhookEvent[];
-    readonly [RelationKeys]?: 'attempts' | 'events';
+    ingestKeys: public_IngestKey[];
+    readonly [RelationKeys]?: 'attempts' | 'events' | 'ingestKeys';
   };
   export type public_InvestigationRun = {
     endedAt: FieldOutputTypes['public']['InvestigationRun']['endedAt'];
@@ -719,6 +731,7 @@ export declare const models: {
     FindingEvidence: Models.public_FindingEvidence;
     Incident: Models.public_Incident;
     IncidentEvent: Models.public_IncidentEvent;
+    IngestKey: Models.public_IngestKey;
     Integration: Models.public_Integration;
     InvestigationRun: Models.public_InvestigationRun;
     Outbox: Models.public_Outbox;
@@ -1337,6 +1350,82 @@ type ContractBase = Omit<
               ];
               foreignKeys: readonly [];
             };
+            readonly ingest_keys: {
+              columns: {
+                readonly created_at: {
+                  readonly dataType: 'pg/timestamp';
+                  readonly codecId: 'pg/timestamp-date@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly environment: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly id: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly integration_id: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly key_hash: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly revoked_at: {
+                  readonly dataType: 'pg/timestamp';
+                  readonly codecId: 'pg/timestamp-date@1';
+                  readonly nullable: true;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly workspace_id: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [];
+              indexes: readonly [
+                {
+                  readonly name: 'ingest_keys_key_hash_key';
+                  readonly columns: readonly ['key_hash'];
+                  readonly unique: true;
+                },
+                {
+                  readonly name: 'ingest_keys_workspace_id_integration_id_idx';
+                  readonly columns: readonly ['workspace_id', 'integration_id'];
+                  readonly unique: false;
+                },
+              ];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'ingest_keys';
+                    readonly columns: readonly ['integration_id'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'integrations';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
+            };
             readonly integrations: {
               columns: {
                 readonly endpoint: {
@@ -1739,6 +1828,10 @@ type ContractBase = Omit<
       readonly model: 'IncidentEvent';
     };
     readonly incidents: { readonly namespace: 'public' & NamespaceId; readonly model: 'Incident' };
+    readonly ingest_keys: {
+      readonly namespace: 'public' & NamespaceId;
+      readonly model: 'IngestKey';
+    };
     readonly integrations: {
       readonly namespace: 'public' & NamespaceId;
       readonly model: 'Integration';
@@ -2406,6 +2499,73 @@ type ContractBase = Omit<
               };
             };
           };
+          readonly IngestKey: {
+            readonly fields: {
+              readonly createdAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamp-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly environment: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly integrationId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly keyHash: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly revokedAt: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamp-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly workspaceId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+            };
+            readonly relations: {
+              readonly integration: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Integration';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['integrationId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'ingest_keys';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly createdAt: { readonly column: 'created_at' };
+                readonly environment: { readonly column: 'environment' };
+                readonly id: { readonly column: 'id' };
+                readonly integrationId: { readonly column: 'integration_id' };
+                readonly keyHash: { readonly column: 'key_hash' };
+                readonly revokedAt: { readonly column: 'revoked_at' };
+                readonly workspaceId: { readonly column: 'workspace_id' };
+              };
+            };
+          };
           readonly Integration: {
             readonly fields: {
               readonly endpoint: {
@@ -2449,6 +2609,17 @@ type ContractBase = Omit<
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
                   readonly model: 'WebhookEvent';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['integrationId'];
+                };
+              };
+              readonly ingestKeys: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'IngestKey';
                 };
                 readonly cardinality: '1:N';
                 readonly on: {
@@ -2849,6 +3020,14 @@ type ContractBase = Omit<
           readonly onCreate: { readonly id: 'uuidv4'; readonly kind: 'generator' };
           readonly ref: {
             readonly entry: 'incidents';
+            readonly field: 'id';
+            readonly namespace: 'public';
+          };
+        },
+        {
+          readonly onCreate: { readonly id: 'uuidv4'; readonly kind: 'generator' };
+          readonly ref: {
+            readonly entry: 'ingest_keys';
             readonly field: 'id';
             readonly namespace: 'public';
           };

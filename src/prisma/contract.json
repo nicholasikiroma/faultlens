@@ -36,6 +36,10 @@
       "model": "Incident",
       "namespace": "public"
     },
+    "ingest_keys": {
+      "model": "IngestKey",
+      "namespace": "public"
+    },
     "integrations": {
       "model": "Integration",
       "namespace": "public"
@@ -1059,6 +1063,110 @@
               "table": "incident_events"
             }
           },
+          "IngestKey": {
+            "fields": {
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamp-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "environment": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "integrationId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "keyHash": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "revokedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamp-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "workspaceId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "integration": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "integrationId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Integration",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "createdAt": {
+                  "column": "created_at"
+                },
+                "environment": {
+                  "column": "environment"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "integrationId": {
+                  "column": "integration_id"
+                },
+                "keyHash": {
+                  "column": "key_hash"
+                },
+                "revokedAt": {
+                  "column": "revoked_at"
+                },
+                "workspaceId": {
+                  "column": "workspace_id"
+                }
+              },
+              "namespaceId": "public",
+              "table": "ingest_keys"
+            }
+          },
           "Integration": {
             "fields": {
               "endpoint": {
@@ -1132,6 +1240,21 @@
                 },
                 "to": {
                   "model": "WebhookEvent",
+                  "namespace": "public"
+                }
+              },
+              "ingestKeys": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "integrationId"
+                  ]
+                },
+                "to": {
+                  "model": "IngestKey",
                   "namespace": "public"
                 }
               }
@@ -2465,6 +2588,94 @@
               },
               "uniques": []
             },
+            "ingest_keys": {
+              "columns": {
+                "created_at": {
+                  "codecId": "pg/timestamp-date@1",
+                  "dataType": "pg/timestamp",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "environment": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "integration_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "key_hash": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "revoked_at": {
+                  "codecId": "pg/timestamp-date@1",
+                  "dataType": "pg/timestamp",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "workspace_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "cascade",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "integration_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "ingest_keys"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "integrations"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "key_hash"
+                  ],
+                  "name": "ingest_keys_key_hash_key",
+                  "unique": true
+                },
+                {
+                  "columns": [
+                    "workspace_id",
+                    "integration_id"
+                  ],
+                  "name": "ingest_keys_workspace_id_integration_id_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
             "integrations": {
               "columns": {
                 "endpoint": {
@@ -2947,10 +3158,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "550abe7d3161095409a9ec24dcdb674c2ab6c031e8fc4abe55c121c65915a1f6"
+    "storageHash": "4a8360364ef68361027912468ca5b834e3021eb93e348ba39934c388bb01721b"
   },
   "execution": {
-    "executionHash": "7d86d22fa249cc8d9e46fc9e40cf42853fb03a9d46bdc907277162e38e1b578a",
+    "executionHash": "97c83c21317aad10f28572b191c5c5379ade5037cf6d801aac3f82c41d9d6f99",
     "mutations": {
       "defaults": [
         {
@@ -3015,6 +3226,17 @@
           },
           "ref": {
             "entry": "incidents",
+            "field": "id",
+            "namespace": "public"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "entry": "ingest_keys",
             "field": "id",
             "namespace": "public"
           }

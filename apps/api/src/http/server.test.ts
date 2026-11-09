@@ -5,6 +5,7 @@ import { after, beforeEach, test } from 'node:test';
 import { db } from '#db';
 import { config } from '../config.ts';
 import { MAX_BODY_BYTES } from '../ingest/ingest.ts';
+import { hashIngestKey } from '../ingest/keys.ts';
 import { SIGNATURE_HEADER } from '../ingest/verify.ts';
 import { startApiServer } from './server.ts';
 
@@ -470,6 +471,10 @@ async function seedIntegration(workspaceId: string, endpointToken: string, signi
     signingSecret,
     environment: 'production',
     endpoint: '/hooks/billing',
+  });
+  await db.orm.public.IngestKey.create({
+    id: randomUUID(), integrationId: id, workspaceId, environment: 'production',
+    keyHash: hashIngestKey(endpointToken), createdAt: new Date(), revokedAt: null,
   });
   return id;
 }

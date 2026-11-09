@@ -22,7 +22,7 @@ No matching path is 404 `{ "error": "not_found" }`. A path that matches another 
 
 ### POST /v1/ingest
 
-Real traffic. The bearer token is the ingest credential `ingest` looks up. The raw body is at most 1,048,576 bytes, which is `MAX_BODY_BYTES`. The server reads one extra byte and then stops, and `ingest` returns `oversized` when the body is longer than the limit. The signature header is `x-wiresleuth-signature`. Duplicate header values keep the first value. `authorization` and `cookie` are not forwarded.
+Real traffic. The bearer token is a hashed API key that `ingest` resolves to an active key scoped to one integration, workspace, and environment. Revoked keys and legacy simulation endpoint tokens return 401 `unknown-token` without writing delivery records. See [ingest keys](ingest-keys.md) for provisioning, rotation, revocation, and upgrade instructions. The raw body is at most 1,048,576 bytes, which is `MAX_BODY_BYTES`. The server reads one extra byte and then stops, and `ingest` returns `oversized` when the body is longer than the limit. The signature header is `x-wiresleuth-signature`. Duplicate header values keep the first value. `authorization` and `cookie` are not forwarded.
 
 There is no query contract. Ingest ignores the query string.
 
@@ -40,7 +40,7 @@ There is no query contract. Ingest ignores the query string.
 
 ### POST /hooks/:token
 
-Simulated and test traffic only. The credential is the `:token` path segment, and it is the same ingest credential as `POST /v1/ingest`. The body, the signature header, and the status table are the same. The server calls `ingest` only when `WIRESLEUTH_SIMULATED_WEBHOOKS` is `1`. When that variable is unset or any other value, the path is not mounted and the response is 404.
+Simulated and test traffic only. The credential is the `:token` path segment, resolved against the integration's legacy `endpointToken`; it is not an API key. The body, the signature header, and the status table are the same. The server calls `ingestSimulated` only when `WIRESLEUTH_SIMULATED_WEBHOOKS` is `1`. When that variable is unset or any other value, the path is not mounted and the response is 404.
 
 ### GET /v1/events
 

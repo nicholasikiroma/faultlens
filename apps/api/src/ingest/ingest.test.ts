@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import { db } from '#db';
 import { ingest, MAX_BODY_BYTES } from './ingest.ts';
 import { SIGNATURE_HEADER } from './verify.ts';
+import { hashIngestKey } from './keys.ts';
 
 const secret = 'simulator-secret';
 const token = 'demo-token';
@@ -279,13 +280,18 @@ async function reset(): Promise<void> {
 }
 
 async function seed(): Promise<void> {
+  const integrationId = randomUUID();
   await db.orm.public.Integration.create({
-    id: randomUUID(),
+    id: integrationId,
     workspaceId,
     endpointToken: token,
     signingSecret: secret,
     environment: 'production',
     endpoint: '/hooks/billing',
+  });
+  await db.orm.public.IngestKey.create({
+    id: randomUUID(), integrationId, workspaceId, environment: 'production',
+    keyHash: hashIngestKey(token), createdAt: new Date(), revokedAt: null,
   });
 }
 

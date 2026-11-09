@@ -3,6 +3,7 @@ import type { PostgresTransactionContext } from "@prisma/orm-postgres/runtime";
 import { db, type Contract } from "#db";
 import type { VerificationState } from "#domain";
 import { sqlText, sqlTimestamp } from "#sql";
+import { integrationForKey } from "./keys.ts";
 import { redact } from "./redact.ts";
 import { validateEventSchema, type ValidEventFields } from "./schema.ts";
 import { verify } from "./verify.ts";
@@ -33,20 +34,32 @@ export type IngestResult =
 
 const TRACEPARENT = /^[\da-f]{2}-([\da-f]{32})-[\da-f]{16}-[\da-f]{2}$/;
 
-export async function ingest(input: {
+interface IngestInput {
   token: string;
   rawBody: Buffer;
   headers: Readonly<Record<string, string>>;
-}): Promise<IngestResult> {
+}
+
+/** Real traffic must authenticate with a scoped, hashed ingest key. */
+export function ingest(input: IngestInput): Promise<IngestResult> {
+  return ingestDelivery(input, "api-key");
+}
+
+/** Explicitly separate legacy simulation credentials from production keys. */
+export function ingestSimulated(input: IngestInput): Promise<IngestResult> {
+  return ingestDelivery(input, "simulated");
+}
+
+async function ingestDelivery(input: IngestInput, credential: "api-key" | "simulated"): Promise<IngestResult> {
   if (input.rawBody.length > MAX_BODY_BYTES) {
     return { outcome: "oversized" };
   }
 
   const receivedAt = new Date();
   return db.transaction(async (tx) => {
-    const integration = await tx.orm.public.Integration.where({
-      endpointToken: input.token,
-    }).first();
+    const integration = credential === "api-key"
+      ? await integrationForKey(tx, input.token)
+      : await tx.orm.public.Integration.where({ endpointToken: input.token }).first();
     if (integration === null) {
       return { outcome: "unknown-token" };
     }

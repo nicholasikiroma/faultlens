@@ -18,7 +18,7 @@ A finished milestone that still says `Left` will be built twice.
 
 ## At a glance
 
-Last checked against the source on 8 Nov 2026. `npm run typecheck` and `npm test` were green (65 passed), and `npx prisma db migrate` and `npx prisma db sign` advanced space `app` to `550abe7d3161095409a9ec24dcdb674c2ab6c031e8fc4abe55c121c65915a1f6`.
+Last checked against the source on 9 Nov 2026 for milestone 12: typechecking, 6 key tests, 14 transport/contract tests, and 25 ingest/key/HTTP integration tests passed. The 25 integration tests ran in a disposable PostgreSQL database. Space `app` is now `4a8360364ef68361027912468ca5b834e3021eb93e348ba39934c388bb01721b`. The last full `npm test` run recorded here was on 8 Nov 2026 (65 passed).
 
 | | Milestone | Status | Done when |
 | --- | --- | --- | --- |
@@ -33,8 +33,8 @@ Last checked against the source on 8 Nov 2026. `npm run typecheck` and `npm test
 | 9 | Authenticated read | Done | Page two repeats no id from page one. Search filters match the P0 list. An export has evidence ids and no signing secret. A bad token is `unauthorized`. |
 | 10 | Feedback and audit | Done | A rating is stored for a finding. An audit row records who changed an incident status and when. |
 | 11 | HTTP shell | Done | The route list is in the repo. A tokened request returns one page. A request without a token is unauthorized. |
-| 12 | Hashed ingest keys | Now | A revoked key writes no event. A valid key stores one event, one attempt, and one outbox row. |
-| 13 | SDK | Left | A sample host returns its own response when the SDK post fails. |
+| 12 | Hashed ingest keys | Done | A revoked key writes no event. A valid key stores one event, one attempt, and one outbox row. |
+| 13 | SDK | Now | A sample host returns its own response when the SDK post fails. |
 | 14 | Local install | Left | One documented command seeds fixtures and starts the backend with no model key. |
 
 `Later`, not in the count above. OIDC for dashboard users. `OUT_OF_ORDER`. The UI. OpenTelemetry. Model calls. GitHub. Multiple workspaces, roles, and retention settings. CSV and PDF export.
@@ -159,22 +159,19 @@ Checked again on 8 Nov 2026, after `apps/api/src/http/server.ts` moved to Hono, 
 
 ## 12. Hashed ingest keys
 
-Status. Now.
+Status. Done.
 
-`docs/decisions.md` says real traffic uses scoped hashed API keys. The integration still stores a signing secret. The secret must stay out of read and export responses.
+`IngestKey` stores only a SHA-256 hash of a 32-byte random credential, its integration/workspace/environment scope, creation time, and optional revocation time. `createIngestKey`, `rotateIngestKey`, and `revokeIngestKey` are in `apps/api/src/ingest/keys.ts`. Creation and rotation return the raw key once; reads cannot retrieve it. Rotation atomically revokes the previous key and inserts its replacement. Key row locks serialize authorization with revocation, so revocation waits for an already-authorized delivery to finish before returning. Scope mismatches fail closed.
 
-Work.
+`ingest` and `POST /v1/ingest` accept active hashed keys only; there is no fallback to legacy endpoint tokens. The signature still uses the integration's signing secret. `ingestSimulated` explicitly resolves legacy simulation tokens for the feature-gated `POST /hooks/:token` route. Operator-only creation, rotation, and revocation commands use `npm run ingest-key -- <command> <id>`, with the workspace from server configuration. Provisioning and upgrade instructions are in `docs/ingest-keys.md`.
 
-1. Store a hash of the ingest key. The raw key is shown once at creation.
-2. The key is scoped to the workspace and can be rotated and revoked.
-3. The versioned ingest route from milestone 11 accepts that key.
-4. The generic webhook path still accepts simulated traffic only.
+Migration `20261108T2356_hashed_ingest_keys` adds the table and indexes. Existing endpoint tokens are not migrated into production keys. `npx prisma db migrate` and `npx prisma db sign` advanced space `app` to `4a8360364ef68361027912468ca5b834e3021eb93e348ba39934c388bb01721b`.
 
-Done when a revoked key writes no event, and a valid key stores one event, one attempt, and one outbox row.
+Checked on 9 Nov 2026 by `npm run typecheck`, `npm run test:keys` (6 passed), and `npm run test:http` (14 passed). Also checked `node --import tsx --test --test-concurrency=1 apps/api/src/ingest/ingest.test.ts apps/api/src/ingest/keys.test.ts apps/api/src/http/server.test.ts` against a newly migrated disposable PostgreSQL database (25 passed, 0 failed; database removed afterward). A revoked key writes no delivery records. A valid HTTP key stores one event, one attempt, and one outbox row. Rotation, workspace/environment isolation, hash-only persistence, and production/simulation credential separation are covered.
 
 ## 13. SDK
 
-Status. Left.
+Status. Now.
 
 `packages/sdk` does not exist. The SDK is a webhook helper for a Node service. It signs the raw body and posts to the versioned ingest route. A failure to deliver does not fail the host handler. The host still returns its own response.
 

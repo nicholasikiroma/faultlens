@@ -52,7 +52,7 @@ Read the hash in `unreliable-systems/receiver/src/ingest.js`. It hashes raw byte
 
 ## ingest
 
-`ingest({ token, rawBody, headers })` commits one delivery, then returns `{ eventId, attemptId }`. It does not call Redis.
+`ingest({ token, rawBody, headers })` commits one delivery and returns a discriminated result. It does not call Redis. Milestone 12 is implemented: real ingest resolves a hashed key scoped to the integration, workspace, and environment. `ingestSimulated` is the explicit simulation-only entry point that resolves `Integration.endpointToken`. Key creation, rotation, and revocation are in `apps/api/src/ingest/keys.ts`; operator commands are documented in `docs/ingest-keys.md`.
 
 Call `verify` and `redact`. Do not copy their logic into this file.
 
@@ -62,7 +62,7 @@ The client is `src/prisma/db.ts`. `DATABASE_URL` points at the `wiresleuth` data
 
 Write this.
 
-1. Find `Integration` by `endpointToken`. If it is missing, write no row.
+1. Resolve an active `IngestKey` by the SHA-256 hash of the provided key, then find its integration in the stored workspace and environment. A missing, revoked, or mismatched key writes no row. Only `ingestSimulated` uses `endpointToken`.
 2. If `verify` returns `REJECTED`, insert a `DeliveryAttempt` with `eventId` null and an `Outbox` row for that attempt. Commit.
 3. If `verify` returns `VERIFIED`, call `redact`.
 4. Insert the `WebhookEvent`, or reuse the one that already has this `integrationId` and `externalEventId`. A second delivery keeps the same event and adds another attempt. A different digest is a conflict. Still store the attempt.
