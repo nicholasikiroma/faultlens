@@ -14,7 +14,7 @@ export type DeliveryResult =
   | { outcome: "failed"; reason: "network" | "timeout" | "invalid-input" }
   | { outcome: "dropped"; reason: "oversized" | "busy" };
 
-interface DeliveryRequest {
+export interface DeliveryRequest {
   path: `/${string}`;
   body: Uint8Array<ArrayBuffer>;
   headers: Readonly<Record<string, string>>;

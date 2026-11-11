@@ -9,7 +9,7 @@ const wiresleuth = createWireSleuthClient({
     signingSecret: process.env["WIRESLEUTH_SIGNING_SECRET"] ?? "",
   },
 });
-const host = createSampleHost(wiresleuth.webhooks);
+const host = createSampleHost(wiresleuth);
 host.listen(3001, "127.0.0.1", () => console.log("sample host listening on http://127.0.0.1:3001/webhook"));
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
   process.once(signal, () => {
