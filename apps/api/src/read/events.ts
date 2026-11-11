@@ -64,20 +64,33 @@ export async function listEvents(
     return { kind: "ok", items: [], nextCursor: null };
   }
 
-  const allWorkspaceEvents = (await db.orm.public.WebhookEvent.all()).filter(
-    (row) => row.workspaceId === input.workspaceId,
-  );
-
   const filters = input.filters;
+  const whereEvent: Record<string, unknown> = {
+    workspaceId: input.workspaceId,
+  };
+  if (filters?.integrationId) {
+    whereEvent.integrationId = filters.integrationId;
+  }
+  if (filters?.externalEventId) {
+    whereEvent.externalEventId = filters.externalEventId;
+  }
+  if (filters?.status) {
+    whereEvent.processingState = filters.status;
+  }
+  if (filters?.traceId) {
+    whereEvent.traceId = filters.traceId;
+  }
+
+  const allWorkspaceEvents = await db.orm.public.WebhookEvent.where(whereEvent).all();
+
   const wantedErrorClass = filters?.errorClass ?? filters?.failureClass ?? null;
   let matchingClassEventIds: Set<string> | null = null;
 
   if (wantedErrorClass !== null) {
-    const findings = (await db.orm.public.Finding.all()).filter(
-      (row) =>
-        row.workspaceId === input.workspaceId &&
-        row.failureClass === wantedErrorClass,
-    );
+    const findings = await db.orm.public.Finding.where({
+      workspaceId: input.workspaceId,
+      failureClass: wantedErrorClass,
+    }).all();
     matchingClassEventIds = new Set(findings.map((row) => row.eventId));
   }
 
@@ -164,10 +177,10 @@ export async function listAttempts(
     return { kind: "unauthorized" };
   }
 
-  const rows = (await db.orm.public.DeliveryAttempt.all()).filter(
-    (row) =>
-      row.workspaceId === input.workspaceId && row.eventId === input.eventId,
-  );
+  const rows = await db.orm.public.DeliveryAttempt.where({
+    workspaceId: input.workspaceId,
+    eventId: input.eventId,
+  }).all();
 
   rows.sort(
     (left, right) =>

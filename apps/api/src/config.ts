@@ -27,4 +27,7 @@ export const config = {
   get simulatedWebhooks(): boolean {
     return process.env["WIRESLEUTH_SIMULATED_WEBHOOKS"] === "1";
   },
+  get corsOrigin(): string | undefined {
+    return process.env["WIRESLEUTH_CORS_ORIGIN"];
+  },
 } as const;

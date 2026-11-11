@@ -1,6 +1,7 @@
 import { Server } from "node:http";
 import { createAdaptorServer } from "@hono/node-server";
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { config } from "../config.ts";
 import { handleListAuditEvents } from "./controllers/audit.controller.ts";
 import {
@@ -54,6 +55,28 @@ const adminHandlers = {
 
 export function createApiApp(): Hono<ApiEnv> {
   const app = new Hono<ApiEnv>();
+  app.use(
+    "*",
+    cors({
+      origin: (origin) => {
+        if (!origin) return "*";
+        if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+          return origin;
+        }
+        return config.corsOrigin ?? origin;
+      },
+      allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      allowHeaders: [
+        "Content-Type",
+        "Authorization",
+        "x-wiresleuth-signature",
+        "x-wiresleuth-episode",
+      ],
+      exposeHeaders: ["Content-Length", "x-wiresleuth-signature"],
+      maxAge: 86400,
+      credentials: true,
+    }),
+  );
   const mounted = ROUTES.filter(isMounted);
   const methodsByPath = new Map<string, string[]>();
   for (const route of mounted) {

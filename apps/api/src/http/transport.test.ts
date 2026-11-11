@@ -178,3 +178,27 @@ test("shutdown force-closes requests after the grace period", { timeout: 5000 },
     if (server.listening) await closeServer(server, 0);
   }
 });
+
+test("CORS preflight and cross-origin headers allow local dashboard requests", async () => {
+  const app = createApiApp();
+  const preflight = await app.request("/v1/events", {
+    method: "OPTIONS",
+    headers: {
+      Origin: "http://localhost:5173",
+      "Access-Control-Request-Method": "GET",
+      "Access-Control-Request-Headers": "Authorization, Content-Type",
+    },
+  });
+  assert.equal(preflight.status, 204);
+  assert.equal(preflight.headers.get("access-control-allow-origin"), "http://localhost:5173");
+  assert.ok(preflight.headers.get("access-control-allow-methods")?.includes("GET"));
+
+  const unauth = await app.request("/v1/events", {
+    method: "GET",
+    headers: {
+      Origin: "http://localhost:5173",
+    },
+  });
+  assert.equal(unauth.status, 401);
+  assert.equal(unauth.headers.get("access-control-allow-origin"), "http://localhost:5173");
+});

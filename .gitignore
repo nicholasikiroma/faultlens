@@ -2,4 +2,3 @@ node_modules/
 dist/
 .env
 .agents/
-Request-recorder-examples

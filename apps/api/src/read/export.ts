@@ -63,15 +63,16 @@ export async function exportIncident(
     return { kind: "missing" };
   }
 
-  const incidentEventLinks = (await db.orm.public.IncidentEvent.all()).filter(
-    (row) => row.incidentId === incidentRow.id,
-  );
+  const incidentEventLinks = await db.orm.public.IncidentEvent.where({
+    incidentId: incidentRow.id,
+  }).all();
   const linkedEventIds = new Set(incidentEventLinks.map((row) => row.eventId));
 
-  const eventRows = (await db.orm.public.WebhookEvent.all()).filter(
-    (row) =>
-      row.workspaceId === input.workspaceId && linkedEventIds.has(row.id),
-  );
+  const eventRows = (
+    await db.orm.public.WebhookEvent.where({
+      workspaceId: input.workspaceId,
+    }).all()
+  ).filter((row) => linkedEventIds.has(row.id));
   eventRows.sort(compareEventOrder);
   const timeline = eventRows.map((row) =>
     toWebhookEvent({
@@ -82,11 +83,12 @@ export async function exportIncident(
   );
 
   const validEventIds = new Set(eventRows.map((row) => row.id));
-  const attemptRows = (await db.orm.public.DeliveryAttempt.all()).filter(
-    (row) =>
-      row.workspaceId === input.workspaceId &&
-      row.eventId !== null &&
-      validEventIds.has(row.eventId),
+  const attemptRows = (
+    await db.orm.public.DeliveryAttempt.where({
+      workspaceId: input.workspaceId,
+    }).all()
+  ).filter(
+    (row) => row.eventId !== null && validEventIds.has(row.eventId),
   );
   attemptRows.sort(
     (left, right) =>
@@ -95,17 +97,16 @@ export async function exportIncident(
   );
   const attempts = attemptRows.map(toDeliveryAttempt);
 
-  const findingRows = (await db.orm.public.Finding.all()).filter(
-    (row) =>
-      row.workspaceId === input.workspaceId &&
-      row.incidentId === incidentRow.id,
-  );
+  const findingRows = await db.orm.public.Finding.where({
+    workspaceId: input.workspaceId,
+    incidentId: incidentRow.id,
+  }).all();
   findingRows.sort((left, right) => left.id.localeCompare(right.id));
   const findingIds = new Set(findingRows.map((row) => row.id));
 
-  const workspaceEvidenceRows = (await db.orm.public.Evidence.all()).filter(
-    (row) => row.workspaceId === input.workspaceId,
-  );
+  const workspaceEvidenceRows = await db.orm.public.Evidence.where({
+    workspaceId: input.workspaceId,
+  }).all();
   const evidenceById = new Map<string, Evidence>(
     workspaceEvidenceRows.map((row) => [
       row.id,

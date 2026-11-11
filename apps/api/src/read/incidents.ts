@@ -54,11 +54,10 @@ export async function listIncidents(
   }
 
   const failureClass = input.failureClass ?? null;
-  const rows = (await db.orm.public.Incident.all()).filter(
-    (row) =>
-      row.workspaceId === input.workspaceId &&
-      (failureClass === null || row.failureClass === failureClass),
-  );
+  const rows = await db.orm.public.Incident.where({
+    workspaceId: input.workspaceId,
+    ...(failureClass !== null ? { failureClass } : {}),
+  }).all();
 
   rows.sort(
     (left, right) =>
