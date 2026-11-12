@@ -26,6 +26,8 @@
   },
   "scripts": {
     "contract:emit": "prisma contract emit",
+    "dev:web": "npm --prefix apps/web run dev",
+    "build:web": "npm --prefix apps/web run build",
     "typecheck": "tsc --noEmit",
     "seed": "tsx apps/api/src/seed/seed-cli.ts",
     "start:api": "tsx apps/api/src/http/main.ts",

@@ -1,0 +1,197 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   WireSleuth — Graphite + Soft Sage Design Tokens
+   Organized into logical categories:
+   1. Backgrounds
+   2. Surfaces
+   3. Text
+   4. Borders
+   5. Accents & Interactive States
+   6. Semantic Status Colours
+   7. Shadows & Overlays
+   ========================================================================== */
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* 1. Backgrounds */
+  --ws-canvas: #F4F3EF;
+  --ws-sidebar: #ECEBE5;
+
+  /* 2. Surfaces */
+  --ws-surface: #FFFFFF;
+  --ws-surface-elevated: #F9F8F5;
+  --ws-surface-subtle: #EFEEE9;
+
+  /* 3. Text */
+  --ws-ink: #292D2A;
+  --ws-secondary: #626A63;
+  --ws-muted: #858B84;
+
+  /* 4. Borders */
+  --ws-border: #E2E1DA;
+  --ws-border-subtle: #EAE9E3;
+  --ws-border-strong: #CECDC4;
+
+  /* 5. Accents & Interactive States (Muted Sage) */
+  --ws-accent: #56836A;
+  --ws-accent-hover: #486F59;
+  --ws-accent-active: #3D5E4B;
+  --ws-accent-subtle: rgba(86, 131, 106, 0.11);
+  --ws-accent-border: rgba(86, 131, 106, 0.30);
+  --ws-accent-ink: #FFFFFF;
+  --ws-focus: #56836A;
+
+  /* Primary Action Button */
+  --ws-btn-primary-bg: #4F7962;
+  --ws-btn-primary-hover: #436753;
+  --ws-btn-primary-active: #385645;
+  --ws-btn-primary-border: #436753;
+  --ws-btn-primary-ink: #FFFFFF;
+
+  /* 6. Semantic Status Colours */
+  /* Healthy / Success: Muted Green */
+  --ws-success-text: #2D6A45;
+  --ws-success-dot: #3B8457;
+  --ws-success-bg: #E7F1EA;
+  --ws-success-border: #C3DEC9;
+
+  /* Warning: Warm Amber */
+  --ws-warning-text: #8C5814;
+  --ws-warning-dot: #C27D24;
+  --ws-warning-bg: #FAF1E2;
+  --ws-warning-border: #E8D0AA;
+
+  /* Critical / Error: Muted Red */
+  --ws-danger-text: #9E332E;
+  --ws-danger-dot: #C4453E;
+  --ws-danger-bg: #F9EBE9;
+  --ws-danger-border: #E9C4C1;
+
+  /* Informational: Soft Blue */
+  --ws-info-text: #2B5B7C;
+  --ws-info-dot: #417AA1;
+  --ws-info-bg: #E8F0F6;
+  --ws-info-border: #C3D8E6;
+
+  /* 7. Shadows & Overlays */
+  --ws-shadow-subtle: 0 1px 2px 0 rgba(24, 27, 26, 0.04);
+  --ws-shadow-elevated: 0 8px 24px -4px rgba(24, 27, 26, 0.10), 0 2px 6px -1px rgba(24, 27, 26, 0.05);
+  --ws-backdrop: rgba(24, 27, 26, 0.40);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* 1. Backgrounds */
+  --ws-canvas: #181B1A;
+  --ws-sidebar: #141817;
+
+  /* 2. Surfaces */
+  --ws-surface: #242927;
+  --ws-surface-elevated: #2D3430;
+  --ws-surface-subtle: #1D211F;
+
+  /* 3. Text */
+  --ws-ink: #F0F2EF;
+  --ws-secondary: #A6AEA8;
+  --ws-muted: #747E77;
+
+  /* 4. Borders */
+  --ws-border: #343C37;
+  --ws-border-subtle: #2A312D;
+  --ws-border-strong: #434D47;
+
+  /* 5. Accents & Interactive States (Soft Sage) */
+  --ws-accent: #8FB99A;
+  --ws-accent-hover: #A1C7AB;
+  --ws-accent-active: #7CA887;
+  --ws-accent-subtle: rgba(143, 185, 154, 0.12);
+  --ws-accent-border: rgba(143, 185, 154, 0.30);
+  --ws-accent-ink: #FFFFFF;
+  --ws-focus: #8FB99A;
+
+  /* Primary Action Button (Grounded, Darker Non-Faded Deep Sage) */
+  --ws-btn-primary-bg: #2C523D;
+  --ws-btn-primary-hover: #37644B;
+  --ws-btn-primary-active: #224330;
+  --ws-btn-primary-border: #427858;
+  --ws-btn-primary-ink: #FFFFFF;
+
+  /* 6. Semantic Status Colours */
+  /* Healthy / Success: Muted Green */
+  --ws-success-text: #82C59A;
+  --ws-success-dot: #5BAE78;
+  --ws-success-bg: rgba(91, 174, 120, 0.14);
+  --ws-success-border: rgba(91, 174, 120, 0.30);
+
+  /* Warning: Warm Amber */
+  --ws-warning-text: #E2B76D;
+  --ws-warning-dot: #D49B43;
+  --ws-warning-bg: rgba(212, 155, 67, 0.14);
+  --ws-warning-border: rgba(212, 155, 67, 0.30);
+
+  /* Critical / Error: Muted Red */
+  --ws-danger-text: #E48983;
+  --ws-danger-dot: #D16059;
+  --ws-danger-bg: rgba(209, 96, 89, 0.15);
+  --ws-danger-border: rgba(209, 96, 89, 0.32);
+
+  /* Informational: Soft Blue */
+  --ws-info-text: #8EBAD9;
+  --ws-info-dot: #649EC7;
+  --ws-info-bg: rgba(100, 158, 199, 0.14);
+  --ws-info-border: rgba(100, 158, 199, 0.30);
+
+  /* 7. Shadows & Overlays */
+  --ws-shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.18);
+  --ws-shadow-elevated: 0 12px 28px -6px rgba(0, 0, 0, 0.45), 0 4px 10px -3px rgba(0, 0, 0, 0.30);
+  --ws-backdrop: rgba(10, 12, 11, 0.62);
+}
+
+/* Custom telemetry scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--ws-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ws-muted);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ws-focus);
+  outline-offset: 2px;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Recorder Tape Reel Keyframes - Understated & Calm */
+@keyframes spin-reel {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-reel {
+  animation: spin-reel 10s linear infinite;
+}
+
+.animate-spin-reel-rev {
+  animation: spin-reel 10s linear infinite reverse;
+}

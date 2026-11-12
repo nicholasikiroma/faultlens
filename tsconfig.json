@@ -19,5 +19,8 @@
     "src/prisma/db.ts",
     "src/prisma/sql.ts",
     "prisma.config.ts"
+  ],
+  "exclude": [
+    "apps/web"
   ]
 }
