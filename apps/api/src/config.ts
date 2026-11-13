@@ -2,7 +2,7 @@ import "dotenv/config";
 
 export const config = {
   get adminToken(): string {
-    return process.env["WIRESLEUTH_ADMIN_TOKEN"] ?? "";
+    return process.env["WIRESLEUTH_ADMIN_TOKEN"] ?? "local-dev-admin-token";
   },
   get workspaceId(): string {
     return process.env["WIRESLEUTH_WORKSPACE_ID"] ?? "workspace-1";

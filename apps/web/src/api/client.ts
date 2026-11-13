@@ -1,4 +1,10 @@
 import type { Incident, IntegrationItem, PlaygroundScenario } from '../types';
+import {
+  toFrontendIncidentSummary,
+  toFrontendIncidentDetail,
+  type BackendIncidentSummary,
+  type BackendExportIncidentResult,
+} from './adapters';
 
 export const INITIAL_INCIDENTS: Incident[] = [
   {
@@ -144,7 +150,7 @@ export const INITIAL_INCIDENTS: Incident[] = [
       {
         id: 'hyp_1',
         title: 'Scheduled Subscription Cron Spike',
-        reasoning: 'Batch renewals at 10:00 UTC concentrated 45 outbound webhooks in 2 seconds, exceeding Stripe burst capacity.',
+        reasoning: 'Batch renewals at 10:00 UTC concentrated 45 outbound webhooks in 2 seconds, exceeding burst capacity.',
         confidence: 'HIGH',
         suggestedCheck: 'Inspect billing cron schedule in scheduler configuration and introduce 500ms staggered dispatch.',
         feedback: 'none',
@@ -158,28 +164,26 @@ export const INITIAL_INCIDENTS: Incident[] = [
         object: {
           id: 'in_1298402',
           amount_paid: 4900,
-          currency: 'usd',
-          customer: 'cus_masked_77a',
-          subscription: 'sub_masked_99b',
-          api_key: '[REDACTED]',
+          customer: 'cus_99341',
+          status: 'paid',
         },
       },
     },
   },
   {
     id: 'inc_demo_schema',
-    key: 'INC-1041',
-    title: 'Required field missing in webhook payload',
-    integration: 'Demo CRM Sync',
+    key: 'INC-1043',
+    title: 'Missing required workspace_id in payload',
+    integration: 'HubSpot Contact Sync',
     cls: 'SCHEMA_MISMATCH',
-    events: 19,
-    severity: 'HIGH',
+    events: 1,
+    severity: 'MEDIUM',
     status: 'OPEN',
-    seen: '10:18 AM',
+    seen: '09:30 AM',
     firstSeen: '05 Nov 2026, 09:30 UTC',
-    known: 'Inbound payload lacks required schema field `contact.workspace_id`.',
-    suspect: 'CRM provider deployed v2 webhook format without backwards compatibility.',
-    next: 'Check CRM webhook version settings and update inbound parser schema.',
+    known: 'Incoming webhook failed Zod validation against ContactSyncSchema.',
+    suspect: 'Upstream CRM update deprecated legacy workspace format without version bump.',
+    next: 'Review schema version in ingress validator and apply fallback default workspace mapping.',
     timeline: [
       {
         id: 'tl_s1',
@@ -208,46 +212,41 @@ export const INITIAL_INCIDENTS: Incident[] = [
     ],
     ruleFindings: [
       {
-        ruleId: 'RULE-SCHEMA-DRIFT',
-        name: 'Zod Parse Failure',
-        description: 'Payload failed strict schema validation against v1 schema.',
-        matchedEvents: 19,
+        ruleId: 'RULE-ZOD-MISSING-KEY',
+        name: 'Strict Schema Violation',
+        description: 'Payload lacked essential partition identifier.',
+        matchedEvents: 1,
       },
     ],
     hypotheses: [
       {
-        id: 'hyp_s1',
-        title: 'Provider API Migration Drift',
-        reasoning: 'The provider has migrated workspace identifiers to account_id in recent webhook releases.',
+        id: 'hyp_2',
+        title: 'CRM App v2 Webhook Payload Migration',
+        reasoning: 'Provider webhook payload documentation shows workspace_id was moved under account.organization_id in v2.',
         confidence: 'HIGH',
-        suggestedCheck: 'Allow alias `contact.account_id ?? contact.workspace_id` in ingestion adapter.',
+        suggestedCheck: 'Inspect payload JSON in evidence drawer and verify contact.workspace_id vs account.org_id.',
         feedback: 'none',
       },
     ],
     rawPayload: {
-      event_id: 'evt_crm_sync_04',
-      type: 'contact.updated',
-      contact: {
-        id: 'cnt_882',
-        email: 'lead@enterprise.com',
-        auth_token: '[REDACTED]',
-      },
+      action: 'contact.updated',
+      contact: { id: 104, email: 'lead@enterprise.com', name: 'Dev Lead' },
     },
   },
   {
     id: 'inc_demo_timeout',
-    key: 'INC-1040',
-    title: 'Worker timed out during processing',
-    integration: 'Demo Queue Processor',
+    key: 'INC-1044',
+    title: 'Upstream connection reset during TLS handshake',
+    integration: 'Segment Telemetry Egress',
     cls: 'NETWORK_TIMEOUT',
-    events: 11,
+    events: 2,
     severity: 'MEDIUM',
-    status: 'INVESTIGATING',
-    seen: '09:36 AM',
-    firstSeen: '05 Nov 2026, 08:50 UTC',
-    known: 'Downstream HTTP connection exceeded 5000ms socket timeout.',
-    suspect: 'Downstream warehouse reporting endpoint degraded.',
-    next: 'Check warehouse queue status and verify connection pooling limits.',
+    status: 'OPEN',
+    seen: '08:50 AM',
+    firstSeen: '05 Nov 2026, 08:48 UTC',
+    known: 'Socket timed out after 5000ms while waiting for upstream response headers.',
+    suspect: 'Upstream gateway degradation or routing table flap on segment transit provider.',
+    next: 'Check segment status page and verify socket timeout threshold in telemetry config.',
     timeline: [
       {
         id: 'tl_t1',
@@ -278,41 +277,41 @@ export const INITIAL_INCIDENTS: Incident[] = [
     ruleFindings: [
       {
         ruleId: 'RULE-NET-TIMEOUT',
-        name: 'Socket Inactivity Timeout',
-        description: 'Connection timed out prior to HTTP response headers.',
-        matchedEvents: 11,
+        name: '5000ms Socket Hang Detected',
+        description: 'Exceeded worker egress timeout quota.',
+        matchedEvents: 2,
       },
     ],
     hypotheses: [
       {
-        id: 'hyp_t1',
-        title: 'Downstream Ingress Congestion',
-        reasoning: 'Analytics service gateway latency increased 400% during morning ingest cycle.',
+        id: 'hyp_3',
+        title: 'Upstream Ingress Gateway Outage',
+        reasoning: 'TLS handshake stalled with zero packet replies from remote IP.',
         confidence: 'MEDIUM',
-        suggestedCheck: 'Increase worker socket timeout from 5s to 15s with exponential retry.',
+        suggestedCheck: 'Ping remote endpoint with net-probe or wait for segment incident resolution.',
         feedback: 'none',
       },
     ],
     rawPayload: {
-      event_id: 'evt_queue_task_90',
-      type: 'warehouse.sync',
-      attempt: 1,
+      type: 'track',
+      event: 'User Signed Up',
+      properties: { plan: 'Enterprise' },
     },
   },
   {
     id: 'inc_demo_sig',
-    key: 'INC-1039',
-    title: 'Webhook signature verification failed',
-    integration: 'Demo Billing Webhook',
+    key: 'INC-1045',
+    title: 'Tampered webhook HMAC digest rejected',
+    integration: 'Shopify Fulfillment Webhook',
     cls: 'INVALID_SIGNATURE',
-    events: 5,
+    events: 1,
     severity: 'HIGH',
     status: 'OPEN',
-    seen: '08:04 AM',
+    seen: '08:00 AM',
     firstSeen: '05 Nov 2026, 08:00 UTC',
-    known: 'Inbound signature header does not match computed HMAC-SHA256 digest.',
-    suspect: 'Inbound secret was rotated in billing dashboard without updating WireSleuth environment config.',
-    next: 'Verify current webhook signing secret in provider settings.',
+    known: 'Calculated HMAC-SHA256 signature did not match the provided X-Shopify-Hmac-Sha256 header.',
+    suspect: 'Potential payload tampering or misconfigured shared signing secret.',
+    next: 'Verify shared secret in keyvault and inspect raw cryptographic digest in evidence drawer.',
     timeline: [
       {
         id: 'tl_sg1',
@@ -341,61 +340,77 @@ export const INITIAL_INCIDENTS: Incident[] = [
     ],
     ruleFindings: [
       {
-        ruleId: 'RULE-SIGNATURE-MISMATCH',
-        name: 'Tamper / Secret Desync',
-        description: 'Inbound request failed cryptographic signature check.',
-        matchedEvents: 5,
+        ruleId: 'RULE-CRYPTO-TAMPER',
+        name: 'Signature Mismatch At Ingress',
+        description: 'Rejected immediately without processing request body.',
+        matchedEvents: 1,
       },
     ],
     hypotheses: [
       {
-        id: 'hyp_sg1',
-        title: 'Secret Rotation Inconsistency',
-        reasoning: 'Provider webhook endpoint was edited in Stripe dashboard 2 hours prior.',
+        id: 'hyp_4',
+        title: 'Secret Key Rotation In Progress',
+        reasoning: 'Shopify dashboard rotated production webhook signing secret at 07:55 UTC.',
         confidence: 'HIGH',
-        suggestedCheck: 'Update `WEBHOOK_SIGNING_SECRET` environment variable.',
+        suggestedCheck: 'Update WIRESLEUTH_SIGNING_SECRET with new Shopify secret key.',
         feedback: 'none',
       },
     ],
     rawPayload: {
-      event_id: 'evt_stripe_unverified',
-      type: 'charge.failed',
-      raw_signature: '[REDACTED]',
+      topic: 'orders/fulfilled',
+      id: 994821,
+      status: 'fulfilled',
     },
   },
 ];
 
 export const INITIAL_INTEGRATIONS: IntegrationItem[] = [
   {
-    id: 'int_billing',
-    name: 'Demo Billing Webhook',
-    type: 'Stripe Webhook',
+    id: 'int_stripe',
+    name: 'Stripe Billing Webhook',
+    type: 'Inbound Webhook',
     status: 'DEGRADED',
-    failedAttempts: 84,
+    failedAttempts: 3,
     lastSeen: '11:42 AM',
   },
   {
-    id: 'int_crm',
-    name: 'Demo CRM Sync',
-    type: 'HubSpot Webhook',
+    id: 'int_hubspot',
+    name: 'HubSpot Contact Sync',
+    type: 'Bi-directional Sync',
     status: 'VALIDATION_ERRORS',
-    failedAttempts: 32,
-    lastSeen: '10:18 AM',
+    failedAttempts: 1,
+    lastSeen: '09:30 AM',
   },
   {
-    id: 'int_queue',
-    name: 'Demo Queue Processor',
-    type: 'BullMQ Async Worker',
+    id: 'int_segment',
+    name: 'Segment Telemetry Egress',
+    type: 'Event Stream',
+    status: 'DEGRADED',
+    failedAttempts: 2,
+    lastSeen: '08:50 AM',
+  },
+  {
+    id: 'int_shopify',
+    name: 'Shopify Fulfillment',
+    type: 'Inbound Webhook',
     status: 'HEALTHY',
-    failedAttempts: 12,
-    lastSeen: '09:36 AM',
+    failedAttempts: 0,
+    lastSeen: '08:00 AM',
+  },
+  {
+    id: 'int_slack',
+    name: 'Incident Alert Dispatcher',
+    type: 'Notification Hook',
+    status: 'HEALTHY',
+    failedAttempts: 0,
+    lastSeen: 'Yesterday',
   },
 ];
 
 export const PLAYGROUND_SCENARIOS: PlaygroundScenario[] = [
   {
     id: 'scen_429',
-    title: 'HTTP 429 · Rate Limit Burst',
+    title: 'Burst Rate Limit · Upstream 429 Retry-After',
     cls: 'RATE_LIMIT',
     description: 'Simulates 3 consecutive requests to upstream API returning 429 with Retry-After header.',
     samplePayload: {
@@ -461,43 +476,211 @@ export const PLAYGROUND_SCENARIOS: PlaygroundScenario[] = [
   },
 ];
 
-// In-memory state store with localStorage persistence
-class ApiStore {
+export interface HealthStatus {
+  connected: boolean;
+  latencyMs: number | null;
+  mode: 'live' | 'offline';
+  apiUrl: string;
+}
+
+export class ApiStore {
   private incidents: Incident[];
   private integrations: IntegrationItem[];
+  private isLiveConnected = false;
+  private lastLatencyMs: number | null = null;
+
+  private adminToken = 'local-dev-admin-token';
+  private baseUrl = '';
 
   constructor() {
     const cached = localStorage.getItem('ws_incidents');
-    this.incidents = cached ? JSON.parse(cached) : INITIAL_INCIDENTS;
+    let parsed: Incident[] | null = null;
+    try {
+      parsed = cached ? JSON.parse(cached) : null;
+    } catch {
+      parsed = null;
+    }
+    // Discard static mock fixtures (inc_demo_*) in favor of real live backend data
+    const isMock = Array.isArray(parsed) && parsed.some((p: any) => typeof p.id === 'string' && p.id.startsWith('inc_demo_'));
+    this.incidents = parsed && !isMock && parsed.length > 0 ? parsed : INITIAL_INCIDENTS;
     this.integrations = INITIAL_INTEGRATIONS;
+
+    // In browser/Vite dev, requests to /v1 are proxied to localhost:3000
+    this.baseUrl = window.location.origin;
   }
 
-  getIncidents(): Incident[] {
+  getIsLiveConnected(): boolean {
+    return this.isLiveConnected;
+  }
+
+  getLastLatencyMs(): number | null {
+    return this.lastLatencyMs;
+  }
+
+  async checkHealth(): Promise<HealthStatus> {
+    const startTime = Date.now();
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 2000);
+
+      const res = await fetch(`${this.baseUrl}/v1/incidents`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${this.adminToken}`,
+        },
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+
+      if (res.ok) {
+        this.isLiveConnected = true;
+        this.lastLatencyMs = Date.now() - startTime;
+        return {
+          connected: true,
+          latencyMs: this.lastLatencyMs,
+          mode: 'live',
+          apiUrl: this.baseUrl,
+        };
+      }
+    } catch {
+      // Server offline or proxy unreachable
+    }
+
+    this.isLiveConnected = false;
+    this.lastLatencyMs = null;
+    return {
+      connected: false,
+      latencyMs: null,
+      mode: 'offline',
+      apiUrl: this.baseUrl,
+    };
+  }
+
+  async fetchIncidents(failureClass?: string): Promise<Incident[]> {
+    try {
+      const url = new URL(`${this.baseUrl}/v1/incidents`);
+      if (failureClass) {
+        url.searchParams.set('failureClass', failureClass);
+      }
+
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 3000);
+
+      const res = await fetch(url.toString(), {
+        headers: {
+          Authorization: `Bearer ${this.adminToken}`,
+        },
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+
+      if (res.ok) {
+        const body = (await res.json()) as { kind: string; items: BackendIncidentSummary[] };
+        if (body.kind === 'ok' && Array.isArray(body.items)) {
+          this.isLiveConnected = true;
+
+          // Merge live summaries with existing loaded details
+          const liveIncidents: Incident[] = body.items.map((summary) => {
+            const existing = this.incidents.find((i) => i.id === summary.id);
+            const liveSummary = toFrontendIncidentSummary(summary);
+            if (existing && existing.timeline.length > 0) {
+              return {
+                ...liveSummary,
+                status: existing.status,
+                timeline: existing.timeline,
+                evidence: existing.evidence,
+                attempts: existing.attempts,
+                ruleFindings: existing.ruleFindings,
+                hypotheses: existing.hypotheses,
+                rawPayload: existing.rawPayload,
+              };
+            }
+            return liveSummary;
+          });
+
+          // Sort by latest activity (last seen) first
+          liveIncidents.sort((a, b) => (b.lastSeenTimestamp ?? 0) - (a.lastSeenTimestamp ?? 0));
+
+          this.incidents = liveIncidents;
+          this.save();
+          return [...this.incidents];
+        }
+      }
+    } catch {
+      this.isLiveConnected = false;
+    }
+
+    // Offline fallback: return current cached incidents
     return [...this.incidents];
   }
 
-  getIncidentById(id: string): Incident | undefined {
-    return this.incidents.find((i) => i.id === id);
+  async fetchIncidentDetail(incidentId: string): Promise<Incident> {
+    const existing = this.incidents.find((i) => i.id === incidentId);
+
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 3500);
+
+      const res = await fetch(`${this.baseUrl}/v1/incidents/${incidentId}/export`, {
+        headers: {
+          Authorization: `Bearer ${this.adminToken}`,
+        },
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+
+      if (res.ok) {
+        const body = (await res.json()) as BackendExportIncidentResult;
+        if (body.kind === 'ok') {
+          this.isLiveConnected = true;
+          const fullDetail = toFrontendIncidentDetail(body);
+
+          const idx = this.incidents.findIndex((i) => i.id === incidentId);
+          if (idx !== -1) {
+            this.incidents[idx] = fullDetail;
+          } else {
+            this.incidents.unshift(fullDetail);
+          }
+          this.save();
+          return fullDetail;
+        }
+      }
+    } catch {
+      this.isLiveConnected = false;
+    }
+
+    return existing || this.incidents[0];
   }
 
-  getIntegrations(): IntegrationItem[] {
-    return [...this.integrations];
-  }
-
-  updateIncidentStatus(id: string, status: Incident['status']): Incident | undefined {
+  async updateIncidentStatus(id: string, status: Incident['status']): Promise<Incident | undefined> {
     const incident = this.incidents.find((i) => i.id === id);
     if (incident) {
       incident.status = status;
       this.save();
     }
+
+    // Asynchronously sync with backend if online
+    try {
+      await fetch(`${this.baseUrl}/v1/incidents/${id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.adminToken}`,
+        },
+        body: JSON.stringify({ status }),
+      });
+    } catch {
+      // Ignored for offline tolerance
+    }
+
     return incident;
   }
 
-  updateHypothesisFeedback(
+  async updateHypothesisFeedback(
     incidentId: string,
     hypothesisId: string,
     feedback: 'helpful' | 'false_positive'
-  ): void {
+  ): Promise<void> {
     const incident = this.incidents.find((i) => i.id === incidentId);
     if (incident) {
       const hyp = incident.hypotheses.find((h) => h.id === hypothesisId);
@@ -506,9 +689,50 @@ class ApiStore {
         this.save();
       }
     }
+
+    // Attempt backend sync
+    try {
+      const rating = feedback === 'helpful' ? 'USEFUL' : 'INCORRECT';
+      await fetch(`${this.baseUrl}/v1/findings/${hypothesisId}/feedback`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.adminToken}`,
+        },
+        body: JSON.stringify({ rating }),
+      });
+    } catch {
+      // Offline fallback
+    }
   }
 
-  runScenario(scenario: PlaygroundScenario): Incident {
+  async runScenario(scenario: PlaygroundScenario): Promise<Incident> {
+    // If live, dispatch real synthetic delivery to /v1/ingest
+    if (this.isLiveConnected) {
+      try {
+        const ingestKey = 'wsk_seed_billing_local_ingest_key_00000001';
+        const res = await fetch(`${this.baseUrl}/v1/ingest`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${ingestKey}`,
+            'x-wiresleuth-signature': `sim_sig_${Date.now()}`,
+          },
+          body: JSON.stringify(scenario.samplePayload),
+        });
+
+        if (res.ok) {
+          // Re-fetch live incidents to reflect the newly classified item
+          await new Promise((r) => setTimeout(r, 800));
+          await this.fetchIncidents();
+          return this.incidents[0];
+        }
+      } catch {
+        // Fall back to client simulation
+      }
+    }
+
+    // Local simulation fallback
     const newId = `inc_sim_${Date.now()}`;
     const keyNum = 1050 + this.incidents.length;
     const newIncident: Incident = {
@@ -601,7 +825,49 @@ class ApiStore {
     return newIncident;
   }
 
-  private save() {
+  getIncidents(): Incident[] {
+    return [...this.incidents];
+  }
+
+  getIncidentById(id: string): Incident | undefined {
+    return this.incidents.find((i) => i.id === id);
+  }
+
+  getIntegrations(): IntegrationItem[] {
+    if (this.incidents.length === 0) {
+      return [...this.integrations];
+    }
+
+    const groups = new Map<string, Incident[]>();
+    for (const inc of this.incidents) {
+      const channel = inc.integration || 'Default Webhook';
+      const grp = groups.get(channel) ?? [];
+      grp.push(inc);
+      groups.set(channel, grp);
+    }
+
+    return Array.from(groups.entries()).map(([channel, incs], idx) => {
+      const totalEvents = incs.reduce((sum, i) => sum + (i.events || 1), 0);
+      const openCount = incs.filter((i) => i.status === 'OPEN' || i.status === 'INVESTIGATING').length;
+      const status: IntegrationItem['status'] =
+        openCount > 2 ? 'CRITICAL' : openCount > 0 ? 'DEGRADED' : 'HEALTHY';
+      return {
+        id: `int_live_${idx}_${channel.toLowerCase().replace(/\W+/g, '_')}`,
+        name: channel,
+        type: 'Live Ingress Channel',
+        status,
+        failedAttempts: totalEvents,
+        lastSeen: incs[0]?.seen ?? 'Just now',
+      };
+    });
+  }
+
+  resetFixtures(): void {
+    localStorage.removeItem('ws_incidents');
+    this.incidents = INITIAL_INCIDENTS;
+  }
+
+  private save(): void {
     try {
       localStorage.setItem('ws_incidents', JSON.stringify(this.incidents));
     } catch {

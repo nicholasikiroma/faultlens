@@ -4,7 +4,7 @@ import { Play, CheckCircle2, ArrowRight, Radio, RefreshCw } from 'lucide-react';
 
 interface PlaygroundViewProps {
   scenarios: PlaygroundScenario[];
-  onRunScenario: (scenario: PlaygroundScenario) => Incident;
+  onRunScenario: (scenario: PlaygroundScenario) => Incident | Promise<Incident>;
   onOpenIncident: (incidentId: string) => void;
 }
 
@@ -31,8 +31,8 @@ export const PlaygroundView: React.FC<PlaygroundViewProps> = ({
         setPipelineStep(3);
 
         // Step 3: Rule Match
-        setTimeout(() => {
-          const newInc = onRunScenario(scen);
+        setTimeout(async () => {
+          const newInc = await onRunScenario(scen);
           setSpawnedIncident(newInc);
           setPipelineStep(4);
         }, 700);
@@ -43,14 +43,17 @@ export const PlaygroundView: React.FC<PlaygroundViewProps> = ({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 pb-2 border-b border-ws-border">
         <div>
-          <div className="text-[10px] font-mono font-semibold tracking-widest text-ws-accent uppercase">
-            FAILURE LAB & FLIGHT SIMULATOR
+          <div className="ws-eyebrow text-ws-accent mb-1 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-ws-accent animate-ping" />
+            FAILURE LAB // FLIGHT SIMULATION DECK
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-ws-ink mt-0.5">Playground</h1>
-          <p className="text-xs text-ws-secondary mt-1">
-            Safely inject synthetic integration failures into the local WireSleuth ingestion pipeline.
+          <h1 className="text-3xl font-bold tracking-tight text-ws-ink font-sans leading-tight">
+            Simulation Lab
+          </h1>
+          <p className="text-[14px] text-ws-secondary mt-1 font-sans leading-relaxed">
+            Safely inject synthetic integration failures into the local WireSleuth ingestion pipeline and test deterministic classification.
           </p>
         </div>
       </div>
@@ -61,12 +64,12 @@ export const PlaygroundView: React.FC<PlaygroundViewProps> = ({
           <div className="flex items-center justify-between pb-3 border-b border-ws-border">
             <div className="flex items-center gap-2">
               <Radio className="w-4 h-4 text-ws-accent" />
-              <span className="text-xs font-mono font-bold text-ws-ink uppercase tracking-wider">
+              <span className="text-xs font-sans font-semibold text-ws-ink">
                 Simulating: {runningScenario.title}
               </span>
             </div>
             {pipelineStep < 4 ? (
-              <span className="flex items-center gap-1.5 text-xs text-ws-warning-text font-mono">
+              <span className="flex items-center gap-1.5 text-xs text-ws-warning-text font-mono font-medium">
                 <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                 Pipeline Ingestion Processing...
               </span>
@@ -79,7 +82,7 @@ export const PlaygroundView: React.FC<PlaygroundViewProps> = ({
           </div>
 
           {/* 4-Step Pipeline Visualizer */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs font-mono">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
             {/* Step 1 */}
             <div
               className={`p-3 rounded-md border transition-colors ${
@@ -88,10 +91,10 @@ export const PlaygroundView: React.FC<PlaygroundViewProps> = ({
                   : 'border-ws-border bg-ws-surface-subtle text-ws-muted'
               }`}
             >
-              <div className="text-[10px] uppercase text-ws-accent font-bold mb-1">
+              <div className="text-[10px] uppercase font-mono text-ws-accent font-medium mb-1">
                 Step 1: Egress
               </div>
-              <div>Synthetic Delivery Dispatched</div>
+              <div className="font-sans">Synthetic Delivery Dispatched</div>
             </div>
 
             {/* Step 2 */}
@@ -102,10 +105,10 @@ export const PlaygroundView: React.FC<PlaygroundViewProps> = ({
                   : 'border-ws-border bg-ws-surface-subtle text-ws-muted'
               }`}
             >
-              <div className="text-[10px] uppercase text-ws-accent font-bold mb-1">
+              <div className="text-[10px] uppercase font-mono text-ws-accent font-medium mb-1">
                 Step 2: Ingest & Redact
               </div>
-              <div>Secrets Masked [REDACTED]</div>
+              <div className="font-sans">Secrets Masked [REDACTED]</div>
             </div>
 
             {/* Step 3 */}
@@ -116,10 +119,10 @@ export const PlaygroundView: React.FC<PlaygroundViewProps> = ({
                   : 'border-ws-border bg-ws-surface-subtle text-ws-muted'
               }`}
             >
-              <div className="text-[10px] uppercase text-ws-accent font-bold mb-1">
+              <div className="text-[10px] uppercase font-mono text-ws-accent font-medium mb-1">
                 Step 3: Rule Match
               </div>
-              <div>Matched {runningScenario.cls}</div>
+              <div className="font-sans">Matched <span className="font-mono">{runningScenario.cls}</span></div>
             </div>
 
             {/* Step 4 */}
@@ -130,22 +133,22 @@ export const PlaygroundView: React.FC<PlaygroundViewProps> = ({
                   : 'border-ws-border bg-ws-surface-subtle text-ws-muted'
               }`}
             >
-              <div className="text-[10px] uppercase text-ws-success-text font-bold mb-1">
+              <div className="text-[10px] uppercase font-mono text-ws-success-text font-medium mb-1">
                 Step 4: Incident Ready
               </div>
-              <div>Opened in Triage Queue</div>
+              <div className="font-sans">Opened in Triage Queue</div>
             </div>
           </div>
 
           {/* CTA when complete */}
           {spawnedIncident && (
             <div className="pt-3 border-t border-ws-border flex items-center justify-between">
-              <span className="text-xs text-ws-muted font-mono">
-                Generated {spawnedIncident.key} • Status: {spawnedIncident.status}
+              <span className="text-xs text-ws-muted font-sans">
+                Generated <span className="font-mono text-ws-secondary font-medium">{spawnedIncident.key}</span> • Status: <span className="font-mono">{spawnedIncident.status}</span>
               </span>
               <button
                 onClick={() => onOpenIncident(spawnedIncident.id)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-ws-btn-primary hover:bg-ws-btn-primary-hover active:bg-ws-btn-primary-active text-ws-btn-primary-ink border border-ws-btn-primary-border text-xs font-semibold shadow-subtle transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-ws-btn-primary hover:bg-ws-btn-primary-hover active:bg-ws-btn-primary-active text-ws-btn-primary-ink border border-ws-btn-primary-border text-[13px] font-medium font-sans shadow-subtle transition-colors"
               >
                 <span>Inspect in Investigation Workspace</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -164,21 +167,21 @@ export const PlaygroundView: React.FC<PlaygroundViewProps> = ({
           >
             <div>
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono font-semibold text-ws-accent bg-ws-accent-subtle border border-ws-accent-border px-2 py-0.5 rounded">
+                <span className="text-[10px] font-mono font-medium text-ws-accent bg-ws-accent-subtle border border-ws-accent-border px-2 py-0.5 rounded">
                   SCENARIO 0{idx + 1}
                 </span>
                 <span className="text-[11px] font-mono text-ws-ink bg-ws-surface-subtle px-2 py-0.5 rounded border border-ws-border">
                   {scen.cls}
                 </span>
               </div>
-              <h3 className="text-sm font-bold text-ws-ink mt-3">{scen.title}</h3>
-              <p className="text-xs text-ws-secondary mt-1 leading-relaxed">{scen.description}</p>
+              <h3 className="text-sm font-semibold text-ws-ink mt-3 font-sans">{scen.title}</h3>
+              <p className="text-[13px] font-sans text-ws-secondary mt-1 leading-relaxed">{scen.description}</p>
             </div>
 
             <button
               onClick={() => handleSimulate(scen)}
               disabled={pipelineStep > 0 && pipelineStep < 4}
-              className="w-full inline-flex items-center justify-center gap-2 py-2 px-3 rounded-md bg-ws-surface-subtle border border-ws-border hover:bg-ws-surface-elevated text-xs font-semibold text-ws-ink transition-colors disabled:opacity-50"
+              className="w-full inline-flex items-center justify-center gap-2 py-2 px-3 rounded-md bg-ws-surface-subtle border border-ws-border hover:bg-ws-surface-elevated text-xs font-medium font-sans text-ws-ink transition-colors disabled:opacity-50"
             >
               <Play className="w-3.5 h-3.5 text-ws-accent fill-current" />
               <span>Simulate Failure</span>

@@ -131,7 +131,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           <input
             ref={inputRef}
             type="text"
-            className="w-full bg-transparent text-sm text-ws-ink placeholder:text-ws-muted outline-none font-sans"
+            className="w-full bg-transparent text-[13px] text-ws-ink placeholder:text-ws-muted outline-none font-sans"
             placeholder="Search incidents, trace IDs, integrations, or run a scenario..."
             value={query}
             onChange={(e) => {
@@ -148,7 +148,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         {/* Results List */}
         <div className="max-h-96 overflow-y-auto p-2 divide-y divide-ws-border-subtle">
           {flatItems.length === 0 ? (
-            <div className="p-8 text-center text-xs text-ws-muted font-mono">
+            <div className="p-8 text-center text-xs text-ws-muted font-sans">
               No matching records found for "{query}".
             </div>
           ) : (
@@ -172,13 +172,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                       {item.type === 'integration' && <Plug className="w-4 h-4 text-ws-warning-dot" />}
                     </div>
                     <div className="min-w-0">
-                      <div className="text-xs font-semibold text-ws-ink truncate">{item.title}</div>
-                      <div className="text-[11px] text-ws-muted truncate">{item.subtitle}</div>
+                      <div className="text-[13px] font-medium text-ws-ink truncate font-sans">{item.title}</div>
+                      <div className="text-xs text-ws-muted truncate font-sans">{item.subtitle}</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0 ml-4">
                     {isSelected && (
-                      <span className="flex items-center gap-1 text-[10px] font-mono text-ws-accent font-semibold">
+                      <span className="flex items-center gap-1 text-[10px] font-mono text-ws-accent font-medium">
                         Select <CornerDownLeft className="w-3 h-3" />
                       </span>
                     )}
@@ -191,9 +191,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         </div>
 
         {/* Footer shortcuts */}
-        <div className="px-4 py-2 border-t border-ws-border bg-ws-surface-subtle flex items-center justify-between text-[10px] font-mono text-ws-muted">
-          <span>Navigate: ↑ ↓ • Select: Enter</span>
-          <span>WireSleuth Telemetry Console</span>
+        <div className="px-4 py-2 border-t border-ws-border bg-ws-surface-subtle flex items-center justify-between text-xs font-sans text-ws-muted">
+          <span>Navigate: <kbd className="font-mono text-[10px] px-1 bg-ws-surface border border-ws-border rounded">↑</kbd> <kbd className="font-mono text-[10px] px-1 bg-ws-surface border border-ws-border rounded">↓</kbd> • Select: <kbd className="font-mono text-[10px] px-1 bg-ws-surface border border-ws-border rounded">Enter</kbd></span>
+          <span className="text-[11px]">WireSleuth Telemetry Console</span>
         </div>
       </div>
     </div>

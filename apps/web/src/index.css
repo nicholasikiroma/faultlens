@@ -18,139 +18,151 @@
 [data-theme="light"] {
   color-scheme: light;
 
-  /* 1. Backgrounds */
-  --ws-canvas: #F4F3EF;
-  --ws-sidebar: #ECEBE5;
+  /* 1. Backgrounds — Pure Bright White flagship experience */
+  --ws-canvas: #FFFFFF;
+  --ws-sidebar: #F8FAFC;
 
   /* 2. Surfaces */
   --ws-surface: #FFFFFF;
-  --ws-surface-elevated: #F9F8F5;
-  --ws-surface-subtle: #EFEEE9;
+  --ws-surface-elevated: #FFFFFF;
+  --ws-surface-subtle: #F3F5F7;
 
   /* 3. Text */
-  --ws-ink: #292D2A;
-  --ws-secondary: #626A63;
-  --ws-muted: #858B84;
+  --ws-ink: #202923;
+  --ws-secondary: #667085;
+  --ws-muted: #98A2B3;
 
   /* 4. Borders */
-  --ws-border: #E2E1DA;
-  --ws-border-subtle: #EAE9E3;
-  --ws-border-strong: #CECDC4;
+  --ws-border: #E5E7EB;
+  --ws-border-subtle: #F1F3F5;
+  --ws-border-strong: #D1D5DB;
 
-  /* 5. Accents & Interactive States (Muted Sage) */
-  --ws-accent: #56836A;
-  --ws-accent-hover: #486F59;
-  --ws-accent-active: #3D5E4B;
-  --ws-accent-subtle: rgba(86, 131, 106, 0.11);
-  --ws-accent-border: rgba(86, 131, 106, 0.30);
+  /* 5. Accents & Interactive States (Forest Sage #527B60) */
+  --ws-accent: #527B60;
+  --ws-accent-hover: #456851;
+  --ws-accent-active: #3A5643;
+  --ws-accent-subtle: rgba(82, 123, 96, 0.09);
+  --ws-accent-border: rgba(82, 123, 96, 0.25);
   --ws-accent-ink: #FFFFFF;
-  --ws-focus: #56836A;
+  --ws-focus: #527B60;
 
-  /* Primary Action Button */
-  --ws-btn-primary-bg: #4F7962;
-  --ws-btn-primary-hover: #436753;
-  --ws-btn-primary-active: #385645;
-  --ws-btn-primary-border: #436753;
+  /* Primary Action Button (Forest Sage) */
+  --ws-btn-primary-bg: #527B60;
+  --ws-btn-primary-hover: #456851;
+  --ws-btn-primary-active: #3A5643;
+  --ws-btn-primary-border: #456851;
   --ws-btn-primary-ink: #FFFFFF;
 
   /* 6. Semantic Status Colours */
-  /* Healthy / Success: Muted Green */
-  --ws-success-text: #2D6A45;
-  --ws-success-dot: #3B8457;
-  --ws-success-bg: #E7F1EA;
-  --ws-success-border: #C3DEC9;
+  /* Healthy / Forest Sage (#527B60) */
+  --ws-success-text: #245A38;
+  --ws-success-dot: #527B60;
+  --ws-success-bg: rgba(82, 123, 96, 0.10);
+  --ws-success-border: rgba(82, 123, 96, 0.25);
 
-  /* Warning: Warm Amber */
-  --ws-warning-text: #8C5814;
-  --ws-warning-dot: #C27D24;
-  --ws-warning-bg: #FAF1E2;
-  --ws-warning-border: #E8D0AA;
+  /* Warning / Butter Yellow (#E9B96E) */
+  --ws-warning-text: #925F11;
+  --ws-warning-dot: #D49B43;
+  --ws-warning-bg: rgba(233, 185, 110, 0.15);
+  --ws-warning-border: rgba(233, 185, 110, 0.35);
 
-  /* Critical / Error: Muted Red */
-  --ws-danger-text: #9E332E;
-  --ws-danger-dot: #C4453E;
-  --ws-danger-bg: #F9EBE9;
-  --ws-danger-border: #E9C4C1;
+  /* Critical / Soft Coral (#DB887C) */
+  --ws-danger-text: #B43E31;
+  --ws-danger-dot: #DB887C;
+  --ws-danger-bg: rgba(219, 136, 124, 0.14);
+  --ws-danger-border: rgba(219, 136, 124, 0.32);
 
-  /* Informational: Soft Blue */
-  --ws-info-text: #2B5B7C;
-  --ws-info-dot: #417AA1;
-  --ws-info-bg: #E8F0F6;
-  --ws-info-border: #C3D8E6;
+  /* Informational / Muted Lavender (#A6A4CF) */
+  --ws-info-text: #48457D;
+  --ws-info-dot: #7874B5;
+  --ws-info-bg: rgba(166, 164, 207, 0.16);
+  --ws-info-border: rgba(166, 164, 207, 0.35);
+
+  /* Lavender specific */
+  --ws-lavender-text: #48457D;
+  --ws-lavender-dot: #A6A4CF;
+  --ws-lavender-bg: rgba(166, 164, 207, 0.16);
+  --ws-lavender-border: rgba(166, 164, 207, 0.35);
 
   /* 7. Shadows & Overlays */
-  --ws-shadow-subtle: 0 1px 2px 0 rgba(24, 27, 26, 0.04);
-  --ws-shadow-elevated: 0 8px 24px -4px rgba(24, 27, 26, 0.10), 0 2px 6px -1px rgba(24, 27, 26, 0.05);
-  --ws-backdrop: rgba(24, 27, 26, 0.40);
+  --ws-shadow-subtle: 0 1px 3px 0 rgba(16, 24, 40, 0.05), 0 1px 2px -1px rgba(16, 24, 40, 0.05);
+  --ws-shadow-elevated: 0 10px 25px -4px rgba(16, 24, 40, 0.08), 0 4px 10px -2px rgba(16, 24, 40, 0.04);
+  --ws-backdrop: rgba(15, 23, 42, 0.35);
 }
 
 [data-theme="dark"] {
   color-scheme: dark;
 
-  /* 1. Backgrounds */
-  --ws-canvas: #181B1A;
-  --ws-sidebar: #141817;
+  /* 1. Backgrounds — True Pure Pitch Black */
+  --ws-canvas: #000000;
+  --ws-sidebar: #080808;
 
-  /* 2. Surfaces */
-  --ws-surface: #242927;
-  --ws-surface-elevated: #2D3430;
-  --ws-surface-subtle: #1D211F;
+  /* 2. Surfaces (Pure Neutral Dark, No Green Tint) */
+  --ws-surface: #111111;
+  --ws-surface-elevated: #181818;
+  --ws-surface-subtle: #141414;
 
-  /* 3. Text */
-  --ws-ink: #F0F2EF;
-  --ws-secondary: #A6AEA8;
-  --ws-muted: #747E77;
+  /* 3. Text (Brilliant Pure White & High-Contrast Neutral Greys) */
+  --ws-ink: #FFFFFF;
+  --ws-secondary: #A1A1AA;
+  --ws-muted: #71717A;
 
-  /* 4. Borders */
-  --ws-border: #343C37;
-  --ws-border-subtle: #2A312D;
-  --ws-border-strong: #434D47;
+  /* 4. Borders (Crisp Neutral Charcoal) */
+  --ws-border: #222222;
+  --ws-border-subtle: #1A1A1A;
+  --ws-border-strong: #333333;
 
-  /* 5. Accents & Interactive States (Soft Sage) */
-  --ws-accent: #8FB99A;
-  --ws-accent-hover: #A1C7AB;
-  --ws-accent-active: #7CA887;
-  --ws-accent-subtle: rgba(143, 185, 154, 0.12);
-  --ws-accent-border: rgba(143, 185, 154, 0.30);
-  --ws-accent-ink: #FFFFFF;
-  --ws-focus: #8FB99A;
+  /* 5. Accents & Interactive States (Luminous Mint/Emerald on Black) */
+  --ws-accent: #34D399;
+  --ws-accent-hover: #4ADE80;
+  --ws-accent-active: #10B981;
+  --ws-accent-subtle: rgba(52, 211, 153, 0.12);
+  --ws-accent-border: rgba(52, 211, 153, 0.28);
+  --ws-accent-ink: #000000;
+  --ws-focus: #34D399;
 
-  /* Primary Action Button (Grounded, Darker Non-Faded Deep Sage) */
-  --ws-btn-primary-bg: #2C523D;
-  --ws-btn-primary-hover: #37644B;
-  --ws-btn-primary-active: #224330;
-  --ws-btn-primary-border: #427858;
-  --ws-btn-primary-ink: #FFFFFF;
+  /* Primary Action Button (High-Contrast Radiant Accent on Black) */
+  --ws-btn-primary-bg: #34D399;
+  --ws-btn-primary-hover: #4ADE80;
+  --ws-btn-primary-active: #10B981;
+  --ws-btn-primary-border: #34D399;
+  --ws-btn-primary-ink: #000000;
 
-  /* 6. Semantic Status Colours */
-  /* Healthy / Success: Muted Green */
-  --ws-success-text: #82C59A;
-  --ws-success-dot: #5BAE78;
-  --ws-success-bg: rgba(91, 174, 120, 0.14);
-  --ws-success-border: rgba(91, 174, 120, 0.30);
+  /* 6. Semantic Status Colours (High Contrast Complementing Accents) */
+  /* Healthy / Ingress Verified (Luminous Mint) */
+  --ws-success-text: #34D399;
+  --ws-success-dot: #34D399;
+  --ws-success-bg: rgba(52, 211, 153, 0.12);
+  --ws-success-border: rgba(52, 211, 153, 0.30);
 
-  /* Warning: Warm Amber */
-  --ws-warning-text: #E2B76D;
-  --ws-warning-dot: #D49B43;
-  --ws-warning-bg: rgba(212, 155, 67, 0.14);
-  --ws-warning-border: rgba(212, 155, 67, 0.30);
+  /* Warning / Attention (Vivid Amber) */
+  --ws-warning-text: #FBBF24;
+  --ws-warning-dot: #FBBF24;
+  --ws-warning-bg: rgba(251, 191, 36, 0.12);
+  --ws-warning-border: rgba(251, 191, 36, 0.30);
 
-  /* Critical / Error: Muted Red */
-  --ws-danger-text: #E48983;
-  --ws-danger-dot: #D16059;
-  --ws-danger-bg: rgba(209, 96, 89, 0.15);
-  --ws-danger-border: rgba(209, 96, 89, 0.32);
+  /* Critical / Anomalies (Vivid Ruby Coral) */
+  --ws-danger-text: #F87171;
+  --ws-danger-dot: #F87171;
+  --ws-danger-bg: rgba(248, 113, 113, 0.14);
+  --ws-danger-border: rgba(248, 113, 113, 0.32);
 
-  /* Informational: Soft Blue */
-  --ws-info-text: #8EBAD9;
-  --ws-info-dot: #649EC7;
-  --ws-info-bg: rgba(100, 158, 199, 0.14);
-  --ws-info-border: rgba(100, 158, 199, 0.30);
+  /* Informational / Rule Receipts (Vivid Lavender Violet) */
+  --ws-info-text: #C084FC;
+  --ws-info-dot: #C084FC;
+  --ws-info-bg: rgba(192, 132, 252, 0.14);
+  --ws-info-border: rgba(192, 132, 252, 0.30);
+
+  /* Lavender specific */
+  --ws-lavender-text: #C084FC;
+  --ws-lavender-dot: #C084FC;
+  --ws-lavender-bg: rgba(192, 132, 252, 0.14);
+  --ws-lavender-border: rgba(192, 132, 252, 0.30);
 
   /* 7. Shadows & Overlays */
-  --ws-shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.18);
-  --ws-shadow-elevated: 0 12px 28px -6px rgba(0, 0, 0, 0.45), 0 4px 10px -3px rgba(0, 0, 0, 0.30);
-  --ws-backdrop: rgba(10, 12, 11, 0.62);
+  --ws-shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.80);
+  --ws-shadow-elevated: 0 16px 36px -8px rgba(0, 0, 0, 0.95), 0 4px 12px -2px rgba(0, 0, 0, 0.80);
+  --ws-backdrop: rgba(0, 0, 0, 0.80);
 }
 
 /* Custom telemetry scrollbar */
@@ -174,8 +186,54 @@
   outline-offset: 2px;
 }
 
+/* Centralized Typography Foundations */
+:root {
+  --ws-font-sans: 'Geist', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --ws-font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+body {
+  font-family: var(--ws-font-sans);
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.011em;
+}
+
+.font-mono,
+code,
+pre,
+kbd {
+  font-family: var(--ws-font-mono);
+  letter-spacing: -0.02em;
+}
+
 .tabular-nums {
   font-variant-numeric: tabular-nums;
+}
+
+/* Editorial & Tactile Developer Tool Utilities */
+.ws-hero-stat {
+  font-family: var(--ws-font-mono);
+  font-size: 2.75rem;
+  line-height: 1;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+
+.ws-eyebrow {
+  font-family: var(--ws-font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ws-tactile-btn {
+  transition: all 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ws-tactile-btn:active {
+  transform: translateY(1px);
 }
 
 /* Recorder Tape Reel Keyframes - Understated & Calm */

@@ -33,6 +33,7 @@
     "start:api": "tsx apps/api/src/http/main.ts",
     "start:worker": "tsx apps/worker/src/main.ts",
     "start:local": "tsx apps/api/src/seed/local-start.ts",
+    "start:commerce": "tsx apps/commerce-service/src/main.ts",
     "start:sdk-example": "tsx apps/sdk-example/src/main.ts",
     "test:sdk": "node --import tsx --test packages/sdk/src/sdk.test.ts",
     "test:seed": "node --import tsx --test apps/api/src/seed/seed.test.ts",

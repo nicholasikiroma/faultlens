@@ -57,11 +57,28 @@ export default {
             bg: 'var(--ws-info-bg)',
             border: 'var(--ws-info-border)',
           },
+          lavender: {
+            text: 'var(--ws-lavender-text)',
+            dot: 'var(--ws-lavender-dot)',
+            bg: 'var(--ws-lavender-bg)',
+            border: 'var(--ws-lavender-border)',
+          },
         }
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        mono: ['IBM Plex Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+      },
+      fontSize: {
+        'ws-title': ['28px', { lineHeight: '34px', letterSpacing: '-0.02em', fontWeight: '600' }],
+        'ws-section': ['16px', { lineHeight: '22px', letterSpacing: '-0.01em', fontWeight: '600' }],
+        'ws-card': ['14px', { lineHeight: '20px', fontWeight: '600' }],
+        'ws-body': ['13px', { lineHeight: '19px', fontWeight: '400' }],
+        'ws-nav': ['13px', { lineHeight: '18px', fontWeight: '500' }],
+        'ws-metric': ['28px', { lineHeight: '32px', letterSpacing: '-0.02em', fontWeight: '500' }],
+        'ws-label': ['10px', { lineHeight: '14px', letterSpacing: '0.04em', fontWeight: '500' }],
+        'ws-meta': ['11px', { lineHeight: '16px', fontWeight: '400' }],
+        'ws-table': ['13px', { lineHeight: '18px', fontWeight: '400' }],
       },
       boxShadow: {
         'subtle': 'var(--ws-shadow-subtle)',

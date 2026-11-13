@@ -40,6 +40,26 @@ interface IngestInput {
   headers: Readonly<Record<string, string>>;
 }
 
+interface IngestEpisodeMeta {
+  episodeId?: string;
+  primaryClass?: string;
+  statusCode?: number;
+  rootCauseSummary?: string;
+  exceptions?: Array<{ name: string; message: string }>;
+  downstreamCalls?: Array<{ statusCode?: number; origin?: string; path?: string }>;
+}
+
+function parseEpisodeMeta(headers: Readonly<Record<string, string>>): IngestEpisodeMeta | null {
+  const raw = headerValue(headers, "x-wiresleuth-episode");
+  if (!raw) return null;
+  try {
+    const jsonStr = Buffer.from(raw, "base64").toString("utf8");
+    return JSON.parse(jsonStr);
+  } catch {
+    return null;
+  }
+}
+
 /** Real traffic must authenticate with a scoped, hashed ingest key. */
 export function ingest(input: IngestInput): Promise<IngestResult> {
   return ingestDelivery(input, "api-key");
@@ -112,16 +132,74 @@ async function ingestDelivery(input: IngestInput, credential: "api-key" | "simul
           receivedAt,
           traceId: traceIdFrom(input.headers),
         });
+
+        // Decode FlightRecorder SDK telemetry metadata if attached
+        const episodeMeta = parseEpisodeMeta(input.headers);
+        let httpStatus: number | null = placed.outcome === "conflict" ? 409 : 200;
+        let errorCode: string | null = placed.outcome === "conflict" ? "conflict" : null;
+        let verificationState: Exclude<VerificationState, "RECEIVED"> = "VERIFIED";
+
+        if (episodeMeta) {
+          if (episodeMeta.statusCode && episodeMeta.statusCode >= 400) {
+            httpStatus = episodeMeta.statusCode;
+          }
+          if (episodeMeta.primaryClass === "RATE_LIMIT" || httpStatus === 429) {
+            httpStatus = 429;
+            errorCode = "rate_limit_429";
+          } else if (
+            episodeMeta.primaryClass === "DOWNSTREAM_TIMEOUT" ||
+            episodeMeta.primaryClass === "NETWORK_TIMEOUT" ||
+            httpStatus === 504
+          ) {
+            httpStatus = 504;
+            errorCode = "timeout";
+          } else if (episodeMeta.primaryClass === "INVALID_SIGNATURE") {
+            verificationState = "REJECTED";
+            errorCode = "invalid_signature";
+          } else if (episodeMeta.primaryClass === "UPSTREAM_5XX" || (httpStatus !== null && httpStatus >= 500)) {
+            errorCode = "upstream_5xx";
+          } else if (episodeMeta.primaryClass === "DUPLICATE_DELIVERY") {
+            errorCode = "duplicate_delivery";
+          }
+        }
+
         const attemptId = await insertAttempt(tx, {
           eventId: placed.eventId,
           integrationId: integration.id,
           workspaceId: integration.workspaceId,
           receivedAt,
-          verificationState: "VERIFIED",
-          httpStatus: placed.outcome === "conflict" ? 409 : 200,
-          errorCode: placed.outcome === "conflict" ? "conflict" : null,
+          verificationState,
+          httpStatus,
+          errorCode,
         });
+
+        if (episodeMeta && episodeMeta.primaryClass && episodeMeta.primaryClass !== "HEALTHY") {
+          await tx.orm.public.Evidence.create({
+            id: randomUUID(),
+            sourceKind: "DELIVERY_ATTEMPT",
+            sourceRecordId: attemptId,
+            summary: episodeMeta.rootCauseSummary ?? `Ingress flight incident: ${episodeMeta.primaryClass}`,
+            sha256Digest: digest,
+            trustTier: "A",
+            workspaceId: integration.workspaceId,
+          });
+        }
+
         await insertOutbox(tx, { eventId: placed.eventId, attemptId });
+
+        // Immediate background classification trigger for real-time dashboard visibility
+        if (placed.eventId) {
+          const eventIdToClassify = placed.eventId;
+          setImmediate(async () => {
+            try {
+              const { classifyJob } = await import("../../../worker/src/classify-job.ts");
+              await classifyJob(eventIdToClassify);
+            } catch {
+              // Gracefully handled by BullMQ worker
+            }
+          });
+        }
+
         return { outcome: placed.outcome, eventId: placed.eventId, attemptId };
       }
       default: {

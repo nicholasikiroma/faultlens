@@ -63,7 +63,7 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
         {/* Header */}
         <div className="p-5 border-b border-ws-border flex items-center justify-between bg-ws-surface-subtle">
           <div className="flex items-center gap-3">
-            <span className="font-mono text-xs font-semibold text-ws-accent bg-ws-accent-subtle border border-ws-accent-border px-2 py-0.5 rounded">
+            <span className="font-mono text-xs font-medium text-ws-accent bg-ws-accent-subtle border border-ws-accent-border px-2 py-0.5 rounded">
               {evidence.id}
             </span>
             <Badge epistemic={evidence.epistemic} />
@@ -77,7 +77,7 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-[11px] font-mono text-ws-muted">
+            <span className="text-xs font-mono text-ws-muted tabular-nums">
               {currentIndex + 1} / {allEvidence.length}
             </span>
             <button
@@ -102,24 +102,24 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           <div>
-            <h2 className="text-base font-bold text-ws-ink">{evidence.title}</h2>
-            <p className="text-xs text-ws-secondary mt-1 leading-relaxed">{evidence.description}</p>
+            <h2 className="text-[16px] font-semibold text-ws-ink font-sans">{evidence.title}</h2>
+            <p className="text-[13px] font-sans text-ws-secondary mt-1 leading-relaxed">{evidence.description}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3 p-3 rounded-md bg-ws-surface-subtle border border-ws-border text-xs">
             <div>
-              <span className="text-ws-muted block text-[10px] uppercase tracking-wider font-semibold font-mono">Source Probe</span>
-              <span className="font-mono text-ws-accent font-semibold">{evidence.source}</span>
+              <span className="text-ws-muted block text-[10px] uppercase tracking-wider font-medium font-mono">Source Probe</span>
+              <span className="font-mono text-ws-accent font-medium text-xs">{evidence.source}</span>
             </div>
             <div>
-              <span className="text-ws-muted block text-[10px] uppercase tracking-wider font-semibold font-mono">Epistemic Level</span>
-              <span className="font-semibold text-ws-ink">{evidence.epistemic}</span>
+              <span className="text-ws-muted block text-[10px] uppercase tracking-wider font-medium font-mono">Epistemic Level</span>
+              <span className="font-medium font-sans text-ws-ink text-xs">{evidence.epistemic}</span>
             </div>
           </div>
 
           {/* Masked Secret Alert if applicable */}
           {jsonString.includes('[REDACTED]') && (
-            <div className="flex items-center gap-2 p-3 rounded-md border border-ws-warning-border bg-ws-warning-bg text-xs text-ws-warning-text">
+            <div className="flex items-center gap-2 p-3 rounded-md border border-ws-warning-border bg-ws-warning-bg text-xs font-sans text-ws-warning-text leading-relaxed">
               <ShieldAlert className="w-4 h-4 text-ws-warning-dot flex-shrink-0" />
               <span>Sensitive authorization credentials and signatures were redacted at ingress.</span>
             </div>
@@ -128,13 +128,13 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
           {/* JSON Payload Inspector */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs font-semibold text-ws-ink">
+              <div className="flex items-center gap-2 text-[13px] font-semibold text-ws-ink font-sans">
                 <Terminal className="w-3.5 h-3.5 text-ws-accent" />
                 Raw Telemetry Payload
               </div>
               <button
                 onClick={handleCopy}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium bg-ws-surface-subtle border border-ws-border hover:bg-ws-surface-elevated text-ws-secondary hover:text-ws-ink transition-colors"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium font-sans bg-ws-surface-subtle border border-ws-border hover:bg-ws-surface-elevated text-ws-secondary hover:text-ws-ink transition-colors"
               >
                 {copied ? <Check className="w-3 h-3 text-ws-success-dot" /> : <Copy className="w-3 h-3" />}
                 {copied ? 'Copied' : 'Copy JSON'}
@@ -147,11 +147,11 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-ws-border bg-ws-surface-subtle flex items-center justify-between text-[11px] text-ws-muted">
-          <span className="font-mono">Use J / K to step • Esc to dismiss</span>
+        <div className="p-4 border-t border-ws-border bg-ws-surface-subtle flex items-center justify-between text-xs text-ws-muted font-sans">
+          <span>Use <kbd className="font-mono text-[10px] px-1 py-0.5 bg-ws-surface border border-ws-border rounded">J</kbd> / <kbd className="font-mono text-[10px] px-1 py-0.5 bg-ws-surface border border-ws-border rounded">K</kbd> to step • <kbd className="font-mono text-[10px] px-1 py-0.5 bg-ws-surface border border-ws-border rounded">Esc</kbd> to dismiss</span>
           <button
             onClick={onClose}
-            className="px-3.5 py-1.5 rounded-md bg-ws-surface-elevated hover:bg-ws-border text-ws-ink font-semibold border border-ws-border transition-colors"
+            className="px-3.5 py-1.5 rounded-md bg-ws-surface-elevated hover:bg-ws-border text-ws-ink font-medium font-sans border border-ws-border transition-colors text-xs"
           >
             Done
           </button>

@@ -16,14 +16,17 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 pb-2 border-b border-ws-border">
         <div>
-          <div className="text-[10px] font-mono font-semibold tracking-widest text-ws-accent uppercase">
-            CONNECTED SOURCES
+          <div className="ws-eyebrow text-ws-accent mb-1 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-ws-accent animate-ping" />
+            CONNECTED SOURCES // PASSIVE TAPS
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-ws-ink mt-0.5">Integrations</h1>
-          <p className="text-xs text-ws-secondary mt-1">
-            Observed webhook providers, message queues, and upstream HTTP microservices.
+          <h1 className="text-3xl font-bold tracking-tight text-ws-ink font-sans leading-tight">
+            Probes & Sources
+          </h1>
+          <p className="text-[14px] text-ws-secondary mt-1 font-sans leading-relaxed">
+            Observed webhook providers, message queues, and upstream HTTP microservices connected to the passive tap.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -31,7 +34,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
             onClick={() =>
               onShowToast('To connect an integration, mount the @wiresleuth/sdk middleware in your HTTP handler.')
             }
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-md bg-ws-btn-primary hover:bg-ws-btn-primary-hover active:bg-ws-btn-primary-active text-ws-btn-primary-ink border border-ws-btn-primary-border text-xs font-semibold shadow-subtle transition-colors"
+            className="ws-tactile-btn inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-ws-btn-primary hover:bg-ws-btn-primary-hover active:bg-ws-btn-primary-active text-ws-btn-primary-ink border border-ws-btn-primary-border text-[13px] font-medium font-sans shadow-subtle"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Connect New Source</span>
@@ -53,8 +56,8 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                     <Plug className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-ws-ink">{int.name}</h3>
-                    <p className="text-xs text-ws-muted">{int.type}</p>
+                    <h3 className="text-sm font-semibold text-ws-ink font-sans">{int.name}</h3>
+                    <p className="text-xs font-sans text-ws-muted">{int.type}</p>
                   </div>
                 </div>
               </div>
@@ -62,7 +65,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
               {/* Status Badge */}
               <div className="mt-4">
                 <span
-                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-semibold uppercase ${
+                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium uppercase ${
                     int.status === 'HEALTHY'
                       ? 'bg-ws-success-bg text-ws-success-text border border-ws-success-border'
                       : 'bg-ws-warning-bg text-ws-warning-text border border-ws-warning-border'
@@ -79,7 +82,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                   <span className="text-[10px] font-mono text-ws-muted uppercase block">
                     Failed Attempts
                   </span>
-                  <span className="text-lg font-mono font-bold text-ws-ink tabular-nums">
+                  <span className="text-lg font-mono font-medium text-ws-ink tabular-nums">
                     {int.failedAttempts}
                   </span>
                 </div>
@@ -87,7 +90,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
                   <span className="text-[10px] font-mono text-ws-muted uppercase block">
                     Last Event
                   </span>
-                  <span className="text-sm font-mono font-semibold text-ws-secondary">
+                  <span className="text-xs font-mono font-medium text-ws-secondary tabular-nums">
                     {int.lastSeen}
                   </span>
                 </div>
@@ -96,7 +99,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
 
             <button
               onClick={() => onInspectIntegration(int.name)}
-              className="w-full inline-flex items-center justify-center gap-2 py-2 px-3 rounded-md bg-ws-surface-subtle border border-ws-border hover:bg-ws-surface-elevated text-xs font-semibold text-ws-ink transition-colors"
+              className="w-full inline-flex items-center justify-center gap-2 py-2 px-3 rounded-md bg-ws-surface-subtle border border-ws-border hover:bg-ws-surface-elevated text-xs font-medium font-sans text-ws-ink transition-colors"
             >
               <span>Inspect Connected Incidents</span>
               <ExternalLink className="w-3.5 h-3.5 text-ws-accent" />
@@ -109,11 +112,11 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
           <div className="p-2.5 rounded-md bg-ws-surface border border-ws-border text-ws-accent">
             <Zap className="w-4 h-4" />
           </div>
-          <div className="text-xs font-bold text-ws-ink">Mount @wiresleuth/sdk</div>
-          <p className="text-xs text-ws-secondary leading-relaxed max-w-xs">
+          <div className="text-[13px] font-semibold text-ws-ink font-sans">Mount @wiresleuth/sdk</div>
+          <p className="text-xs font-sans text-ws-secondary leading-relaxed max-w-xs">
             Supports Express, Fastify, Next.js, Hono, and Node HTTP with passive stream taps and tamper-evident redaction.
           </p>
-          <code className="text-[11px] font-mono bg-ws-surface text-ws-accent px-3 py-1.5 rounded border border-ws-border">
+          <code className="text-xs font-mono bg-ws-surface text-ws-accent px-3 py-1.5 rounded border border-ws-border">
             npm i @wiresleuth/sdk
           </code>
         </div>

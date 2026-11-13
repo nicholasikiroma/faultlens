@@ -66,6 +66,7 @@ export interface Incident {
   status: IncidentStatus;
   seen: string;
   firstSeen: string;
+  lastSeenTimestamp?: number;
   known: string;
   suspect: string;
   next: string;

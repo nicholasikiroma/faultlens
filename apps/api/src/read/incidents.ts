@@ -61,7 +61,8 @@ export async function listIncidents(
 
   rows.sort(
     (left, right) =>
-      left.firstSeenAt.getTime() - right.firstSeenAt.getTime() ||
+      right.lastSeenAt.getTime() - left.lastSeenAt.getTime() ||
+      right.firstSeenAt.getTime() - left.firstSeenAt.getTime() ||
       left.id.localeCompare(right.id),
   );
 

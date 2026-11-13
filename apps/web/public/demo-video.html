@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WireSleuth – Demo Video Generator & Studio Exporter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #000000;
+      color: #FFFFFF;
+      font-family: 'Geist', -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .studio-container {
+      max-width: 1200px;
+      width: 100%;
+      background: #0A0A0A;
+      border: 1px solid #222222;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .studio-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #222222;
+      padding-bottom: 16px;
+    }
+    .brand-unit {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: #111111;
+      border: 1px solid #222222;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #34D399;
+      font-family: 'IBM Plex Mono', monospace;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .title-group h1 {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .title-group p {
+      font-size: 12px;
+      color: #A1A1AA;
+    }
+    .canvas-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000000;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #222222;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .controls-deck {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding-top: 8px;
+    }
+    .playback-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    button {
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+    .btn-record {
+      background: #34D399;
+      color: #000000;
+      border: 1px solid #34D399;
+    }
+    .btn-record:hover {
+      background: #4ADE80;
+    }
+    .btn-secondary {
+      background: #181818;
+      color: #FFFFFF;
+      border: 1px solid #333333;
+    }
+    .btn-secondary:hover {
+      background: #222222;
+    }
+    .timeline-scrubber {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .progress-track {
+      width: 100%;
+      height: 6px;
+      background: #181818;
+      border-radius: 3px;
+      overflow: hidden;
+      position: relative;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: #34D399;
+      border-radius: 3px;
+      transition: width 0.1s linear;
+    }
+    .time-labels {
+      display: flex;
+      justify-content: space-between;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: #71717A;
+    }
+    .subtitle-box {
+      background: #111111;
+      border: 1px solid #222222;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #E4E4E7;
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .speaker-pill {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      background: rgba(52, 211, 153, 0.15);
+      color: #34D399;
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      padding: 3px 8px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="studio-container">
+    <div class="studio-header">
+      <div class="brand-unit">
+        <div class="brand-icon">WS</div>
+        <div class="title-group">
+          <h1>WireSleuth Demo Video Studio</h1>
+          <p>Real-time Canvas Rendering · Synchronized Audio & SFX · 1-Click Video Export</p>
+        </div>
+      </div>
+      <div>
+        <span style="font-family:'IBM Plex Mono'; font-size:11px; color:#34D399; background:rgba(52,211,153,0.1); border:1px solid rgba(52,211,153,0.3); padding:4px 10px; border-radius:6px;">
+          ● GOOGLE FLOW COMPLIANT (1080p 60FPS)
+        </span>
+      </div>
+    </div>
+
+    <!-- 16:9 1080p Render Canvas -->
+    <div class="canvas-wrapper">
+      <canvas id="renderCanvas" width="1920" height="1080"></canvas>
+    </div>
+
+    <!-- Live Voiceover & Teleprompter Bar -->
+    <div class="subtitle-box">
+      <span class="speaker-pill" id="sceneBadge">SCENE 01 // HOOK</span>
+      <span id="subtitleText">Initializing WireSleuth Video Studio... Click "Play Preview" or "Record & Download Video".</span>
+    </div>
+
+    <!-- Timeline & Exporter Controls -->
+    <div class="controls-deck">
+      <div class="playback-controls">
+        <button id="playBtn" class="btn-secondary">
+          <span id="playIcon">▶</span>
+          <span id="playText">Play Preview</span>
+        </button>
+        <button id="recordBtn" class="btn-record">
+          <span>⏺</span>
+          <span id="recordText">Record & Download Video (.webm)</span>
+        </button>
+      </div>
+
+      <div class="timeline-scrubber">
+        <div class="progress-track">
+          <div id="progressFill" class="progress-fill"></div>
+        </div>
+        <div class="time-labels">
+          <span id="currentTime">00:00</span>
+          <span>Target: 01:30 (90s)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('renderCanvas');
+    const ctx = canvas.getContext('2d');
+    const playBtn = document.getElementById('playBtn');
+    const recordBtn = document.getElementById('recordBtn');
+    const progressFill = document.getElementById('progressFill');
+    const currentTimeLabel = document.getElementById('currentTime');
+    const sceneBadge = document.getElementById('sceneBadge');
+    const subtitleText = document.getElementById('subtitleText');
+
+    let isPlaying = false;
+    let isRecording = false;
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let audioCtx = null;
+
+    const TOTAL_DURATION = 90; // 90 seconds
+    let startTime = 0;
+    let elapsedTime = 0;
+    let animationFrameId = null;
+
+    // Web Audio Sound FX Synthesizer
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      return audioCtx;
+    }
+
+    function playBeep(freq = 440, duration = 0.08, type = 'sine') {
+      try {
+        const actx = getAudioContext();
+        const osc = actx.createOscillator();
+        const gain = actx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, actx.currentTime);
+        gain.gain.setValueAtTime(0.05, actx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(actx.destination);
+        osc.start();
+        osc.stop(actx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    // 6 Video Scenes matching the script
+    const SCENES = [
+      {
+        id: 'scene_1',
+        title: 'SCENE 01 // SILENT INTEGRATION CHAOS',
+        start: 0,
+        end: 12,
+        vo: "Every engineering team knows the feeling. A critical webhook drops. An upstream API silently rate-limits your service. And you're left digging through thousands of noisy log lines—wondering what actually broke.",
+        render: (t, progress) => {
+          // Terminal Chaos Background
+          ctx.fillStyle = '#060709';
+          ctx.fillRect(0, 0, 1920, 1080);
+
+          // Grid lines
+          ctx.strokeStyle = '#181C24';
+          ctx.lineWidth = 1;
+          for (let x = 0; x < 1920; x += 80) {
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 1080); ctx.stroke();
+          }
+
+          // Chaotic terminal error logs
+          ctx.font = '22px "IBM Plex Mono", monospace';
+          ctx.fillStyle = '#F87171';
+          const logs = [
+            `[FATAL] 10:42:01.120 stripe_ingress: HTTP 429 Too Many Requests (Rate limit exceeded)`,
+            `[ERROR] 10:42:02.441 webhook_handler: ETIMEDOUT connect to api.shopify.com:443`,
+            `[CRIT]  10:42:03.892 payload_verify: HMAC-SHA256 signature verification failed`,
+            `[WARN]  10:42:05.109 retry_worker: Exceeded backoff quota (5/5 retries exhausted)`,
+            `[DEBUG] 10:42:06.330 raw_dump: { "error": "quota_depleted", "secret": "[LEAKED_KEY]" }`,
+            `[FATAL] 10:42:07.781 async_queue: Consumer dropped 142 unhandled frames`
+          ];
+          logs.forEach((log, i) => {
+            const alpha = Math.min(1, Math.max(0.1, (progress * 8) - i));
+            ctx.fillStyle = i % 2 === 0 ? `rgba(248, 113, 113, ${alpha})` : `rgba(251, 191, 36, ${alpha})`;
+            ctx.fillText(log, 160, 280 + i * 50);
+          });
+
+          // Dramatic Overlay Headline
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = '700 68px "Geist", sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText("Integrations Fail Silently In Production.", 960, 720);
+
+          ctx.fillStyle = '#A1A1AA';
+          ctx.font = '400 30px "Geist", sans-serif';
+          ctx.fillText("Scattered logs. Masked secrets. Blind debugging.", 960, 780);
+          ctx.textAlign = 'left';
+        }
+      },
+      {
+        id: 'scene_2',
+        title: 'SCENE 02 // ENTER WIRESLEUTH FLIGHT DECK',
+        start: 12,
+        end: 28,
+        vo: "Meet WireSleuth. A developer observability platform designed like a precision flight recorder. Powered by zero-overhead AsyncLocalStorage and Undici tracing, WireSleuth passively taps incoming traffic without modifying your code.",
+        render: (t, progress) => {
+          // Pitch Black OLED Canvas
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(0, 0, 1920, 1080);
+
+          // Left Sidebar Frame
+          ctx.fillStyle = '#080808';
+          ctx.fillRect(0, 0, 420, 1080);
+          ctx.strokeStyle = '#222222';
+          ctx.beginPath(); ctx.moveTo(420, 0); ctx.lineTo(420, 1080); ctx.stroke();
+
+          // Brand Logo
+          ctx.fillStyle = '#34D399';
+          ctx.font = '700 36px "Geist", sans-serif';
+          ctx.fillText("WireSleuth", 80, 120);
+          ctx.fillStyle = '#71717A';
+          ctx.font = '500 18px "IBM Plex Mono", monospace';
+          ctx.fillText("MODEL WS-24 // PASSIVE WIRE TAP", 80, 155);
+
+          // Animated Flight Recorder Pod
+          ctx.fillStyle = '#111111';
+          ctx.strokeStyle = '#222222';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.roundRect(60, 200, 300, 240, 16);
+          ctx.fill(); ctx.stroke();
+
+          // Status Light
+          ctx.fillStyle = '#34D399';
+          ctx.beginPath(); ctx.arc(90, 235, 6, 0, Math.PI * 2); ctx.fill();
+          ctx.font = '600 16px "IBM Plex Mono", monospace';
+          ctx.fillText("REC ACTIVE", 110, 241);
+          ctx.fillStyle = '#A1A1AA';
+          ctx.fillText("00:15:10", 270, 241);
+
+          // Cassette tape window
+          ctx.fillStyle = '#050505';
+          ctx.roundRect(80, 270, 260, 90, 8);
+          ctx.fill();
+
+          // Animated Rotating Tape Reels
+          const angle = t * 4;
+          [140, 280].forEach((cx) => {
+            ctx.save();
+            ctx.translate(cx, 315);
+            ctx.rotate(angle);
+            ctx.strokeStyle = '#34D399';
+            ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.arc(0, 0, 24, 0, Math.PI * 2); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(-16, 0); ctx.lineTo(16, 0); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, -16); ctx.lineTo(0, 16); ctx.stroke();
+            ctx.restore();
+          });
+
+          // Buffer meter
+          ctx.fillStyle = '#71717A';
+          ctx.font = '14px "IBM Plex Mono", monospace';
+          ctx.fillText("BUFFER // ALS-STREAM", 80, 395);
+          ctx.fillStyle = '#A1A1AA';
+          ctx.fillText("4.8 / 64 KB", 260, 395);
+
+          // 8-segment LED bar
+          for (let s = 0; s < 8; s++) {
+            ctx.fillStyle = s < 5 ? '#34D399' : s < 7 ? '#FBBF24' : '#222222';
+            ctx.fillRect(80 + s * 33, 410, 28, 8);
+          }
+
+          // Main Stage Cockpit Header
+          ctx.fillStyle = '#34D399';
+          ctx.font = '600 18px "IBM Plex Mono", monospace';
+          ctx.fillText("● TELEMETRY COCKPIT // NODE 127.0.0.1:3000", 490, 120);
+
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = '700 64px "Geist", sans-serif';
+          ctx.fillText("The Ingress Flight Recorder", 490, 200);
+
+          ctx.fillStyle = '#A1A1AA';
+          ctx.font = '400 24px "Geist", sans-serif';
+          ctx.fillText("Continuous, zero-overhead tracing powered by AsyncLocalStorage.", 490, 250);
+
+          // Feature pill highlight
+          ctx.fillStyle = '#111111';
+          ctx.strokeStyle = '#34D399';
+          ctx.beginPath();
+          ctx.roundRect(490, 310, 360, 60, 10);
+          ctx.fill(); ctx.stroke();
+          ctx.fillStyle = '#34D399';
+          ctx.font = '600 20px "IBM Plex Mono", monospace';
+          ctx.fillText("✔ 0% PACKET LOSS TAP", 520, 347);
+        }
+      },
+      {
+        id: 'scene_3',
+        title: 'SCENE 03 // ASYMMETRIC COMMAND BRIDGE & WAVEFORM',
+        start: 28,
+        end: 45,
+        vo: "Instead of drowning you in thousands of isolated alerts, WireSleuth automatically fingerprints failure signatures into actionable cases. On the right, our live spectrum breaks down error taxonomy, while the master waveform tracks peak burst velocity across your fleet.",
+        render: (t, progress) => {
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(0, 0, 1920, 1080);
+
+          // Top Header
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = '700 48px "Geist", sans-serif';
+          ctx.fillText("Asymmetric Command Bridge", 120, 100);
+
+          // Left Hero Operational Alert Station (Card 1)
+          ctx.fillStyle = '#111111';
+          ctx.strokeStyle = '#222222';
+          ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.roundRect(120, 150, 650, 400, 16); ctx.fill(); ctx.stroke();
+
+          // Soft Coral top bar
+          ctx.fillStyle = '#F87171';
+          ctx.fillRect(120, 150, 650, 6);
+
+          ctx.fillStyle = '#F87171';
+          ctx.font = '600 18px "IBM Plex Mono", monospace';
+          ctx.fillText("● 03 CASES UNRESOLVED // URGENT TRIAGE", 160, 200);
+
+          // Huge Raycast Hero Stat
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = '700 96px "IBM Plex Mono", monospace';
+          ctx.fillText("03", 160, 310);
+          ctx.font = '500 22px "Geist", sans-serif';
+          ctx.fillStyle = '#F87171';
+          ctx.fillText("2 Critical Priority", 320, 275);
+          ctx.fillStyle = '#71717A';
+          ctx.fillText("Across 3 upstream providers", 320, 310);
+
+          // Top 2 Anomaly cases mini stream
+          ctx.fillStyle = '#181818';
+          ctx.roundRect(160, 350, 570, 75, 8); ctx.fill();
+          ctx.fillStyle = '#34D399';
+          ctx.font = '600 16px "IBM Plex Mono", monospace';
+          ctx.fillText("INC-1042 · RATE_LIMIT", 180, 380);
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = '600 18px "Geist", sans-serif';
+          ctx.fillText("Upstream rate-limit responses (3 events)", 180, 408);
+
+          ctx.fillStyle = '#181818';
+          ctx.roundRect(160, 440, 570, 75, 8); ctx.fill();
+          ctx.fillStyle = '#FBBF24';
+          ctx.font = '600 16px "IBM Plex Mono", monospace';
+          ctx.fillText("INC-1043 · SCHEMA_DRIFT", 180, 470);
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = '600 18px "Geist", sans-serif';
+          ctx.fillText("Stripe payload schema mismatch (7 events)", 180, 498);
+
+          // Right Unified Telemetry Deck
+          ctx.fillStyle = '#141414';
+          ctx.strokeStyle = '#222222';
+          ctx.beginPath(); ctx.roundRect(810, 150, 990, 400, 16); ctx.fill(); ctx.stroke();
+
+          // 3 Columns inside right deck
+          ctx.fillStyle = '#A1A1AA';
+          ctx.font = '16px "Geist", sans-serif';
+          ctx.fillText("Cumulative Ingress", 850, 200);
+          ctx.fillText("Reliability Index", 1180, 200);
+          ctx.fillText("Passive Wire Tap", 1510, 200);
+
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = '700 52px "IBM Plex Mono", monospace';
+          ctx.fillText("1,280", 850, 265);
+          ctx.fillText("98.4%", 1180, 265);
+          ctx.fillStyle = '#34D399';
+          ctx.fillText("0% Loss", 1510, 265);
+
+          // Live Ingress Spectrum Bar
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = '600 20px "Geist", sans-serif';
+          ctx.fillText("Live Ingress Failure Spectrum", 850, 360);
+
+          // Multi-segmented bar
+          ctx.fillStyle = '#F87171'; ctx.fillRect(850, 390, 380, 24); // Rate Limit
+          ctx.fillStyle = '#FBBF24'; ctx.fillRect(1230, 390, 260, 24); // Schema
+          ctx.fillStyle = '#C084FC'; ctx.fillRect(1490, 390, 180, 24); // Timeout
+          ctx.fillStyle = '#34D399'; ctx.fillRect(1670, 390, 90, 24); // Verified
+
+          // Legend
+          ctx.font = '14px "IBM Plex Mono", monospace';
+          ctx.fillStyle = '#F87171'; ctx.fillText("● RATE_LIMIT 42%", 850, 450);
+          ctx.fillStyle = '#FBBF24'; ctx.fillText("● SCHEMA 28%", 1080, 450);
+          ctx.fillStyle = '#C084FC'; ctx.fillText("● TIMEOUT 18%", 1280, 450);
+          ctx.fillStyle = '#34D399'; ctx.fillText("● VERIFIED 12%", 1500, 450);
+
+          // Bottom Master Waveform Stage
+          ctx.fillStyle = '#111111';
+          ctx.strokeStyle = '#222222';
+          ctx.beginPath(); ctx.roundRect(120, 580, 1680, 440, 16); ctx.fill(); ctx.stroke();
+
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = '600 22px "Geist", sans-serif';
+          ctx.fillText("Master Telemetry Waveform // 8H Rolling Window", 160, 630);
+
+          // Waveform line and area
+          ctx.beginPath();
+          ctx.moveTo(160, 920);
+          ctx.lineTo(400, 880);
+          ctx.lineTo(650, 880);
+          ctx.lineTo(880, 710); // Peak
+          ctx.lineTo(1100, 870);
+          ctx.lineTo(1350, 920);
+          ctx.lineTo(1760, 920);
+          ctx.strokeStyle = '#34D399';
+          ctx.lineWidth = 4;
+          ctx.stroke();
+
+          // Anomaly Callout Pin on Peak
+          ctx.fillStyle = '#181818';
+          ctx.strokeStyle = '#34D399';
+          ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.roundRect(800, 660, 220, 40, 8); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = '#34D399';
+          ctx.font = '600 14px "IBM Plex Mono", monospace';
+          ctx.fillText("PEAK: 191 ev/h (14:00)", 820, 685);
+        }
+      },
+      {
+        id: 'scene_4',
+        title: 'SCENE 04 // FORENSICS & EPISTEMIC SEPARATION',
+        start: 45,
+        end: 65,
+        vo: "Select any incident to inspect its forensic breakdown. WireSleuth separates epistemic truth: hard, deterministic rule receipts prove exactly what happened, while bounded AI hypotheses suggest your next safe verification check. And sensitive credentials never leave your machine.",
+        render: (t, progress) => {
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(0, 0, 1920, 1080);
+
+          // Investigation Header
+          ctx.fillStyle = '#34D399';
+          ctx.font = '600 16px "IBM Plex Mono", monospace';
+          ctx.fillText("← INCIDENT INVESTIGATION // INC-1042", 120, 100);
+
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = '700 52px "Geist", sans-serif';
+          ctx.fillText("Upstream rate-limit responses", 120, 165);
+
+          // Tri-Column Summary Strip
+          const cols = [
+            { title: "[1] WHAT WE KNOW", body: "Three attempts received HTTP 429 status code from Stripe billing webhook endpoint.", color: "#34D399" },
+            { title: "[2] WHAT WE SUSPECT", body: "Worker concurrency exceeds assigned 100 req/min rate limit during subscription renewal bursts.", color: "#FBBF24" },
+            { title: "[3] NEXT SAFE CHECK", body: "Inspect Retry-After response headers and increase exponential worker backoff multiplier.", color: "#C084FC" },
+          ];
+          cols.forEach((col, i) => {
+            const cx = 120 + i * 570;
+            ctx.fillStyle = '#111111';
+            ctx.strokeStyle = '#222222';
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.roundRect(cx, 200, 550, 160, 12); ctx.fill(); ctx.stroke();
+
+            ctx.fillStyle = col.color;
+            ctx.font = '600 16px "IBM Plex Mono", monospace';
+            ctx.fillText(col.title, cx + 24, 240);
+
+            ctx.fillStyle = '#E4E4E7';
+            ctx.font = '400 18px "Geist", sans-serif';
+            ctx.fillText(col.body.substring(0, 48), cx + 24, 280);
+            ctx.fillText(col.body.substring(48), cx + 24, 310);
+          });
+
+          // Left Workbench: Timeline
+          ctx.fillStyle = '#111111';
+          ctx.strokeStyle = '#222222';
+          ctx.beginPath(); ctx.roundRect(120, 390, 1050, 620, 16); ctx.fill(); ctx.stroke();
+
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = '600 22px "Geist", sans-serif';
+          ctx.fillText("Ingress Execution Timeline Checkpoints", 160, 440);
+
+          const checkpoints = [
+            { time: "10:00:00.120", title: "Webhook received & authenticated via HMAC-SHA256", status: "VERIFIED", color: "#34D399" },
+            { time: "10:00:01.345", title: "Upstream attempt_01 returned status 429 (Too Many Requests)", status: "WARN", color: "#FBBF24" },
+            { time: "10:02:01.890", title: "Retry attempt_02 saturated provider quota again", status: "FAILURE", color: "#F87171" },
+            { time: "10:05:03.412", title: "Deterministic rule RATE_LIMIT_V1 classified anomaly", status: "RULE", color: "#C084FC" }
+          ];
+
+          checkpoints.forEach((cp, i) => {
+            const cy = 480 + i * 115;
+            ctx.fillStyle = '#181818';
+            ctx.roundRect(160, cy, 970, 90, 10); ctx.fill();
+
+            ctx.fillStyle = '#71717A';
+            ctx.font = '15px "IBM Plex Mono", monospace';
+            ctx.fillText(cp.time, 190, cy + 50);
+
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '600 18px "Geist", sans-serif';
+            ctx.fillText(cp.title, 340, cy + 50);
+
+            ctx.fillStyle = cp.color;
+            ctx.font = '600 14px "IBM Plex Mono", monospace';
+            ctx.fillText(`[${cp.status}]`, 1020, cy + 50);
+          });
+
+          // Right Rail: Rule Findings & AI Hypotheses
+          ctx.fillStyle = '#111111';
+          ctx.strokeStyle = '#222222';
+          ctx.beginPath(); ctx.roundRect(1200, 390, 600, 620, 16); ctx.fill(); ctx.stroke();
+
+          // Rule findings card
+          ctx.fillStyle = '#C084FC';
+          ctx.font = '600 16px "IBM Plex Mono", monospace';
+          ctx.fillText("CPU // DETERMINISTIC RULE RECEIPTS", 1230, 440);
+          ctx.fillStyle = '#181818';
+          ctx.roundRect(1230, 465, 540, 140, 10); ctx.fill();
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = '600 18px "Geist", sans-serif';
+          ctx.fillText("Rule: Upstream Rate Quota Exhaustion", 1250, 505);
+          ctx.fillStyle = '#A1A1AA';
+          ctx.font = '14px "Geist", sans-serif';
+          ctx.fillText("Triggered on consecutive 429 status from billing endpoint.", 1250, 535);
+          ctx.fillStyle = '#C084FC';
+          ctx.font = '13px "IBM Plex Mono", monospace';
+          ctx.fillText("Receipt: rule_rate_limit_stripe_v1 · 3 matches", 1250, 575);
+
+          // Zero-Secret Redaction Drawer Box
+          ctx.fillStyle = '#FBBF24';
+          ctx.font = '600 16px "IBM Plex Mono", monospace';
+          ctx.fillText("SHIELD // ZERO-SECRET INGRESS REDACTION", 1230, 650);
+          ctx.fillStyle = '#050505';
+          ctx.roundRect(1230, 675, 540, 280, 10); ctx.fill();
+          ctx.font = '14px "IBM Plex Mono", monospace';
+          ctx.fillStyle = '#34D399';
+          ctx.fillText(`{`, 1260, 715);
+          ctx.fillStyle = '#A1A1AA';
+          ctx.fillText(`  "account_id": "act_88921",`, 1280, 745);
+          ctx.fillText(`  "secret_token": "[REDACTED_BEARER_KEY]",`, 1280, 775);
+          ctx.fillText(`  "signature": "[REDACTED_HMAC_SHA256]",`, 1280, 805);
+          ctx.fillText(`  "event": "invoice.payment_failed"`, 1280, 835);
+          ctx.fillStyle = '#34D399';
+          ctx.fillText(`}`, 1260, 865);
+        }
+      },
+      {
+        id: 'scene_5',
+        title: 'SCENE 05 // SYNTHETIC LAB & DUAL THEMES',
+        start: 65,
+        end: 78,
+        vo: "Need to test failure recovery before production? Use the built-in Failure Lab to simulate synthetic anomalies in seconds. And whether you prefer ultra-clean Bright White or high-contrast Pitch Black, WireSleuth is built for extended engineering work.",
+        render: (t, progress) => {
+          // Half black / half white split or toggle demonstration
+          const isWhiteTheme = (t % 6) > 3;
+
+          ctx.fillStyle = isWhiteTheme ? '#FFFFFF' : '#000000';
+          ctx.fillRect(0, 0, 1920, 1080);
+
+          ctx.fillStyle = isWhiteTheme ? '#202923' : '#FFFFFF';
+          ctx.font = '700 52px "Geist", sans-serif';
+          ctx.fillText("Failure Lab & Dual-Theme Experience", 120, 100);
+
+          ctx.fillStyle = isWhiteTheme ? '#667085' : '#A1A1AA';
+          ctx.font = '22px "Geist", sans-serif';
+          ctx.fillText(isWhiteTheme ? "Flagship Bright White (Pure #FFFFFF canvas, crisp slate sidebar)" : "Obsidian Pitch Black (Pure OLED black, high-contrast neon accents)", 120, 150);
+
+          // 4-Step Pipeline Visualizer
+          const steps = [
+            "Step 1: Egress Dispatch",
+            "Step 2: Redact & Verify",
+            "Step 3: Rule Classification",
+            "Step 4: Incident Emitted"
+          ];
+
+          steps.forEach((step, idx) => {
+            const sx = 120 + idx * 430;
+            ctx.fillStyle = isWhiteTheme ? '#F3F5F7' : '#111111';
+            ctx.strokeStyle = idx <= (Math.floor(t * 2) % 4) ? '#34D399' : (isWhiteTheme ? '#E5E7EB' : '#222222');
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.roundRect(sx, 220, 390, 200, 12); ctx.fill(); ctx.stroke();
+
+            ctx.fillStyle = '#34D399';
+            ctx.font = '600 16px "IBM Plex Mono", monospace';
+            ctx.fillText(`STAGE 0${idx + 1}`, sx + 24, 270);
+
+            ctx.fillStyle = isWhiteTheme ? '#202923' : '#FFFFFF';
+            ctx.font = '700 22px "Geist", sans-serif';
+            ctx.fillText(step, sx + 24, 320);
+
+            ctx.fillStyle = '#34D399';
+            ctx.font = '14px "IBM Plex Mono", monospace';
+            ctx.fillText(idx <= (Math.floor(t * 2) % 4) ? "● PROCESSED IN 24ms" : "○ WAITING", sx + 24, 370);
+          });
+
+          // Keyboard Command Palette Overlay
+          ctx.fillStyle = isWhiteTheme ? '#FFFFFF' : '#181818';
+          ctx.strokeStyle = isWhiteTheme ? '#E5E7EB' : '#333333';
+          ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.roundRect(460, 520, 1000, 420, 16); ctx.fill(); ctx.stroke();
+
+          ctx.fillStyle = '#34D399';
+          ctx.font = '600 16px "IBM Plex Mono", monospace';
+          ctx.fillText("⌘K COMMAND PALETTE", 500, 570);
+
+          ctx.fillStyle = isWhiteTheme ? '#202923' : '#FFFFFF';
+          ctx.font = '600 24px "Geist", sans-serif';
+          ctx.fillText("Run Scenario: Shopify Webhook Signature Drift", 500, 630);
+          ctx.fillStyle = isWhiteTheme ? '#667085' : '#A1A1AA';
+          ctx.font = '18px "Geist", sans-serif';
+          ctx.fillText("Injects payload with modified HMAC digest to test rule triage routing.", 500, 670);
+
+          // Simulated Toast Notification
+          ctx.fillStyle = isWhiteTheme ? '#FFFFFF' : '#111111';
+          ctx.strokeStyle = '#F87171';
+          ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.roundRect(1250, 780, 500, 110, 12); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = '#F87171';
+          ctx.font = '600 15px "IBM Plex Mono", monospace';
+          ctx.fillText("● REAL-TIME ANOMALY INGESTION", 1280, 820);
+          ctx.fillStyle = isWhiteTheme ? '#202923' : '#FFFFFF';
+          ctx.font = '600 17px "Geist", sans-serif';
+          ctx.fillText("INC-1044 · Dispatched & Classified", 1280, 855);
+        }
+      },
+      {
+        id: 'scene_6',
+        title: 'SCENE 06 // CALL TO ACTION & GET STARTED',
+        start: 78,
+        end: 90,
+        vo: "Stop debugging blind webhooks. Give your integrations a flight recorder. Install the WireSleuth SDK and take command of your ingress today.",
+        render: (t, progress) => {
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(0, 0, 1920, 1080);
+
+          // Radial glow
+          const grad = ctx.createRadialGradient(960, 450, 50, 960, 450, 600);
+          grad.addColorStop(0, 'rgba(52, 211, 153, 0.12)');
+          grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, 1920, 1080);
+
+          ctx.textAlign = 'center';
+
+          // Logo Icon
+          ctx.fillStyle = '#111111';
+          ctx.strokeStyle = '#34D399';
+          ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.roundRect(910, 240, 100, 100, 20); ctx.fill(); ctx.stroke();
+
+          ctx.fillStyle = '#34D399';
+          ctx.font = '700 48px "IBM Plex Mono", monospace';
+          ctx.fillText("WS", 960, 308);
+
+          // Title
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = '800 76px "Geist", sans-serif';
+          ctx.fillText("WireSleuth", 960, 430);
+
+          ctx.fillStyle = '#A1A1AA';
+          ctx.font = '500 28px "Geist", sans-serif';
+          ctx.fillText("The Ingress Flight Recorder for Modern Backend Services", 960, 490);
+
+          // Terminal install command box
+          ctx.fillStyle = '#0D0D0D';
+          ctx.strokeStyle = '#222222';
+          ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.roundRect(660, 570, 600, 80, 12); ctx.fill(); ctx.stroke();
+
+          ctx.fillStyle = '#34D399';
+          ctx.font = '600 26px "IBM Plex Mono", monospace';
+          ctx.fillText("$ npm install @wiresleuth/sdk", 960, 620);
+
+          ctx.fillStyle = '#71717A';
+          ctx.font = '500 20px "IBM Plex Mono", monospace';
+          ctx.fillText("github.com/wiresleuth/wiresleuth · Open Telemetry Standard", 960, 720);
+
+          ctx.textAlign = 'left';
+        }
+      }
+    ];
+
+    // Main animation loop
+    function animate(timestamp) {
+      if (!startTime) startTime = timestamp;
+      elapsedTime = (timestamp - startTime) / 1000;
+
+      if (elapsedTime >= TOTAL_DURATION) {
+        elapsedTime = TOTAL_DURATION;
+        stopPlayback();
+      }
+
+      // Update UI scrubbers
+      const pct = (elapsedTime / TOTAL_DURATION) * 100;
+      progressFill.style.width = `${pct}%`;
+
+      const mins = Math.floor(elapsedTime / 60);
+      const secs = Math.floor(elapsedTime % 60);
+      currentTimeLabel.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+      // Current scene
+      const activeScene = SCENES.find(s => elapsedTime >= s.start && elapsedTime < s.end) || SCENES[SCENES.length - 1];
+      sceneBadge.textContent = activeScene.title;
+      subtitleText.textContent = `"${activeScene.vo}"`;
+
+      // Render Scene
+      const sceneProgress = (elapsedTime - activeScene.start) / (activeScene.end - activeScene.start);
+      activeScene.render(elapsedTime, sceneProgress);
+
+      if (isPlaying) {
+        animationFrameId = requestAnimationFrame(animate);
+      }
+    }
+
+    function startPlayback() {
+      isPlaying = true;
+      startTime = performance.now() - (elapsedTime * 1000);
+      playBtn.classList.replace('btn-secondary', 'btn-record');
+      document.getElementById('playText').textContent = 'Pause';
+      document.getElementById('playIcon').textContent = '⏸';
+      playBeep(520, 0.1);
+      animationFrameId = requestAnimationFrame(animate);
+    }
+
+    function stopPlayback() {
+      isPlaying = false;
+      playBtn.classList.replace('btn-record', 'btn-secondary');
+      document.getElementById('playText').textContent = 'Play Preview';
+      document.getElementById('playIcon').textContent = '▶';
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+      if (isRecording && mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+      }
+    }
+
+    playBtn.addEventListener('click', () => {
+      if (isPlaying) {
+        stopPlayback();
+      } else {
+        if (elapsedTime >= TOTAL_DURATION) elapsedTime = 0;
+        startPlayback();
+      }
+    });
+
+    // Recording Engine using Canvas captureStream & MediaRecorder
+    recordBtn.addEventListener('click', () => {
+      if (isRecording) {
+        stopPlayback();
+        return;
+      }
+
+      elapsedTime = 0;
+      recordedChunks = [];
+
+      try {
+        const stream = canvas.captureStream(60); // 60 FPS
+        mediaRecorder = new MediaRecorder(stream, {
+          mimeType: MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+            ? 'video/webm;codecs=vp9'
+            : 'video/webm'
+        });
+
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data && e.data.size > 0) {
+            recordedChunks.push(e.data);
+          }
+        };
+
+        mediaRecorder.onstop = () => {
+          isRecording = false;
+          recordBtn.classList.replace('btn-secondary', 'btn-record');
+          document.getElementById('recordText').textContent = 'Record & Download Video (.webm)';
+
+          const blob = new Blob(recordedChunks, { type: 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = url;
+          a.download = 'WireSleuth_Product_Demo_1080p.webm';
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(() => {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+          }, 100);
+
+          alert("Video export complete! 'WireSleuth_Product_Demo_1080p.webm' has been downloaded.");
+        };
+
+        isRecording = true;
+        recordBtn.classList.replace('btn-record', 'btn-secondary');
+        document.getElementById('recordText').textContent = 'Recording in progress (Click to stop)...';
+
+        mediaRecorder.start();
+        startPlayback();
+      } catch (err) {
+        alert("MediaRecorder error: " + err.message);
+      }
+    });
+
+    // Initial first-frame render
+    SCENES[0].render(0, 0);
+  </script>
+</body>
+</html>
+
