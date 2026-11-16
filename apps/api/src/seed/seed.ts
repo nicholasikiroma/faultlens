@@ -65,7 +65,7 @@ export const SEED_INTEGRATIONS: readonly SeedIntegrationSpec[] = [
     slug: 'billing',
     endpointToken: 'seed-token-billing',
     signingSecret: 'seed-signing-secret-billing',
-    rawIngestKey: 'wsk_seed_billing_local_ingest_key_00000001',
+    rawIngestKey: 'flk_seed_billing_local_ingest_key_00000001',
     environment: 'local',
     endpoint: '/hooks/billing',
   },
@@ -73,7 +73,7 @@ export const SEED_INTEGRATIONS: readonly SeedIntegrationSpec[] = [
     slug: 'orders',
     endpointToken: 'seed-token-orders',
     signingSecret: 'seed-signing-secret-orders',
-    rawIngestKey: 'wsk_seed_orders_local_ingest_key_00000002',
+    rawIngestKey: 'flk_seed_orders_local_ingest_key_00000002',
     environment: 'local',
     endpoint: '/hooks/orders',
   },
@@ -325,7 +325,7 @@ export async function seedProductFixtures(options?: {
 }): Promise<SeedResult> {
   const workspaceId = (options?.workspaceId ?? config.workspaceId).trim();
   if (workspaceId.length === 0) {
-    throw new Error('WIRESLEUTH_WORKSPACE_ID must not be blank');
+    throw new Error('FAULTLENS_WORKSPACE_ID must not be blank');
   }
 
   await ensureProductSchema();
@@ -551,6 +551,13 @@ async function upsertIngestKey(
     createdAt: Date;
   },
 ): Promise<void> {
+  const existingByHash = await tx.orm.public.IngestKey.where({
+    keyHash: input.keyHash,
+  }).first();
+  if (existingByHash !== null) {
+    return;
+  }
+
   await tx.query(
     tx.raw.sql`
       INSERT INTO ingest_keys (
@@ -565,7 +572,12 @@ async function upsertIngestKey(
         CAST(${input.createdAt.toISOString()} AS timestamptz),
         NULL
       )
-      ON CONFLICT (key_hash) DO NOTHING
+      ON CONFLICT (id) DO UPDATE SET
+        integration_id = EXCLUDED.integration_id,
+        workspace_id = EXCLUDED.workspace_id,
+        environment = EXCLUDED.environment,
+        key_hash = EXCLUDED.key_hash,
+        revoked_at = NULL
     `
       .affectedCount()
       .build(),

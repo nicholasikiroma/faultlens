@@ -96,14 +96,14 @@ export {
 };
 export type { Transport, TransportOptions, DeliveryResult, WebhookCapture, WebhookOptions };
 
-export interface WireSleuthClientOptions extends Partial<TransportOptions>, FlightRecorderOptions {
+export interface FaultLensClientOptions extends Partial<TransportOptions>, FlightRecorderOptions {
   /** Opt into webhook observations / signing */
   webhooks?: WebhookOptions;
   /** Integration signing secret for webhook ingestion */
   signingSecret?: string;
 }
 
-export interface WireSleuthMiddlewareBundle {
+export interface FaultLensMiddlewareBundle {
   nodeHttp: (
     handler: (req: IncomingMessage, res: ServerResponse) => Promise<void> | void,
     options?: { routeTemplate?: string }
@@ -129,9 +129,9 @@ export class FlightRecorder {
   public readonly transport?: Transport;
   public readonly signingSecret?: string;
   public readonly webhooks?: WebhookCapture;
-  public readonly middleware: WireSleuthMiddlewareBundle;
+  public readonly middleware: FaultLensMiddlewareBundle;
 
-  constructor(public readonly options: WireSleuthClientOptions = {}) {
+  constructor(public readonly options: FaultLensClientOptions = {}) {
     this.sketch = new DeliveryHistorySketch();
     ensureUndiciObserverSubscribed();
     ensureProcessMonitorsInstalled();
@@ -273,7 +273,7 @@ export class FlightRecorder {
         this.shippedEpisodes.push(episode);
       }
 
-      // Non-blocking shipping to WireSleuth backend if transport and signingSecret are available
+      // Non-blocking shipping to FaultLens backend if transport and signingSecret are available
       if (decision.shouldShip && this.transport && this.signingSecret) {
         const captured = episode.bodyTap.capturedBytes;
         const rawBody: Buffer = captured && captured.length > 0
@@ -312,7 +312,7 @@ export class FlightRecorder {
             headers: {
               'content-type': 'application/json',
               [INGEST_SIGNATURE_HEADER]: signature,
-              'x-wiresleuth-episode': episodeMeta,
+              'x-faultlens-episode': episodeMeta,
             },
           }));
         }
@@ -330,12 +330,12 @@ export class FlightRecorder {
   }
 }
 
-export type WireSleuthClient = FlightRecorder;
+export type FaultLensClient = FlightRecorder;
 
-export function createWireSleuthClient(
-  options: WireSleuthClientOptions & { webhooks: WebhookOptions }
-): WireSleuthClient & { readonly webhooks: WebhookCapture };
-export function createWireSleuthClient(options: WireSleuthClientOptions): WireSleuthClient;
-export function createWireSleuthClient(options: WireSleuthClientOptions): WireSleuthClient {
+export function createFaultLensClient(
+  options: FaultLensClientOptions & { webhooks: WebhookOptions }
+): FaultLensClient & { readonly webhooks: WebhookCapture };
+export function createFaultLensClient(options: FaultLensClientOptions): FaultLensClient;
+export function createFaultLensClient(options: FaultLensClientOptions): FaultLensClient {
   return new FlightRecorder(options);
 }

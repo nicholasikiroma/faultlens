@@ -352,7 +352,7 @@ export const INITIAL_INCIDENTS: Incident[] = [
         title: 'Secret Key Rotation In Progress',
         reasoning: 'Shopify dashboard rotated production webhook signing secret at 07:55 UTC.',
         confidence: 'HIGH',
-        suggestedCheck: 'Update WIRESLEUTH_SIGNING_SECRET with new Shopify secret key.',
+        suggestedCheck: 'Update FAULTLENS_SIGNING_SECRET with new Shopify secret key.',
         feedback: 'none',
       },
     ],
@@ -493,7 +493,7 @@ export class ApiStore {
   private baseUrl = '';
 
   constructor() {
-    const cached = localStorage.getItem('ws_incidents');
+    const cached = localStorage.getItem('fl_incidents');
     let parsed: Incident[] | null = null;
     try {
       parsed = cached ? JSON.parse(cached) : null;
@@ -710,13 +710,13 @@ export class ApiStore {
     // If live, dispatch real synthetic delivery to /v1/ingest
     if (this.isLiveConnected) {
       try {
-        const ingestKey = 'wsk_seed_billing_local_ingest_key_00000001';
+        const ingestKey = 'flk_seed_billing_local_ingest_key_00000001';
         const res = await fetch(`${this.baseUrl}/v1/ingest`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${ingestKey}`,
-            'x-wiresleuth-signature': `sim_sig_${Date.now()}`,
+            'x-faultlens-signature': `sim_sig_${Date.now()}`,
           },
           body: JSON.stringify(scenario.samplePayload),
         });
@@ -747,7 +747,7 @@ export class ApiStore {
       seen: 'Just now',
       firstSeen: new Date().toLocaleTimeString(),
       known: `Telemetry captured simulated failure signature for ${scenario.cls}.`,
-      suspect: `Simulated test scenario executed from WireSleuth Playground.`,
+      suspect: `Simulated test scenario executed from FaultLens Playground.`,
       next: `Inspect flight timeline, attempts, and classified rule receipt.`,
       timeline: [
         {
@@ -771,7 +771,7 @@ export class ApiStore {
         {
           id: `evd_${newId}_1`,
           title: 'Simulator Egress Receipt',
-          description: 'Synthetic delivery injected via WireSleuth Playground.',
+          description: 'Synthetic delivery injected via FaultLens Playground.',
           source: 'flight_simulator',
           epistemic: 'OBSERVED',
           data: scenario.samplePayload,
@@ -863,13 +863,13 @@ export class ApiStore {
   }
 
   resetFixtures(): void {
-    localStorage.removeItem('ws_incidents');
+    localStorage.removeItem('fl_incidents');
     this.incidents = INITIAL_INCIDENTS;
   }
 
   private save(): void {
     try {
-      localStorage.setItem('ws_incidents', JSON.stringify(this.incidents));
+      localStorage.setItem('fl_incidents', JSON.stringify(this.incidents));
     } catch {
       // Storage full or unavailable
     }

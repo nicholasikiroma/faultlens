@@ -50,7 +50,7 @@ interface IngestEpisodeMeta {
 }
 
 function parseEpisodeMeta(headers: Readonly<Record<string, string>>): IngestEpisodeMeta | null {
-  const raw = headerValue(headers, "x-wiresleuth-episode");
+  const raw = headerValue(headers, "x-faultlens-episode");
   if (!raw) return null;
   try {
     const jsonStr = Buffer.from(raw, "base64").toString("utf8");

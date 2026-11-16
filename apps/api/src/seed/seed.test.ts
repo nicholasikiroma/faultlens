@@ -9,9 +9,9 @@ const TEST_ADMIN_TOKEN = 'local-dev-admin-token';
 const WORKSPACE = 'workspace-1';
 
 beforeEach(() => {
-  process.env['WIRESLEUTH_ADMIN_TOKEN'] = TEST_ADMIN_TOKEN;
-  process.env['WIRESLEUTH_WORKSPACE_ID'] = WORKSPACE;
-  process.env['WIRESLEUTH_ADMIN_ACTOR'] = 'local-admin';
+  process.env['FAULTLENS_ADMIN_TOKEN'] = TEST_ADMIN_TOKEN;
+  process.env['FAULTLENS_WORKSPACE_ID'] = WORKSPACE;
+  process.env['FAULTLENS_ADMIN_ACTOR'] = 'local-admin';
 });
 
 after(async () => {

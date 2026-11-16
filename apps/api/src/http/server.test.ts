@@ -15,10 +15,10 @@ const TOKEN = 'demo-token';
 const SECRET = 'simulator-secret';
 
 beforeEach(() => {
-  process.env['WIRESLEUTH_ADMIN_TOKEN'] = ADMIN;
-  process.env['WIRESLEUTH_WORKSPACE_ID'] = WORKSPACE;
-  process.env['WIRESLEUTH_ADMIN_ACTOR'] = 'local-admin';
-  delete process.env['WIRESLEUTH_SIMULATED_WEBHOOKS'];
+  process.env['FAULTLENS_ADMIN_TOKEN'] = ADMIN;
+  process.env['FAULTLENS_WORKSPACE_ID'] = WORKSPACE;
+  process.env['FAULTLENS_ADMIN_ACTOR'] = 'local-admin';
+  delete process.env['FAULTLENS_SIMULATED_WEBHOOKS'];
 });
 
 after(async () => {
@@ -206,7 +206,7 @@ test('POST /hooks/:token is 404 unless simulated webhooks are enabled', async ()
   }
   assert.equal((await db.orm.public.WebhookEvent.all()).length, 0);
 
-  process.env['WIRESLEUTH_SIMULATED_WEBHOOKS'] = '0';
+  process.env['FAULTLENS_SIMULATED_WEBHOOKS'] = '0';
   const zero = await startApiServer({ port: 0, host: '127.0.0.1' });
   try {
     const response = await fetch(`${zero.url}/hooks/${TOKEN}`, hookInit());
@@ -215,7 +215,7 @@ test('POST /hooks/:token is 404 unless simulated webhooks are enabled', async ()
     await zero.close();
   }
 
-  process.env['WIRESLEUTH_SIMULATED_WEBHOOKS'] = '1';
+  process.env['FAULTLENS_SIMULATED_WEBHOOKS'] = '1';
   const enabled = await startApiServer({ port: 0, host: '127.0.0.1' });
   try {
     const response = await fetch(`${enabled.url}/hooks/${TOKEN}`, hookInit());

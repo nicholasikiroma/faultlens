@@ -28,7 +28,7 @@ import { StreamingHmac } from './crypto-sketch.js';
  *     for a complete wire-body HMAC digest.
  */
 
-const TAPPED_SYMBOL = Symbol.for('wiresleuth.stream_tapped');
+const TAPPED_SYMBOL = Symbol.for('faultlens.stream_tapped');
 
 export interface PassiveTapOptions {
   maxTapBytes?: number;

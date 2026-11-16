@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { Incident } from '../types';
-import { Activity, BarChart2, ShieldCheck, TrendingUp, Clock, Layers } from 'lucide-react';
+import { BarChart2, ShieldCheck, TrendingUp } from 'lucide-react';
 
 interface SparklinePoint {
   hour: string;
@@ -9,21 +9,18 @@ interface SparklinePoint {
 
 interface SparklineProps {
   incidents?: Incident[];
-  onSelectIncident?: (id: string) => void;
 }
 
-export const Sparkline: React.FC<SparklineProps> = ({ incidents = [], onSelectIncident }) => {
+export const Sparkline: React.FC<SparklineProps> = ({ incidents = [] }) => {
   const [hoveredPoint, setHoveredPoint] = useState<SparklinePoint | null>(null);
   const [activeWindow, setActiveWindow] = useState<'1H' | '8H' | '24H'>('8H');
 
-  // Generate dynamic hourly distribution from real live incidents
   const now = new Date();
   const currentHour = now.getHours();
 
   const dynamicHourlyData: SparklinePoint[] = Array.from({ length: 8 }, (_, idx) => {
     const hourVal = (currentHour - 7 + idx + 24) % 24;
     const hourStr = `${hourVal.toString().padStart(2, '0')}:00`;
-    // Weight points based on real live incident events
     const matchingIncidents = incidents.filter((_, iIdx) => iIdx % 8 === idx);
     const count = matchingIncidents.reduce((sum, inc) => sum + (inc.events || 1), 0);
     return {
@@ -33,7 +30,7 @@ export const Sparkline: React.FC<SparklineProps> = ({ incidents = [], onSelectIn
   });
 
   const width = 640;
-  const height = 175;
+  const height = 165;
   const paddingX = 40;
   const paddingY = 20;
 
@@ -49,7 +46,6 @@ export const Sparkline: React.FC<SparklineProps> = ({ incidents = [], onSelectIn
   const pathD = points.reduce((acc, p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`), '');
   const areaD = `${pathD} L ${points[points.length - 1].x} ${height - paddingY} L ${points[0].x} ${height - paddingY} Z`;
 
-  // Dynamic Telemetry Metrics derived from live stream
   const totalEvents = incidents.reduce((sum, inc) => sum + (inc.events || 1), 0);
 
   const peakPoint = dynamicHourlyData.reduce(
@@ -64,7 +60,6 @@ export const Sparkline: React.FC<SparklineProps> = ({ incidents = [], onSelectIn
 
   const avgRate = Math.round(totalEvents / 8);
 
-  // Group by Integration source
   const integrationStats = incidents.reduce((acc, inc) => {
     const name = inc.integration || 'Internal';
     acc[name] = (acc[name] || 0) + (inc.events || 1);
@@ -77,7 +72,6 @@ export const Sparkline: React.FC<SparklineProps> = ({ incidents = [], onSelectIn
 
   const uniqueIntegrationsCount = Object.keys(integrationStats).length;
 
-  // Group by Failure Class
   const classStats = incidents.reduce((acc, inc) => {
     const cls = inc.cls || 'UNKNOWN';
     acc[cls] = (acc[cls] || 0) + (inc.events || 1);
@@ -88,73 +82,64 @@ export const Sparkline: React.FC<SparklineProps> = ({ incidents = [], onSelectIn
 
   return (
     <div className="flex flex-col justify-between h-full space-y-4">
-      {/* Chart Top Header & Window Controls */}
       <div>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-ws-ink font-sans text-sm">Live Ingress Telemetry Waveform</span>
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono text-ws-accent bg-ws-accent-subtle border border-ws-accent-border font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-ws-accent animate-ping" />
-                LOSSLESS TAP
-              </span>
-            </div>
-            <p className="text-xs font-sans text-ws-secondary mt-0.5">
-              Continuous failure rate across <span className="font-mono text-ws-ink font-medium">{incidents.length}</span> active incident clusters
+            <h2 className="font-semibold text-fl-ink font-sans text-fl-section">
+              Incident Event Activity
+            </h2>
+            <p className="text-xs font-sans text-fl-secondary mt-0.5">
+              Failure observation rate across{' '}
+              <span className="font-mono text-fl-ink font-medium">{incidents.length}</span> incident clusters
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Window selector */}
-            <div className="flex items-center p-0.5 rounded-md bg-ws-surface border border-ws-border text-[11px] font-mono">
-              {(['1H', '8H', '24H'] as const).map((win) => (
-                <button
-                  key={win}
-                  onClick={() => setActiveWindow(win)}
-                  className={`px-2 py-0.5 rounded transition-colors ${
-                    activeWindow === win
-                      ? 'bg-ws-surface-subtle text-ws-ink font-semibold border border-ws-border shadow-subtle'
-                      : 'text-ws-muted hover:text-ws-secondary'
-                  }`}
-                >
-                  {win}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-ws-surface border border-ws-border text-[10px] font-mono text-ws-secondary font-medium tracking-wide uppercase">
-              <span className="w-1.5 h-1.5 rounded-full bg-ws-success-dot animate-pulse" />
-              <span>LIVE</span>
-            </div>
+          <div className="flex items-center p-0.5 rounded-lg bg-fl-surface-subtle border border-fl-border text-[11px] font-mono self-start sm:self-auto">
+            {(['1H', '8H', '24H'] as const).map((win) => (
+              <button
+                key={win}
+                type="button"
+                onClick={() => setActiveWindow(win)}
+                className={`px-2.5 py-1 rounded-md transition-colors ${
+                  activeWindow === win
+                    ? 'bg-fl-surface text-fl-ink font-semibold border border-fl-border shadow-subtle'
+                    : 'text-fl-muted hover:text-fl-secondary border border-transparent'
+                }`}
+              >
+                {win}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* SVG Graph Container */}
-        <div className="relative bg-ws-surface-subtle rounded-md border border-ws-border-subtle p-4 overflow-hidden">
-          {/* Hover Tooltip */}
+        <div className="relative bg-fl-surface-subtle rounded-lg border border-fl-border-subtle p-4 overflow-hidden">
           {hoveredPoint && (
-            <div className="absolute top-2.5 right-4 text-xs font-sans bg-ws-surface-elevated border border-ws-border text-ws-ink px-2.5 py-1 rounded shadow-subtle z-10">
-              <span className="font-mono tabular-nums">{hoveredPoint.hour}</span>: <strong className="text-ws-accent font-mono font-medium tabular-nums">{hoveredPoint.count} events</strong>
+            <div className="absolute top-2.5 right-4 text-xs font-sans bg-fl-surface-elevated border border-fl-border text-fl-ink px-2.5 py-1 rounded-md shadow-subtle z-10">
+              <span className="font-mono tabular-nums">{hoveredPoint.hour}</span>:{' '}
+              <strong className="text-fl-accent-text font-mono font-medium tabular-nums">
+                {hoveredPoint.count} events
+              </strong>
             </div>
           )}
 
-          {/* Peak Indicator Callout on Graph */}
           {!hoveredPoint && peakPoint.count > 0 && (
-            <div className="absolute top-2.5 right-4 text-[11px] font-mono bg-ws-surface-elevated/90 border border-ws-border-subtle text-ws-secondary px-2 py-0.5 rounded z-10 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-ws-accent" />
-              <span>Peak: <strong className="text-ws-ink font-medium tabular-nums">{peakPoint.count} ev/h</strong> at {peakPoint.hour}</span>
+            <div className="absolute top-2.5 right-4 text-[11px] font-mono bg-fl-surface-elevated/90 border border-fl-border text-fl-secondary px-2.5 py-1 rounded-md z-10 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-fl-accent" aria-hidden="true" />
+              <span>
+                Peak: <strong className="text-fl-ink font-medium tabular-nums">{peakPoint.count} ev/h</strong> at{' '}
+                {peakPoint.hour}
+              </span>
             </div>
           )}
 
-          <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-44 overflow-visible">
+          <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-40 overflow-visible" role="img" aria-label="Failure observation rate chart">
             <defs>
-              <linearGradient id="telemetryGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--ws-accent)" stopOpacity="0.22" />
-                <stop offset="100%" stopColor="var(--ws-accent)" stopOpacity="0.0" />
+              <linearGradient id="faultlensChartGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="var(--fl-accent)" stopOpacity="0.24" />
+                <stop offset="100%" stopColor="var(--fl-accent)" stopOpacity="0.0" />
               </linearGradient>
             </defs>
 
-            {/* Grid horizontal lines */}
             {[0, Math.floor(maxCount / 2), maxCount].map((val) => {
               const y = height - paddingY - (val / maxCount) * (height - paddingY * 2);
               return (
@@ -165,7 +150,7 @@ export const Sparkline: React.FC<SparklineProps> = ({ incidents = [], onSelectIn
                     x2={width - paddingX}
                     y2={y}
                     stroke="currentColor"
-                    className="text-ws-border"
+                    className="text-fl-border"
                     strokeWidth="1"
                     strokeDasharray="2 3"
                   />
@@ -173,7 +158,7 @@ export const Sparkline: React.FC<SparklineProps> = ({ incidents = [], onSelectIn
                     x={paddingX - 10}
                     y={y + 3}
                     textAnchor="end"
-                    className="fill-ws-muted font-mono"
+                    className="fill-fl-muted font-mono"
                     fontSize="9"
                   >
                     {val}
@@ -182,33 +167,29 @@ export const Sparkline: React.FC<SparklineProps> = ({ incidents = [], onSelectIn
               );
             })}
 
-            {/* Peak vertical dashed indicator line */}
             {peakPointOnChart && peakPointOnChart.count > 0 && (
               <line
                 x1={peakPointOnChart.x}
                 y1={peakPointOnChart.y}
                 x2={peakPointOnChart.x}
                 y2={height - paddingY}
-                stroke="var(--ws-accent)"
+                stroke="var(--fl-accent)"
                 strokeWidth="1"
                 strokeDasharray="2 2"
                 opacity="0.35"
               />
             )}
 
-            {/* Fill area */}
-            <path d={areaD} fill="url(#telemetryGrad)" />
-            {/* Main stroke line */}
-            <path d={pathD} fill="none" stroke="var(--ws-accent)" strokeWidth="2" strokeLinecap="round" />
+            <path d={areaD} fill="url(#faultlensChartGrad)" />
+            <path d={pathD} fill="none" stroke="var(--fl-accent)" strokeWidth="2" strokeLinecap="round" />
 
-            {/* Interactive Points */}
             {points.map((p, i) => (
               <circle
                 key={i}
                 cx={p.x}
                 cy={p.y}
                 r={hoveredPoint?.hour === p.hour ? 5 : p.count === peakPoint.count && p.count > 0 ? 4 : 3}
-                className="fill-ws-surface stroke-ws-accent cursor-pointer transition-all duration-150"
+                className="fill-fl-surface stroke-fl-accent cursor-pointer transition-all duration-150"
                 strokeWidth="2"
                 onMouseEnter={() => setHoveredPoint(p)}
                 onMouseLeave={() => setHoveredPoint(null)}
@@ -216,8 +197,7 @@ export const Sparkline: React.FC<SparklineProps> = ({ incidents = [], onSelectIn
             ))}
           </svg>
 
-          {/* X-axis time labels */}
-          <div className="flex justify-between px-10 mt-2 text-[10px] font-mono text-ws-muted tabular-nums">
+          <div className="flex justify-between px-10 mt-2 text-[10px] font-mono text-fl-muted tabular-nums">
             {dataPoints.map((dp, idx) => (
               <span key={idx}>{dp.hour}</span>
             ))}
@@ -225,52 +205,52 @@ export const Sparkline: React.FC<SparklineProps> = ({ incidents = [], onSelectIn
         </div>
       </div>
 
-      {/* Additional Telemetry Information Panel (Fills previous gap with real insight) */}
-      <div className="pt-3 border-t border-ws-border grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {/* Metric Module 1: Ingress Velocity & Window Stats */}
-        <div className="p-3 rounded-md bg-ws-surface-subtle border border-ws-border-subtle flex flex-col justify-between space-y-2">
-          <div className="flex items-center justify-between text-[10px] font-mono text-ws-muted uppercase tracking-wider">
+      {/* Diagnostic Summary Strip */}
+      <div className="pt-3 border-t border-fl-border grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="p-3.5 rounded-lg bg-fl-surface-subtle border border-fl-border-subtle flex flex-col justify-between space-y-2">
+          <div className="flex items-center justify-between text-[10px] font-mono text-fl-muted uppercase tracking-wider">
             <span>Stream Velocity</span>
-            <TrendingUp className="w-3.5 h-3.5 text-ws-accent" />
+            <TrendingUp className="w-3.5 h-3.5 text-fl-accent" aria-hidden="true" />
           </div>
           <div>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-xl font-mono font-medium text-ws-ink tabular-nums">
+              <span className="text-xl font-mono font-medium text-fl-ink tabular-nums">
                 {peakPoint.count}
               </span>
-              <span className="text-[11px] font-mono text-ws-muted">peak ev/h</span>
+              <span className="text-[11px] font-mono text-fl-muted">peak ev/h</span>
             </div>
-            <div className="text-[11px] font-sans text-ws-secondary mt-0.5">
-              Recorded at <span className="font-mono text-ws-ink font-medium">{peakPoint.hour}</span>
+            <div className="text-xs font-sans text-fl-secondary mt-0.5">
+              Recorded at <span className="font-mono text-fl-ink font-medium">{peakPoint.hour}</span>
             </div>
           </div>
-          <div className="pt-2 border-t border-ws-border/60 flex items-center justify-between text-[10px] font-mono text-ws-muted">
+          <div className="pt-2 border-t border-fl-border flex items-center justify-between text-[11px] font-mono text-fl-muted">
             <span>Window Mean</span>
-            <span className="text-ws-secondary font-medium tabular-nums">~{avgRate} ev/h</span>
+            <span className="text-fl-secondary font-medium tabular-nums">~{avgRate} ev/h</span>
           </div>
         </div>
 
-        {/* Metric Module 2: Source Distribution */}
-        <div className="p-3 rounded-md bg-ws-surface-subtle border border-ws-border-subtle flex flex-col justify-between space-y-2">
-          <div className="flex items-center justify-between text-[10px] font-mono text-ws-muted uppercase tracking-wider">
+        <div className="p-3.5 rounded-lg bg-fl-surface-subtle border border-fl-border-subtle flex flex-col justify-between space-y-2">
+          <div className="flex items-center justify-between text-[10px] font-mono text-fl-muted uppercase tracking-wider">
             <span>Source Distribution</span>
-            <BarChart2 className="w-3.5 h-3.5 text-ws-accent" />
+            <BarChart2 className="w-3.5 h-3.5 text-fl-accent" aria-hidden="true" />
           </div>
           <div className="space-y-1.5">
             {sortedIntegrations.length === 0 ? (
-              <div className="text-xs text-ws-muted font-sans">No sources active</div>
+              <div className="text-xs text-fl-muted font-sans">No sources active</div>
             ) : (
               sortedIntegrations.map(([name, count]) => {
                 const pct = Math.round((count / Math.max(1, totalEvents)) * 100);
                 return (
                   <div key={name} className="space-y-0.5">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="font-sans text-ws-ink font-medium truncate max-w-[90px]">{name}</span>
-                      <span className="font-mono text-[10px] text-ws-secondary tabular-nums">{pct}% ({count})</span>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-sans text-fl-ink font-medium truncate max-w-[110px]">{name}</span>
+                      <span className="font-mono text-[11px] text-fl-secondary tabular-nums">
+                        {pct}% ({count})
+                      </span>
                     </div>
-                    <div className="h-1 w-full bg-ws-border rounded-full overflow-hidden">
+                    <div className="h-1 w-full bg-fl-border rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-ws-accent rounded-full transition-all duration-300"
+                        className="h-full bg-fl-accent rounded-full transition-all duration-300"
                         style={{ width: `${Math.max(6, pct)}%` }}
                       />
                     </div>
@@ -279,30 +259,29 @@ export const Sparkline: React.FC<SparklineProps> = ({ incidents = [], onSelectIn
               })
             )}
           </div>
-          <div className="pt-1.5 border-t border-ws-border/60 text-[10px] font-mono text-ws-muted flex items-center justify-between">
-            <span>Observed Probes</span>
-            <span className="text-ws-secondary font-medium">{uniqueIntegrationsCount} active</span>
+          <div className="pt-1.5 border-t border-fl-border text-[11px] font-mono text-fl-muted flex items-center justify-between">
+            <span>Observed Sources</span>
+            <span className="text-fl-secondary font-medium">{uniqueIntegrationsCount} active</span>
           </div>
         </div>
 
-        {/* Metric Module 3: Ingress Integrity & Diagnostics */}
-        <div className="p-3 rounded-md bg-ws-surface-subtle border border-ws-border-subtle flex flex-col justify-between space-y-2">
-          <div className="flex items-center justify-between text-[10px] font-mono text-ws-muted uppercase tracking-wider">
-            <span>Ingress Integrity</span>
-            <ShieldCheck className="w-3.5 h-3.5 text-ws-success-dot" />
+        <div className="p-3.5 rounded-lg bg-fl-surface-subtle border border-fl-border-subtle flex flex-col justify-between space-y-2">
+          <div className="flex items-center justify-between text-[10px] font-mono text-fl-muted uppercase tracking-wider">
+            <span>Rule Classification</span>
+            <ShieldCheck className="w-3.5 h-3.5 text-fl-success-dot" aria-hidden="true" />
           </div>
           <div>
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-ws-ink font-sans">
-              <span className="w-1.5 h-1.5 rounded-full bg-ws-success-dot" />
-              <span>Lossless Passive Tap</span>
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-fl-ink font-sans">
+              <span className="w-1.5 h-1.5 rounded-full bg-fl-success-dot" aria-hidden="true" />
+              <span>Deterministic Engine</span>
             </div>
-            <p className="text-[11px] font-sans text-ws-secondary mt-1 leading-relaxed">
-              Deterministic rule evaluation against redacted payloads & traces.
+            <p className="text-xs font-sans text-fl-secondary mt-1 leading-relaxed">
+              Evidence-backed classification over redacted payloads and delivery attempts.
             </p>
           </div>
-          <div className="pt-2 border-t border-ws-border/60 flex items-center justify-between text-[10px] font-mono text-ws-muted">
-            <span>Primary Anomaly</span>
-            <span className="font-mono text-ws-ink font-medium text-[10px] bg-ws-surface px-1.5 py-0.5 rounded border border-ws-border">
+          <div className="pt-2 border-t border-fl-border flex items-center justify-between text-[11px] font-mono text-fl-muted">
+            <span>Top Class</span>
+            <span className="font-mono text-fl-ink font-medium text-[10px] bg-fl-surface px-1.5 py-0.5 rounded border border-fl-border">
               {primaryClass}
             </span>
           </div>

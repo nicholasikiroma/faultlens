@@ -11,7 +11,7 @@ docker compose up --build -d
 ```
 
 This command:
-1. Starts `postgres` (database `wiresleuth` on port `5432`) and `redis` (port `6379`).
+1. Starts `postgres` (database `faultlens` on port `5432`) and `redis` (port `6379`).
 2. Runs the `seed` service (`npm run seed`), which applies the idempotent schema (`prisma/sql/incidents.sql`), seeds two integrations (`/hooks/billing` and `/hooks/orders`) and the eight deterministic failure scenarios, and runs the deterministic rule engine (`classifyJob`) to group them into incidents.
 3. Starts the `api` service (`npm run start:api` on `http://127.0.0.1:3000`) and the `worker` service (`npm run start:worker`) with no model key.
 
@@ -19,7 +19,7 @@ Re-running `docker compose up --build -d` or `npm run seed` is idempotent: deter
 
 ### Start from the host when PostgreSQL and Redis are already running
 
-If PostgreSQL (`localhost:5432/wiresleuth`) and Redis (`localhost:6379`) are already running locally:
+If PostgreSQL (`localhost:5432/faultlens`) and Redis (`localhost:6379`) are already running locally:
 
 ```sh
 npm run start:local
@@ -50,7 +50,7 @@ npm run start:worker
 
 ## Inspect one incident
 
-The local stack uses `WIRESLEUTH_ADMIN_TOKEN=local-dev-admin-token` and `WIRESLEUTH_WORKSPACE_ID=workspace-1` by default.
+The local stack uses `FAULTLENS_ADMIN_TOKEN=local-dev-admin-token` and `FAULTLENS_WORKSPACE_ID=workspace-1` by default.
 
 1. List all eight seeded incidents:
 

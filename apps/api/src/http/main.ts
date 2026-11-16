@@ -2,7 +2,7 @@ import { db } from "#db";
 import { startApiServer } from "./server.ts";
 
 const { url, close } = await startApiServer();
-console.log(`wiresleuth api listening on ${url}`);
+console.log(`faultlens api listening on ${url}`);
 
 let shuttingDown = false;
 async function shutdown(): Promise<void> {

@@ -1,5 +1,5 @@
 export interface TransportOptions {
-  /** API origin, e.g. https://wiresleuth.example.com (no path or credentials). */
+  /** API origin, e.g. https://faultlens.example.com (no path or credentials). */
   baseUrl: string;
   apiKey: string;
   /** Per-delivery deadline. Default: 1000 ms. */

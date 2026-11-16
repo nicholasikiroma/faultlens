@@ -10,7 +10,7 @@ export function hashIngestKey(key: string): string {
 }
 
 async function insertKey(tx: Tx, integration: { id: string; workspaceId: string; environment: string }) {
-  const key = `wsk_${randomBytes(32).toString("base64url")}`;
+  const key = `flk_${randomBytes(32).toString("base64url")}`;
   const id = randomUUID();
   const createdAt = new Date();
   await tx.orm.public.IngestKey.create({

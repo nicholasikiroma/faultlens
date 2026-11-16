@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import type { EvidenceItem } from '../types';
 import { Badge } from './Badge';
+import { Button } from './ui';
 import { X, Copy, Check, ChevronLeft, ChevronRight, Terminal, ShieldAlert } from 'lucide-react';
 
 interface EvidenceDrawerProps {
@@ -53,46 +54,52 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 overflow-hidden bg-ws-backdrop backdrop-blur-[2px] flex justify-end transition-opacity"
+      className="fixed inset-0 z-50 overflow-hidden bg-fl-backdrop backdrop-blur-[2px] flex justify-end transition-opacity"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-xl bg-ws-surface border-l border-ws-border h-full shadow-elevated flex flex-col transform transition-transform duration-200"
+        className="w-full max-w-xl bg-fl-surface border-l border-fl-border h-full shadow-overlay flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-5 border-b border-ws-border flex items-center justify-between bg-ws-surface-subtle">
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-xs font-medium text-ws-accent bg-ws-accent-subtle border border-ws-accent-border px-2 py-0.5 rounded">
+        <div className="p-4 border-b border-fl-border flex items-center justify-between bg-fl-surface-subtle">
+          <div className="flex items-center gap-2.5">
+            <span className="font-mono text-xs font-medium text-fl-accent-text bg-fl-accent-subtle border border-fl-accent-border px-2 py-0.5 rounded">
               {evidence.id}
             </span>
             <Badge epistemic={evidence.epistemic} />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button
+              type="button"
               onClick={() => currentIndex > 0 && onSelectEvidence(allEvidence[currentIndex - 1])}
               disabled={currentIndex <= 0}
-              className="p-1 rounded text-ws-muted hover:text-ws-ink hover:bg-ws-surface-elevated disabled:opacity-30"
+              className="p-1.5 rounded-md text-fl-muted hover:text-fl-ink hover:bg-fl-surface-elevated disabled:opacity-30"
               title="Previous evidence (K)"
+              aria-label="Previous evidence"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-xs font-mono text-ws-muted tabular-nums">
+            <span className="text-xs font-mono text-fl-muted tabular-nums px-1">
               {currentIndex + 1} / {allEvidence.length}
             </span>
             <button
+              type="button"
               onClick={() => currentIndex < allEvidence.length - 1 && onSelectEvidence(allEvidence[currentIndex + 1])}
               disabled={currentIndex >= allEvidence.length - 1}
-              className="p-1 rounded text-ws-muted hover:text-ws-ink hover:bg-ws-surface-elevated disabled:opacity-30"
+              className="p-1.5 rounded-md text-fl-muted hover:text-fl-ink hover:bg-fl-surface-elevated disabled:opacity-30"
               title="Next evidence (J)"
+              aria-label="Next evidence"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
-            <div className="w-px h-4 bg-ws-border mx-1" />
+            <div className="w-px h-4 bg-fl-border mx-1" aria-hidden="true" />
             <button
+              type="button"
               onClick={onClose}
-              className="p-1.5 rounded-md text-ws-muted hover:text-ws-ink hover:bg-ws-surface-elevated"
+              className="p-1.5 rounded-md text-fl-muted hover:text-fl-ink hover:bg-fl-surface-elevated"
               title="Close drawer (Esc)"
+              aria-label="Close evidence drawer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -100,27 +107,36 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-6 space-y-5">
           <div>
-            <h2 className="text-[16px] font-semibold text-ws-ink font-sans">{evidence.title}</h2>
-            <p className="text-[13px] font-sans text-ws-secondary mt-1 leading-relaxed">{evidence.description}</p>
+            <h2 className="text-base font-semibold text-fl-ink font-sans">{evidence.title}</h2>
+            <p className="text-[13px] font-sans text-fl-secondary mt-1 leading-relaxed">
+              {evidence.description}
+            </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 p-3 rounded-md bg-ws-surface-subtle border border-ws-border text-xs">
+          <div className="grid grid-cols-2 gap-3 p-3.5 rounded-lg bg-fl-surface-subtle border border-fl-border text-xs">
             <div>
-              <span className="text-ws-muted block text-[10px] uppercase tracking-wider font-medium font-mono">Source Probe</span>
-              <span className="font-mono text-ws-accent font-medium text-xs">{evidence.source}</span>
+              <span className="text-fl-muted block text-[10px] uppercase tracking-wider font-medium font-mono">
+                Source Probe
+              </span>
+              <span className="font-mono text-fl-accent-text font-medium text-xs">
+                {evidence.source}
+              </span>
             </div>
             <div>
-              <span className="text-ws-muted block text-[10px] uppercase tracking-wider font-medium font-mono">Epistemic Level</span>
-              <span className="font-medium font-sans text-ws-ink text-xs">{evidence.epistemic}</span>
+              <span className="text-fl-muted block text-[10px] uppercase tracking-wider font-medium font-mono">
+                Epistemic Level
+              </span>
+              <span className="font-medium font-sans text-fl-ink text-xs">
+                {evidence.epistemic}
+              </span>
             </div>
           </div>
 
-          {/* Masked Secret Alert if applicable */}
           {jsonString.includes('[REDACTED]') && (
-            <div className="flex items-center gap-2 p-3 rounded-md border border-ws-warning-border bg-ws-warning-bg text-xs font-sans text-ws-warning-text leading-relaxed">
-              <ShieldAlert className="w-4 h-4 text-ws-warning-dot flex-shrink-0" />
+            <div className="flex items-center gap-2.5 p-3 rounded-lg border border-fl-warning-border bg-fl-warning-bg text-xs font-sans text-fl-warning-text leading-relaxed">
+              <ShieldAlert className="w-4 h-4 text-fl-warning-dot flex-shrink-0" aria-hidden="true" />
               <span>Sensitive authorization credentials and signatures were redacted at ingress.</span>
             </div>
           )}
@@ -128,33 +144,35 @@ export const EvidenceDrawer: React.FC<EvidenceDrawerProps> = ({
           {/* JSON Payload Inspector */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-[13px] font-semibold text-ws-ink font-sans">
-                <Terminal className="w-3.5 h-3.5 text-ws-accent" />
-                Raw Telemetry Payload
+              <div className="flex items-center gap-2 text-[13px] font-semibold text-fl-ink font-sans">
+                <Terminal className="w-3.5 h-3.5 text-fl-accent" aria-hidden="true" />
+                Observed Evidence Payload
               </div>
-              <button
+              <Button
+                size="sm"
+                variant="secondary"
                 onClick={handleCopy}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium font-sans bg-ws-surface-subtle border border-ws-border hover:bg-ws-surface-elevated text-ws-secondary hover:text-ws-ink transition-colors"
+                leadingIcon={copied ? <Check className="w-3 h-3 text-fl-success-dot" /> : <Copy className="w-3 h-3" />}
               >
-                {copied ? <Check className="w-3 h-3 text-ws-success-dot" /> : <Copy className="w-3 h-3" />}
                 {copied ? 'Copied' : 'Copy JSON'}
-              </button>
+              </Button>
             </div>
-            <div className="relative rounded-md border border-ws-border bg-ws-surface-subtle p-4 overflow-x-auto text-xs font-mono">
-              <pre className="text-ws-ink leading-relaxed whitespace-pre-wrap">{jsonString}</pre>
+            <div className="rounded-lg border border-fl-border bg-fl-surface-subtle p-4 overflow-x-auto text-xs font-mono">
+              <pre className="text-fl-ink leading-relaxed whitespace-pre-wrap">{jsonString}</pre>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-ws-border bg-ws-surface-subtle flex items-center justify-between text-xs text-ws-muted font-sans">
-          <span>Use <kbd className="font-mono text-[10px] px-1 py-0.5 bg-ws-surface border border-ws-border rounded">J</kbd> / <kbd className="font-mono text-[10px] px-1 py-0.5 bg-ws-surface border border-ws-border rounded">K</kbd> to step • <kbd className="font-mono text-[10px] px-1 py-0.5 bg-ws-surface border border-ws-border rounded">Esc</kbd> to dismiss</span>
-          <button
-            onClick={onClose}
-            className="px-3.5 py-1.5 rounded-md bg-ws-surface-elevated hover:bg-ws-border text-ws-ink font-medium font-sans border border-ws-border transition-colors text-xs"
-          >
+        <div className="p-4 border-t border-fl-border bg-fl-surface-subtle flex items-center justify-between text-xs text-fl-muted font-sans">
+          <span>
+            <kbd className="font-mono text-[10px] px-1 py-0.5 bg-fl-surface border border-fl-border rounded">J</kbd> /{' '}
+            <kbd className="font-mono text-[10px] px-1 py-0.5 bg-fl-surface border border-fl-border rounded">K</kbd> step •{' '}
+            <kbd className="font-mono text-[10px] px-1 py-0.5 bg-fl-surface border border-fl-border rounded">Esc</kbd> dismiss
+          </span>
+          <Button size="sm" variant="secondary" onClick={onClose}>
             Done
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { PlaygroundScenario, Incident } from '../types';
-import { Play, CheckCircle2, ArrowRight, Radio, RefreshCw } from 'lucide-react';
+import { Button, PageHeader, Panel } from '../components/ui';
+import { Play, CheckCircle2, ArrowRight, Activity, RefreshCw } from 'lucide-react';
 
 interface PlaygroundViewProps {
   scenarios: PlaygroundScenario[];
@@ -22,15 +23,12 @@ export const PlaygroundView: React.FC<PlaygroundViewProps> = ({
     setPipelineStep(1);
     setSpawnedIncident(null);
 
-    // Step 1: Egress
     setTimeout(() => {
       setPipelineStep(2);
 
-      // Step 2: Redact & Verify
       setTimeout(() => {
         setPipelineStep(3);
 
-        // Step 3: Rule Match
         setTimeout(async () => {
           const newInc = await onRunScenario(scen);
           setSpawnedIncident(newInc);
@@ -42,151 +40,144 @@ export const PlaygroundView: React.FC<PlaygroundViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 pb-2 border-b border-ws-border">
-        <div>
-          <div className="ws-eyebrow text-ws-accent mb-1 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-ws-accent animate-ping" />
-            FAILURE LAB // FLIGHT SIMULATION DECK
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight text-ws-ink font-sans leading-tight">
-            Simulation Lab
-          </h1>
-          <p className="text-[14px] text-ws-secondary mt-1 font-sans leading-relaxed">
-            Safely inject synthetic integration failures into the local WireSleuth ingestion pipeline and test deterministic classification.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Failure Lab"
+        title="Simulation Playground"
+        description="Safely inject synthetic integration failures into the local FaultLens ingestion pipeline and verify deterministic rule classification."
+      />
 
-      {/* Live Pipeline Animation Box when simulating */}
       {runningScenario && (
-        <div className="p-5 rounded-lg bg-ws-surface border border-ws-accent-border shadow-subtle space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-ws-border">
+        <Panel padding="md" className="border-fl-accent-border space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-fl-border">
             <div className="flex items-center gap-2">
-              <Radio className="w-4 h-4 text-ws-accent" />
-              <span className="text-xs font-sans font-semibold text-ws-ink">
+              <Activity className="w-4 h-4 text-fl-accent" aria-hidden="true" />
+              <span className="text-xs font-sans font-semibold text-fl-ink">
                 Simulating: {runningScenario.title}
               </span>
             </div>
             {pipelineStep < 4 ? (
-              <span className="flex items-center gap-1.5 text-xs text-ws-warning-text font-mono font-medium">
-                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                Pipeline Ingestion Processing...
+              <span className="flex items-center gap-1.5 text-xs text-fl-warning-text font-mono font-medium">
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+                Ingesting...
               </span>
             ) : (
-              <span className="flex items-center gap-1.5 text-xs text-ws-success-text font-mono font-medium">
-                <CheckCircle2 className="w-4 h-4 text-ws-success-dot" />
-                Incident Created & Classified
+              <span className="flex items-center gap-1.5 text-xs text-fl-success-text font-mono font-medium">
+                <CheckCircle2 className="w-4 h-4 text-fl-success-dot" aria-hidden="true" />
+                Incident Classified
               </span>
             )}
           </div>
 
-          {/* 4-Step Pipeline Visualizer */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
-            {/* Step 1 */}
             <div
-              className={`p-3 rounded-md border transition-colors ${
+              className={`p-3 rounded-lg border transition-colors ${
                 pipelineStep >= 1
-                  ? 'border-ws-accent-border bg-ws-accent-subtle text-ws-ink font-semibold'
-                  : 'border-ws-border bg-ws-surface-subtle text-ws-muted'
+                  ? 'border-fl-accent-border bg-fl-accent-subtle text-fl-ink font-semibold'
+                  : 'border-fl-border bg-fl-surface-subtle text-fl-muted'
               }`}
             >
-              <div className="text-[10px] uppercase font-mono text-ws-accent font-medium mb-1">
-                Step 1: Egress
+              <div className="text-[10px] uppercase font-mono text-fl-accent-text font-medium mb-1">
+                Step 1: Dispatch
               </div>
-              <div className="font-sans">Synthetic Delivery Dispatched</div>
+              <div className="font-sans">Synthetic Event Sent</div>
             </div>
 
-            {/* Step 2 */}
             <div
-              className={`p-3 rounded-md border transition-colors ${
+              className={`p-3 rounded-lg border transition-colors ${
                 pipelineStep >= 2
-                  ? 'border-ws-accent-border bg-ws-accent-subtle text-ws-ink font-semibold'
-                  : 'border-ws-border bg-ws-surface-subtle text-ws-muted'
+                  ? 'border-fl-accent-border bg-fl-accent-subtle text-fl-ink font-semibold'
+                  : 'border-fl-border bg-fl-surface-subtle text-fl-muted'
               }`}
             >
-              <div className="text-[10px] uppercase font-mono text-ws-accent font-medium mb-1">
-                Step 2: Ingest & Redact
+              <div className="text-[10px] uppercase font-mono text-fl-accent-text font-medium mb-1">
+                Step 2: Redact
               </div>
-              <div className="font-sans">Secrets Masked [REDACTED]</div>
+              <div className="font-sans">Secrets Masked</div>
             </div>
 
-            {/* Step 3 */}
             <div
-              className={`p-3 rounded-md border transition-colors ${
+              className={`p-3 rounded-lg border transition-colors ${
                 pipelineStep >= 3
-                  ? 'border-ws-accent-border bg-ws-accent-subtle text-ws-ink font-semibold'
-                  : 'border-ws-border bg-ws-surface-subtle text-ws-muted'
+                  ? 'border-fl-accent-border bg-fl-accent-subtle text-fl-ink font-semibold'
+                  : 'border-fl-border bg-fl-surface-subtle text-fl-muted'
               }`}
             >
-              <div className="text-[10px] uppercase font-mono text-ws-accent font-medium mb-1">
-                Step 3: Rule Match
+              <div className="text-[10px] uppercase font-mono text-fl-accent-text font-medium mb-1">
+                Step 3: Classify
               </div>
-              <div className="font-sans">Matched <span className="font-mono">{runningScenario.cls}</span></div>
+              <div className="font-sans">
+                Matched <span className="font-mono">{runningScenario.cls}</span>
+              </div>
             </div>
 
-            {/* Step 4 */}
             <div
-              className={`p-3 rounded-md border transition-colors ${
+              className={`p-3 rounded-lg border transition-colors ${
                 pipelineStep >= 4
-                  ? 'border-ws-success-border bg-ws-success-bg text-ws-ink font-semibold'
-                  : 'border-ws-border bg-ws-surface-subtle text-ws-muted'
+                  ? 'border-fl-success-border bg-fl-success-bg text-fl-ink font-semibold'
+                  : 'border-fl-border bg-fl-surface-subtle text-fl-muted'
               }`}
             >
-              <div className="text-[10px] uppercase font-mono text-ws-success-text font-medium mb-1">
-                Step 4: Incident Ready
+              <div className="text-[10px] uppercase font-mono text-fl-success-text font-medium mb-1">
+                Step 4: Ready
               </div>
               <div className="font-sans">Opened in Triage Queue</div>
             </div>
           </div>
 
-          {/* CTA when complete */}
           {spawnedIncident && (
-            <div className="pt-3 border-t border-ws-border flex items-center justify-between">
-              <span className="text-xs text-ws-muted font-sans">
-                Generated <span className="font-mono text-ws-secondary font-medium">{spawnedIncident.key}</span> • Status: <span className="font-mono">{spawnedIncident.status}</span>
+            <div className="pt-3 border-t border-fl-border flex items-center justify-between gap-3">
+              <span className="text-xs text-fl-muted font-sans">
+                Created{' '}
+                <span className="font-mono text-fl-secondary font-medium">
+                  {spawnedIncident.key}
+                </span>{' '}
+                • Status: <span className="font-mono">{spawnedIncident.status}</span>
               </span>
-              <button
+              <Button
+                variant="primary"
                 onClick={() => onOpenIncident(spawnedIncident.id)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-ws-btn-primary hover:bg-ws-btn-primary-hover active:bg-ws-btn-primary-active text-ws-btn-primary-ink border border-ws-btn-primary-border text-[13px] font-medium font-sans shadow-subtle transition-colors"
+                trailingIcon={<ArrowRight className="w-3.5 h-3.5" />}
               >
-                <span>Inspect in Investigation Workspace</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
+                Inspect Incident
+              </Button>
             </div>
           )}
-        </div>
+        </Panel>
       )}
 
-      {/* Scenario Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {scenarios.map((scen, idx) => (
-          <div
+          <Panel
             key={scen.id}
-            className="p-5 rounded-lg bg-ws-surface border border-ws-border shadow-subtle flex flex-col justify-between space-y-4 hover:border-ws-border-strong transition-colors"
+            padding="md"
+            className="flex flex-col justify-between space-y-4 hover:border-fl-border-strong transition-colors"
           >
             <div>
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono font-medium text-ws-accent bg-ws-accent-subtle border border-ws-accent-border px-2 py-0.5 rounded">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[10px] font-mono font-medium text-fl-accent-text bg-fl-accent-subtle border border-fl-accent-border px-2 py-0.5 rounded">
                   SCENARIO 0{idx + 1}
                 </span>
-                <span className="text-[11px] font-mono text-ws-ink bg-ws-surface-subtle px-2 py-0.5 rounded border border-ws-border">
+                <span className="text-[11px] font-mono text-fl-ink bg-fl-surface-subtle px-2 py-0.5 rounded border border-fl-border">
                   {scen.cls}
                 </span>
               </div>
-              <h3 className="text-sm font-semibold text-ws-ink mt-3 font-sans">{scen.title}</h3>
-              <p className="text-[13px] font-sans text-ws-secondary mt-1 leading-relaxed">{scen.description}</p>
+              <h3 className="text-fl-card text-fl-ink mt-3 font-sans">{scen.title}</h3>
+              <p className="text-[13px] font-sans text-fl-secondary mt-1 leading-relaxed">
+                {scen.description}
+              </p>
             </div>
 
-            <button
+            <Button
+              variant="secondary"
+              size="sm"
+              className="w-full"
               onClick={() => handleSimulate(scen)}
               disabled={pipelineStep > 0 && pipelineStep < 4}
-              className="w-full inline-flex items-center justify-center gap-2 py-2 px-3 rounded-md bg-ws-surface-subtle border border-ws-border hover:bg-ws-surface-elevated text-xs font-medium font-sans text-ws-ink transition-colors disabled:opacity-50"
+              leadingIcon={<Play className="w-3.5 h-3.5 text-fl-accent fill-current" />}
             >
-              <Play className="w-3.5 h-3.5 text-ws-accent fill-current" />
-              <span>Simulate Failure</span>
-            </button>
-          </div>
+              Simulate Failure
+            </Button>
+          </Panel>
         ))}
       </div>
     </div>

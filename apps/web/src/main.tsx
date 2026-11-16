@@ -23,34 +23,34 @@ class RootErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
   }
 
   componentDidCatch(error: Error, info: any) {
-    console.error('WireSleuth React Render Error:', error, info);
+    console.error('FaultLens React Render Error:', error, info);
   }
 
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ padding: '40px', fontFamily: 'monospace', background: '#0c0f0d', color: '#e5eae6', minHeight: '100vh' }}>
-          <h2 style={{ color: '#e06c75', fontSize: '18px', fontWeight: 'bold' }}>UI Application Render Recovery</h2>
-          <p style={{ color: '#88928c', fontSize: '13px', marginTop: '8px' }}>
+        <div style={{ padding: '40px', fontFamily: 'monospace', background: '#0B0D12', color: '#F1F5F9', minHeight: '100vh' }}>
+          <h2 style={{ color: '#F87171', fontSize: '18px', fontWeight: 'bold' }}>UI Application Render Recovery</h2>
+          <p style={{ color: '#94A3B8', fontSize: '13px', marginTop: '8px' }}>
             {this.state.error?.message || 'A client-side render exception occurred.'}
           </p>
-          <pre style={{ background: '#141a16', padding: '16px', borderRadius: '6px', fontSize: '11px', marginTop: '16px', overflowX: 'auto', border: '1px solid #232d26' }}>
+          <pre style={{ background: '#131722', padding: '16px', borderRadius: '6px', fontSize: '11px', marginTop: '16px', overflowX: 'auto', border: '1px solid #232A3B' }}>
             {this.state.error?.stack}
           </pre>
           <button
             onClick={() => {
               try {
-                localStorage.removeItem('ws_incidents');
+                localStorage.removeItem('fl_incidents');
               } catch {}
               window.location.reload();
             }}
             style={{
               marginTop: '20px',
               padding: '8px 16px',
-              background: '#2f9e66',
-              color: '#04150b',
+              background: '#4F46E5',
+              color: '#FFFFFF',
               border: 'none',
-              borderRadius: '4px',
+              borderRadius: '6px',
               fontWeight: 'bold',
               cursor: 'pointer',
               fontSize: '12px',

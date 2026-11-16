@@ -6,7 +6,7 @@ import { createSampleHost } from '../../../apps/sdk-example/src/server.ts';
 import { verify } from '../../../apps/api/src/ingest/verify.ts';
 import { validateEventSchema } from '../../../apps/api/src/ingest/schema.ts';
 import {
-  createWireSleuthClient,
+  createFaultLensClient,
   FlightRecorder,
   getCurrentEpisode,
   runInEpisode,
@@ -27,10 +27,10 @@ import {
   flightRecorderExpressMiddleware,
   flightRecorderHonoMiddleware,
   type DeliveryResult,
-  type WireSleuthClientOptions,
+  type FaultLensClientOptions,
 } from './index.ts';
 
-const apiKey = 'wsk_test-key-not-a-provider-secret';
+const apiKey = 'flk_test-key-not-a-provider-secret';
 const signingSecret = 'test-integration-signing-secret';
 const raw = Buffer.from('{ "event_id": "evt-sdk", "type": "invoice.paid", "label": "café" }\n');
 
@@ -55,8 +55,8 @@ async function listen(t: TestContext, server: Server) {
   return `http://127.0.0.1:${address.port}`;
 }
 
-const clientFor = (baseUrl: string, options: Partial<WireSleuthClientOptions> = {}) =>
-  createWireSleuthClient({
+const clientFor = (baseUrl: string, options: Partial<FaultLensClientOptions> = {}) =>
+  createFaultLensClient({
     baseUrl,
     apiKey,
     ...options,
@@ -65,7 +65,7 @@ const clientFor = (baseUrl: string, options: Partial<WireSleuthClientOptions> = 
 
 describe('1. Core Configuration & Client Composition', () => {
   test('core needs no webhook secret and exposes only explicitly enabled capabilities', () => {
-    const core = createWireSleuthClient({ baseUrl: 'http://localhost', apiKey });
+    const core = createFaultLensClient({ baseUrl: 'http://localhost', apiKey });
     assert.equal(core.webhooks, undefined);
     assert.ok(core instanceof FlightRecorder);
     assert.equal(typeof core.middleware.nodeHttp, 'function');
@@ -347,7 +347,7 @@ describe('8. Zero-Tampering Guarantee (Control vs Instrumented)', () => {
       const bodyStr = Buffer.concat(chunks).toString('utf8');
       res.writeHead(202, {
         'content-type': 'application/json',
-        'x-custom-header': 'wiresleuth-test',
+        'x-custom-header': 'faultlens-test',
       });
       res.end(
         JSON.stringify({

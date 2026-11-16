@@ -26,30 +26,30 @@ export const Badge: React.FC<BadgeProps> = ({
     switch (ep) {
       case 'OBSERVED':
         return (
-          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium tracking-wide uppercase border border-ws-accent-border bg-ws-accent-subtle text-ws-accent ${className}`}>
-            <span className="w-1.5 h-1.5 rounded-full bg-ws-accent" />
-            [OBSERVED]
+          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium tracking-wide uppercase border border-fl-accent-border bg-fl-accent-subtle text-fl-accent-text ${className}`}>
+            <span className="w-1.5 h-1.5 rounded-full bg-fl-accent" aria-hidden="true" />
+            OBSERVED
           </span>
         );
       case 'RULE':
         return (
-          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium tracking-wide uppercase border border-ws-lavender-border bg-ws-lavender-bg text-ws-lavender-text ${className}`}>
-            <Cpu className="w-3 h-3 text-ws-lavender-dot" />
-            [RULE]
+          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium tracking-wide uppercase border border-fl-violet-border bg-fl-violet-bg text-fl-violet-text ${className}`}>
+            <Cpu className="w-3 h-3 text-fl-violet-dot" aria-hidden="true" />
+            RULE
           </span>
         );
       case 'AI_HYPOTHESIS':
         return (
-          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium tracking-wide uppercase border border-dashed border-ws-warning-border bg-ws-warning-bg text-ws-warning-text ${className}`}>
-            <Sparkles className="w-3 h-3 text-ws-warning-dot" />
-            [AI HYPOTHESIS]
+          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium tracking-wide uppercase border border-dashed border-fl-warning-border bg-fl-warning-bg text-fl-warning-text ${className}`}>
+            <Sparkles className="w-3 h-3 text-fl-warning-dot" aria-hidden="true" />
+            AI HYPOTHESIS
           </span>
         );
       case 'REDACTED':
         return (
-          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium tracking-wide uppercase border border-ws-border bg-ws-surface-subtle text-ws-muted select-none ${className}`}>
-            <Shield className="w-3 h-3 text-ws-muted" />
-            [REDACTED]
+          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium tracking-wide uppercase border border-fl-border bg-fl-surface-subtle text-fl-muted select-none ${className}`}>
+            <Shield className="w-3 h-3 text-fl-muted" aria-hidden="true" />
+            REDACTED
           </span>
         );
     }
@@ -60,66 +60,65 @@ export const Badge: React.FC<BadgeProps> = ({
     switch (sev) {
       case 'CRITICAL':
         return (
-          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium uppercase tracking-wide border border-ws-danger-border bg-ws-danger-bg text-ws-danger-text ${className}`}>
-            <AlertCircle className="w-3 h-3 text-ws-danger-dot" />
+          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium uppercase tracking-wide border border-fl-danger-border bg-fl-danger-bg text-fl-danger-text ${className}`}>
+            <AlertCircle className="w-3 h-3 text-fl-danger-dot" aria-hidden="true" />
             CRITICAL
           </span>
         );
       case 'HIGH':
         return (
-          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium uppercase tracking-wide border border-ws-danger-border bg-ws-danger-bg text-ws-danger-text ${className}`}>
-            <AlertCircle className="w-3 h-3 text-ws-danger-dot" />
+          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium uppercase tracking-wide border border-fl-danger-border bg-fl-danger-bg text-fl-danger-text ${className}`}>
+            <AlertCircle className="w-3 h-3 text-fl-danger-dot" aria-hidden="true" />
             HIGH
           </span>
         );
       case 'MEDIUM':
         return (
-          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium uppercase tracking-wide border border-ws-warning-border bg-ws-warning-bg text-ws-warning-text ${className}`}>
-            <AlertTriangle className="w-3 h-3 text-ws-warning-dot" />
+          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium uppercase tracking-wide border border-fl-warning-border bg-fl-warning-bg text-fl-warning-text ${className}`}>
+            <AlertTriangle className="w-3 h-3 text-fl-warning-dot" aria-hidden="true" />
             MEDIUM
           </span>
         );
       case 'LOW':
         return (
-          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium uppercase tracking-wide border border-ws-success-border bg-ws-success-bg text-ws-success-text ${className}`}>
-            <CheckCircle className="w-3 h-3 text-ws-success-dot" />
+          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium uppercase tracking-wide border border-fl-success-border bg-fl-success-bg text-fl-success-text ${className}`}>
+            <CheckCircle className="w-3 h-3 text-fl-success-dot" aria-hidden="true" />
             LOW
           </span>
         );
     }
   }
 
-  // Default: Status
   const st = status || 'OPEN';
   switch (st) {
     case 'INVESTIGATING':
       return (
-        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium uppercase tracking-wide border border-ws-lavender-border bg-ws-lavender-bg text-ws-lavender-text ${className}`}>
+        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium uppercase tracking-wide border border-fl-violet-border bg-fl-violet-bg text-fl-violet-text ${className}`}>
           {withPulse ? (
-            <span className="w-1.5 h-1.5 rounded-full bg-ws-lavender-dot animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-fl-violet-dot animate-pulse" aria-hidden="true" />
           ) : (
-            <Activity className="w-3 h-3 text-ws-lavender-dot" />
+            <Activity className="w-3 h-3 text-fl-violet-dot" aria-hidden="true" />
           )}
           {label || 'INVESTIGATING'}
         </span>
       );
     case 'OPEN':
       return (
-        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium uppercase tracking-wide border border-ws-danger-border bg-ws-danger-bg text-ws-danger-text ${className}`}>
-          <span className="w-1.5 h-1.5 rounded-full bg-ws-danger-dot" />
+        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium uppercase tracking-wide border border-fl-danger-border bg-fl-danger-bg text-fl-danger-text ${className}`}>
+          <span className="w-1.5 h-1.5 rounded-full bg-fl-danger-dot" aria-hidden="true" />
           {label || 'OPEN'}
         </span>
       );
     case 'RESOLVED':
       return (
-        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium uppercase tracking-wide border border-ws-success-border bg-ws-success-bg text-ws-success-text ${className}`}>
-          <CheckCircle className="w-3 h-3 text-ws-success-dot" />
+        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium uppercase tracking-wide border border-fl-success-border bg-fl-success-bg text-fl-success-text ${className}`}>
+          <CheckCircle className="w-3 h-3 text-fl-success-dot" aria-hidden="true" />
           {label || 'RESOLVED'}
         </span>
       );
     case 'IGNORED':
       return (
-        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium uppercase tracking-wide border border-ws-border bg-ws-surface-subtle text-ws-muted ${className}`}>
+        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium uppercase tracking-wide border border-fl-border bg-fl-surface-subtle text-fl-muted ${className}`}>
           {label || 'IGNORED'}
         </span>
       );

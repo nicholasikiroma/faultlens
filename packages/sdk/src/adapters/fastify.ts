@@ -20,7 +20,7 @@ export interface FastifyInstanceLike {
   addHook(hook: 'onResponse', fn: (req: FastifyRequestLike, reply: FastifyReplyLike, done: () => void) => void): void;
 }
 
-const EPISODE_SYM = Symbol('wiresleuth.fastify_episode');
+const EPISODE_SYM = Symbol('faultlens.fastify_episode');
 
 /**
  * Framework Adapter: Fastify (`fastify`)

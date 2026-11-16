@@ -34,6 +34,6 @@ test('a changed body is rejected', () => {
 });
 
 test('the header name is case insensitive', () => {
-  const result = verify(body, { 'X-Wiresleuth-Signature': signature(body, secret) }, secret);
+  const result = verify(body, { 'X-FaultLens-Signature': signature(body, secret) }, secret);
   assert.equal(result, 'VERIFIED');
 });

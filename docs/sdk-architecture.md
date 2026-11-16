@@ -2,14 +2,14 @@
 
 ## Product boundary
 
-WireSleuth is a self-hosted, open-source tool for examining incidents and deriving useful insights from evidence. It is not intended to replace Sentry or become a general-purpose error-monitoring platform. Webhook investigation is the first solution; it is not the boundary of the product or SDK. Distributed-system investigations and other incident sources will follow when their investigation requirements are defined.
+FaultLens is a self-hosted, open-source tool for examining incidents and deriving useful insights from evidence. It is not intended to replace Sentry or become a general-purpose error-monitoring platform. Webhook investigation is the first solution; it is not the boundary of the product or SDK. Distributed-system investigations and other incident sources will follow when their investigation requirements are defined.
 
 The SDK supplies observations that support backend investigation. It does not diagnose incidents in the host, replace provider verification, decide business outcomes, or require the host to wait for telemetry delivery. Backend evidence, grouping, rules, and investigation remain separate concerns.
 
 ## Current public API
 
 ```ts
-const wiresleuth = createWireSleuthClient({
+const faultlens = createFaultLensClient({
   baseUrl,
   apiKey,
   timeoutMs: 1000,
@@ -17,7 +17,7 @@ const wiresleuth = createWireSleuthClient({
   webhooks: { signingSecret },
 });
 
-void wiresleuth.webhooks.capture(rawBody);
+void faultlens.webhooks.capture(rawBody);
 ```
 
 Capabilities are explicitly configured. Omitting `webhooks` constructs the shared client without requiring a webhook signing secret or exposing the webhook capability. A literal configuration that enables webhooks provides a non-optional `webhooks` property in TypeScript. Callers using a dynamically typed configuration must check whether the capability is enabled.

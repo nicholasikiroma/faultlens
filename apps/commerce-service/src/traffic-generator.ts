@@ -94,7 +94,7 @@ export function startTrafficGenerator(options: TrafficGeneratorOptions = {}) {
         headers: {
           "content-type": "application/json",
           "x-order-signature": signature,
-          "x-wiresleuth-generator": "commerce-sim-v1",
+          "x-faultlens-generator": "commerce-sim-v1",
         },
         body: bodyString,
       });

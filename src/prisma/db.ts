@@ -10,5 +10,5 @@ export const contract = contractFromJson<Contract>(contractJson);
 
 export const db = postgres({
   contract,
-  url: process.env['DATABASE_URL'] ?? 'postgresql://lab:lab@localhost:5432/wiresleuth',
+  url: process.env['DATABASE_URL'] ?? 'postgresql://lab:lab@localhost:5432/faultlens',
 });

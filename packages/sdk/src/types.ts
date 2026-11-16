@@ -1,5 +1,5 @@
 /**
- * Core Type Definitions for the WireSleuth Webhook Flight-Recorder SDK.
+ * Core Type Definitions for the FaultLens Webhook Flight-Recorder SDK.
  *
  * Design Principle (Ousterhout's "Deep Modules"):
  * The public API surface exposed to the host application is tiny, while the

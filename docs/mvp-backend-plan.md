@@ -1,6 +1,6 @@
 # MVP backend plan
 
-This is the status of the WireSleuth MVP backend. Read the table first. The sections below it are the work.
+This is the status of the FaultLens MVP backend. Read the table first. The sections below it are the work.
 
 `docs/decisions.md` wins when it disagrees with this file, `docs/filling-the-skeletons.md`, or a design doc. The PRD and the roadmap used here are `design-spec/WireSleuth_PRD.docx` and `design-spec/WireSleuth_Implementation_Roadmap.docx`. P0 is the must-ship list in that PRD. M1 and M2 in the roadmap are the backend gate this file tracks. The UI, OpenTelemetry, model calls, and the GitHub integration are not in this gate.
 
@@ -125,7 +125,7 @@ Checked on 8 Nov 2026 by `apps/api/src/incidents/lifecycle.test.ts` via `npm run
 
 Status. Done.
 
-PRD P0-04 and AC-06. `listEvents` and `listAttempts` in `apps/api/src/read/events.ts`, `listIncidents` in `apps/api/src/read/incidents.ts`, and `exportIncident` in `apps/api/src/read/export.ts` require an `adminToken` and a trusted `workspaceId` argument. `verifyAdminToken` in `apps/api/src/read/auth.ts` compares the provided token against `WIRESLEUTH_ADMIN_TOKEN` (from `apps/api/src/config.ts`) in constant time using `crypto.timingSafeEqual`. A missing or wrong token returns `{ kind: 'unauthorized' }` without throwing.
+PRD P0-04 and AC-06. `listEvents` and `listAttempts` in `apps/api/src/read/events.ts`, `listIncidents` in `apps/api/src/read/incidents.ts`, and `exportIncident` in `apps/api/src/read/export.ts` require an `adminToken` and a trusted `workspaceId` argument. `verifyAdminToken` in `apps/api/src/read/auth.ts` compares the provided token against `FAULTLENS_ADMIN_TOKEN` (from `apps/api/src/config.ts`) in constant time using `crypto.timingSafeEqual`. A missing or wrong token returns `{ kind: 'unauthorized' }` without throwing.
 
 `listEvents` orders by `firstReceivedAt` ascending then `id` ascending, supports cursor pagination (`cursor: null` for page one, last row `id` for subsequent pages, and `nextCursor: null` on the last page), and filters by integration, time range (`from` / `to`), external event id, status (`processingState`), error class (`errorClass` / `failureClass`), and trace id. `listAttempts` returns only attempts for that event in that workspace, or `[]`. `listIncidents` returns the workspace's incidents with their lifecycle `status`, optionally filtered by `failureClass`. `exportIncident` returns the incident, chronological `timeline` of linked events, attempts, cited `evidence`, and findings with `evidenceIds` verified against `evidence`, containing no signing secret and no raw payload, or `{ kind: 'missing' }` when absent.
 
@@ -151,7 +151,7 @@ Status. Done.
 
 The route list is `apps/api/src/http/routes.ts`. `docs/http-routes.md` lists the same routes, and `apps/api/src/http/routes.test.ts` fails when a heading and a `ROUTES` entry disagree. `apps/api/src/http/server.ts` uses Hono (`hono` and `@hono/node-server`) as the HTTP adapter. It registers that list and checks the admin token before a controller reads a body. A controller in `apps/api/src/http/controllers/` calls one domain function per route. Those functions do not import Hono.
 
-`POST /v1/ingest` takes the ingest credential as `Authorization: Bearer`. `stored` and `duplicate` respond 200, which matches the `httpStatus` `ingest` stores on the attempt. `POST /hooks/:token` is mounted only when `WIRESLEUTH_SIMULATED_WEBHOOKS` is `1`. Admin routes use `WIRESLEUTH_ADMIN_TOKEN`. The workspace id is `WIRESLEUTH_WORKSPACE_ID` and the actor on a write is `WIRESLEUTH_ADMIN_ACTOR`. A `workspaceId` query parameter is 400.
+`POST /v1/ingest` takes the ingest credential as `Authorization: Bearer`. `stored` and `duplicate` respond 200, which matches the `httpStatus` `ingest` stores on the attempt. `POST /hooks/:token` is mounted only when `FAULTLENS_SIMULATED_WEBHOOKS` is `1`. Admin routes use `FAULTLENS_ADMIN_TOKEN`. The workspace id is `FAULTLENS_WORKSPACE_ID` and the actor on a write is `FAULTLENS_ADMIN_ACTOR`. A `workspaceId` query parameter is 400.
 
 Checked on 8 Nov 2026 by `apps/api/src/http/server.test.ts` via `npm run typecheck` and `npm test` (65 passed, 0 failed). A tokened `GET /v1/events?limit=1` returns one page, and the next page does not repeat that id. The same path with no token or a wrong token is 401.
 
@@ -173,7 +173,7 @@ Checked on 9 Nov 2026 by `npm run typecheck`, `npm run test:keys` (6 passed), an
 
 Status. Done.
 
-`createWireSleuthClient` in `packages/sdk/src/index.ts` is the product-level SDK entry point. It creates a shared transport for authentication, deadlines, concurrency bounds, and failure isolation. The optional `webhooks` capability exposes `client.webhooks.capture(rawBody)`, owns webhook signing configuration, signs a byte-for-byte snapshot with HMAC-SHA256, and selects the current `/v1/ingest` route. The shared core requires no webhook signing secret. Shared webhook signature-header and body-limit constants live in `packages/domain/src/ingest.ts`. The SDK has no database, Redis, HTTP-framework, or model dependency and is available through the root `#sdk` import without a nested package manifest. Product scope and SDK boundaries are in `docs/sdk-architecture.md`: incident investigation is the product; webhook investigation is its first capability, not the shape of all future observations.
+`createFaultLensClient` in `packages/sdk/src/index.ts` is the product-level SDK entry point. It creates a shared transport for authentication, deadlines, concurrency bounds, and failure isolation. The optional `webhooks` capability exposes `client.webhooks.capture(rawBody)`, owns webhook signing configuration, signs a byte-for-byte snapshot with HMAC-SHA256, and selects the current `/v1/ingest` route. The shared core requires no webhook signing secret. Shared webhook signature-header and body-limit constants live in `packages/domain/src/ingest.ts`. The SDK has no database, Redis, HTTP-framework, or model dependency and is available through the root `#sdk` import without a nested package manifest. Product scope and SDK boundaries are in `docs/sdk-architecture.md`: incident investigation is the product; webhook investigation is its first capability, not the shape of all future observations.
 
 Delivery failures resolve as data rather than rejecting. A bounded deadline aborts stalled requests, oversized payloads are dropped locally, and a per-client concurrency bound drops excess calls instead of queueing. Redirects are refused. Response bodies and errors are not exposed or logged. There are no retries or durable-delivery guarantees.
 

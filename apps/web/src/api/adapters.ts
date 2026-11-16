@@ -169,7 +169,7 @@ function deriveOperationalGuidance(cls: FailureClass): {
       };
     case 'INVALID_SIGNATURE':
       return {
-        known: 'Calculated HMAC-SHA256 signature did not match the x-wiresleuth-signature header.',
+        known: 'Calculated HMAC-SHA256 signature did not match the x-faultlens-signature header.',
         suspect: 'Webhook signing secret mismatch or header was modified in transit.',
         next: 'Rotate integration signing secret and verify raw payload body bytes before parsing.',
       };

@@ -4,9 +4,9 @@ These are the operator's answers on 7 Nov 2026. They are not guesses. `07-DECISI
 
 ## SDK and product scope clarification (9 Nov 2026)
 
-WireSleuth is a self-hosted, open-source incident investigation tool, not a replacement for Sentry or a general-purpose monitoring platform. It helps developers examine incidents and derive useful insights from supporting observations and evidence. Webhooks are the first investigation capability; distributed-system investigations and other sources come later.
+FaultLens is a self-hosted, open-source incident investigation tool, not a replacement for Sentry or a general-purpose monitoring platform. It helps developers examine incidents and derive useful insights from supporting observations and evidence. Webhooks are the first investigation capability; distributed-system investigations and other sources come later.
 
-The SDK must reflect that product boundary. Its public entry point is `createWireSleuthClient`, with a shared delivery core and explicitly enabled feature capabilities. Webhook capture is `client.webhooks.capture`, not the identity of the entire SDK. Webhook signing configuration and the current webhook payload contract stay in that capability. Future capabilities should reuse authentication, delivery bounds, and failure isolation without being forced into a webhook-shaped event. This does not authorize implementing future integrations or inventing a universal event schema now. See `docs/sdk-architecture.md`.
+The SDK must reflect that product boundary. Its public entry point is `createFaultLensClient`, with a shared delivery core and explicitly enabled feature capabilities. Webhook capture is `client.webhooks.capture`, not the identity of the entire SDK. Webhook signing configuration and the current webhook payload contract stay in that capability. Future capabilities should reuse authentication, delivery bounds, and failure isolation without being forced into a webhook-shaped event. This does not authorize implementing future integrations or inventing a universal event schema now. See `docs/sdk-architecture.md`.
 
 ## PRD section 15
 

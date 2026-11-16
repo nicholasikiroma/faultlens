@@ -4,14 +4,14 @@ import { config } from '../config.ts';
 import { startApiServer } from '../http/server.ts';
 import { seedProductFixtures } from './seed.ts';
 
-if (!process.env['WIRESLEUTH_ADMIN_TOKEN']) {
-  process.env['WIRESLEUTH_ADMIN_TOKEN'] = 'local-dev-admin-token';
+if (!process.env['FAULTLENS_ADMIN_TOKEN']) {
+  process.env['FAULTLENS_ADMIN_TOKEN'] = 'local-dev-admin-token';
 }
-if (!process.env['WIRESLEUTH_WORKSPACE_ID']) {
-  process.env['WIRESLEUTH_WORKSPACE_ID'] = 'workspace-1';
+if (!process.env['FAULTLENS_WORKSPACE_ID']) {
+  process.env['FAULTLENS_WORKSPACE_ID'] = 'workspace-1';
 }
-if (!process.env['WIRESLEUTH_ADMIN_ACTOR']) {
-  process.env['WIRESLEUTH_ADMIN_ACTOR'] = 'local-admin';
+if (!process.env['FAULTLENS_ADMIN_ACTOR']) {
+  process.env['FAULTLENS_ADMIN_ACTOR'] = 'local-admin';
 }
 
 const seeded = await seedProductFixtures();

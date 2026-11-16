@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { Incident, EvidenceItem, IncidentStatus } from '../types';
 import { Badge } from '../components/Badge';
+import { Button, EmptyState, PageHeader, Panel } from '../components/ui';
 import {
   ArrowLeft,
   Download,
@@ -50,154 +51,149 @@ export const InvestigationView: React.FC<InvestigationViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Top Bar Navigation & Actions */}
-      <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 pb-2 border-b border-ws-border">
-        <div>
+      <PageHeader
+        backAction={
           <button
+            type="button"
             onClick={onBack}
-            className="inline-flex items-center gap-1.5 text-xs font-sans font-medium text-ws-accent hover:text-ws-accent-hover mb-2 transition-colors ws-tactile-btn"
+            className="fl-tactile-btn inline-flex items-center gap-1.5 text-xs font-sans font-medium text-fl-accent-text hover:underline"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>← Back to triage queue</span>
+            <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
+            <span>Back to Incidents</span>
           </button>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight text-ws-ink font-sans leading-tight">
-              {incident.title}
-            </h1>
-            {isLoadingDetail && (
-              <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-sans font-medium bg-ws-accent-subtle text-ws-accent border border-ws-accent-border">
-                <RefreshCw className="w-3 h-3 animate-spin" />
-                Syncing detail...
-              </span>
-            )}
-          </div>
-          <p className="text-xs text-ws-muted mt-1 font-sans">
-            <span className="font-mono text-ws-secondary font-medium">{incident.key}</span> • {incident.integration} • First seen <span className="font-mono tabular-nums">{incident.firstSeen}</span>
-          </p>
-        </div>
+        }
+        eyebrow="Incident Investigation"
+        title={incident.title}
+        badge={
+          isLoadingDetail ? (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-sans font-medium bg-fl-accent-subtle text-fl-accent-text border border-fl-accent-border">
+              <RefreshCw className="w-3 h-3 animate-spin" aria-hidden="true" />
+              Syncing detail...
+            </span>
+          ) : undefined
+        }
+        description={
+          <>
+            <span className="font-mono text-fl-ink font-medium">{incident.key}</span> •{' '}
+            {incident.integration} • First seen{' '}
+            <span className="font-mono tabular-nums">{incident.firstSeen}</span>
+          </>
+        }
+        actions={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                const exportBlob = new Blob([JSON.stringify(incident, null, 2)], {
+                  type: 'application/json',
+                });
+                const url = URL.createObjectURL(exportBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${incident.key}_sanitized_bundle.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                onShowToast(`Exported ${incident.key} sanitized bundle.`);
+              }}
+              leadingIcon={<Download className="w-3.5 h-3.5 text-fl-accent" />}
+            >
+              Export Bundle
+            </Button>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            onClick={() => {
-              const exportBlob = new Blob([JSON.stringify(incident, null, 2)], {
-                type: 'application/json',
-              });
-              const url = URL.createObjectURL(exportBlob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `${incident.key}_sanitized_bundle.json`;
-              a.click();
-              onShowToast(`Exported ${incident.key} sanitized bundle.`);
-            }}
-            className="ws-tactile-btn inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-ws-surface border border-ws-border hover:border-ws-border-strong text-ws-ink hover:bg-ws-surface-elevated text-[13px] font-medium font-sans shadow-subtle"
-          >
-            <Download className="w-3.5 h-3.5 text-ws-accent" />
-            <span>Export Sanitized Bundle</span>
-          </button>
+            <Button
+              variant="primary"
+              onClick={() =>
+                onShowToast('Running deterministic rule check across linked evidence...')
+              }
+              leadingIcon={<Search className="w-3.5 h-3.5" />}
+            >
+              Run Investigation
+            </Button>
+          </>
+        }
+      />
 
-          <button
-            onClick={() =>
-              onShowToast('Simulating bounded read-only investigation with deterministic rules...')
-            }
-            className="ws-tactile-btn inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-ws-btn-primary hover:bg-ws-btn-primary-hover active:bg-ws-btn-primary-active text-ws-btn-primary-ink border border-ws-btn-primary-border text-[13px] font-medium font-sans shadow-subtle"
-          >
-            <Search className="w-3.5 h-3.5" />
-            <span>Run Investigation</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Incident Status Badges Bar & Live Transition Actions */}
-      <div className="flex flex-wrap items-center justify-between gap-3 py-2.5 border-y border-ws-border">
+      {/* Status & Lifecycle Controls Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 py-2.5 border-b border-fl-border">
         <div className="flex flex-wrap items-center gap-3">
           <Badge status={incident.status} withPulse={incident.status === 'INVESTIGATING'} />
           <Badge severity={incident.severity} />
-          <span className="text-xs font-sans text-ws-muted">
-            Class: <strong className="font-mono text-ws-ink font-medium">{incident.cls}</strong>
+          <span className="text-xs font-sans text-fl-muted">
+            Class: <strong className="font-mono text-fl-ink font-medium">{incident.cls}</strong>
           </span>
-          <span className="text-xs font-sans text-ws-muted">
-            Events: <strong className="font-mono text-ws-ink font-medium tabular-nums">{incident.events}</strong>
+          <span className="text-xs font-sans text-fl-muted">
+            Events:{' '}
+            <strong className="font-mono text-fl-ink font-medium tabular-nums">
+              {incident.events}
+            </strong>
           </span>
         </div>
 
-        {/* Live Status Transition Buttons */}
         {onStatusChange && (
           <div className="flex items-center gap-2">
-            <span className="text-xs font-sans text-ws-muted">Transition:</span>
+            <span className="text-xs font-sans text-fl-muted">Transition:</span>
             {incident.status !== 'INVESTIGATING' && (
-              <button
-                onClick={() => onStatusChange('INVESTIGATING')}
-                className="px-2.5 py-1 rounded text-xs font-sans font-medium bg-ws-surface border border-ws-border hover:border-ws-border-strong text-ws-ink hover:bg-ws-surface-elevated transition-colors"
-              >
+              <Button size="sm" variant="secondary" onClick={() => onStatusChange('INVESTIGATING')}>
                 Mark investigating
-              </button>
+              </Button>
             )}
             {incident.status !== 'RESOLVED' && (
               <button
+                type="button"
                 onClick={() => onStatusChange('RESOLVED')}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-sans font-medium bg-ws-success-bg border border-ws-success-border text-ws-success-text hover:opacity-90 transition-opacity"
+                className="fl-tactile-btn inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-sans font-medium bg-fl-success-bg border border-fl-success-border text-fl-success-text hover:brightness-110"
               >
-                <CheckCircle className="w-3.5 h-3.5" />
+                <CheckCircle className="w-3.5 h-3.5" aria-hidden="true" />
                 Resolve
               </button>
             )}
             {incident.status === 'RESOLVED' && (
-              <button
-                onClick={() => onStatusChange('OPEN')}
-                className="px-2.5 py-1 rounded text-xs font-sans font-medium bg-ws-surface border border-ws-border hover:border-ws-border-strong text-ws-ink hover:bg-ws-surface-elevated transition-colors"
-              >
+              <Button size="sm" variant="secondary" onClick={() => onStatusChange('OPEN')}>
                 Reopen
-              </button>
+              </Button>
             )}
           </div>
         )}
       </div>
 
-      {/* Tri-Column Summary Strip: Know / Suspect / Next Safe Check */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-ws-border rounded-lg overflow-hidden border border-ws-border shadow-subtle">
-        <div className="p-4 bg-ws-surface space-y-1.5">
-          <div className="text-[10px] font-mono font-medium tracking-wider text-ws-accent uppercase flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-ws-accent" />
-            [1] WHAT WE KNOW
+      {/* Tri-Column Epistemic Strip: Know / Suspect / Next Safe Check */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-fl-border rounded-xl overflow-hidden border border-fl-border shadow-subtle">
+        <div className="p-4 bg-fl-surface space-y-1.5">
+          <div className="text-[10px] font-mono font-semibold tracking-wider text-fl-accent-text uppercase flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-fl-accent" aria-hidden="true" />
+            What We Know
           </div>
-          <p className="text-[13px] text-ws-ink leading-relaxed font-sans">
-            {incident.known}
-          </p>
+          <p className="text-[13px] text-fl-ink leading-relaxed font-sans">{incident.known}</p>
         </div>
-        <div className="p-4 bg-ws-surface space-y-1.5">
-          <div className="text-[10px] font-mono font-medium tracking-wider text-ws-warning-text uppercase flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-ws-warning-dot" />
-            [2] WHAT WE SUSPECT
+        <div className="p-4 bg-fl-surface space-y-1.5">
+          <div className="text-[10px] font-mono font-semibold tracking-wider text-fl-warning-text uppercase flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-fl-warning-dot" aria-hidden="true" />
+            What We Suspect
           </div>
-          <p className="text-[13px] text-ws-ink leading-relaxed font-sans">
-            {incident.suspect}
-          </p>
+          <p className="text-[13px] text-fl-ink leading-relaxed font-sans">{incident.suspect}</p>
         </div>
-        <div className="p-4 bg-ws-surface space-y-1.5">
-          <div className="text-[10px] font-mono font-medium tracking-wider text-ws-lavender-text uppercase flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-ws-lavender-dot" />
-            [3] NEXT SAFE CHECK
+        <div className="p-4 bg-fl-surface space-y-1.5">
+          <div className="text-[10px] font-mono font-semibold tracking-wider text-fl-violet-text uppercase flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-fl-violet-dot" aria-hidden="true" />
+            Next Safe Check
           </div>
-          <p className="text-[13px] text-ws-ink leading-relaxed font-sans">
-            {incident.next}
-          </p>
+          <p className="text-[13px] text-fl-ink leading-relaxed font-sans">{incident.next}</p>
         </div>
       </div>
 
-      {/* Dual Column Layout: Left Workbench + Right Inspector Rail */}
+      {/* Investigation Workbench & Findings Inspector */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column (2 Cols): Tabs for Timeline, Evidence, Attempts, Raw Payload */}
-        <div className="lg:col-span-2 rounded-lg bg-ws-surface border border-ws-border shadow-subtle overflow-hidden flex flex-col">
-          {/* Tabs Bar */}
-          <div className="flex items-center gap-6 px-6 border-b border-ws-border bg-ws-surface-subtle">
+        <Panel padding="none" className="lg:col-span-2 overflow-hidden flex flex-col">
+          <div className="flex items-center gap-6 px-6 border-b border-fl-border bg-fl-surface-subtle">
             {(['timeline', 'evidence', 'attempts', 'raw'] as const).map((tab) => (
               <button
                 key={tab}
+                type="button"
                 onClick={() => setActiveTab(tab)}
                 className={`py-3.5 text-[13px] font-sans font-medium capitalize border-b-2 transition-colors ${
                   activeTab === tab
-                    ? 'border-ws-accent text-ws-ink font-semibold'
-                    : 'border-transparent text-ws-muted hover:text-ws-secondary'
+                    ? 'border-fl-accent text-fl-ink font-semibold'
+                    : 'border-transparent text-fl-muted hover:text-fl-secondary'
                 }`}
               >
                 {tab === 'raw' ? 'Raw Payload' : tab}
@@ -205,13 +201,13 @@ export const InvestigationView: React.FC<InvestigationViewProps> = ({
             ))}
           </div>
 
-          {/* Tab 1: Timeline (Color-coded states) */}
           {activeTab === 'timeline' && (
             <div className="p-6 space-y-4">
               {incident.timeline.length === 0 ? (
-                <div className="p-8 text-center text-xs font-sans text-ws-muted">
-                  No timeline checkpoints recorded yet for this incident.
-                </div>
+                <EmptyState
+                  title="No timeline checkpoints recorded"
+                  description="Events linked to this incident will appear chronologically here."
+                />
               ) : (
                 incident.timeline.map((item, idx) => {
                   const linkedEvidence = incident.evidence.find((e) => e.id === item.evidenceId);
@@ -220,95 +216,84 @@ export const InvestigationView: React.FC<InvestigationViewProps> = ({
 
                   return (
                     <div key={item.id} className="relative flex items-start gap-3.5">
-                      {/* Timestamp */}
-                      <div className="w-16 font-mono text-[11px] text-ws-muted text-right flex-shrink-0 pt-2 tabular-nums">
+                      <div className="w-16 font-mono text-[11px] text-fl-muted text-right flex-shrink-0 pt-2 tabular-nums">
                         {item.time.split('.')[0]}
                       </div>
 
-                      {/* Circuit Node & Vertical Connecting Line Column */}
                       <div className="flex flex-col items-center flex-shrink-0 self-stretch">
-                        {/* Node Checkpoint Icon */}
                         <div
-                          className={`relative z-10 w-7 h-7 rounded-full flex items-center justify-center shadow-subtle transition-transform ${
+                          className={`relative z-10 w-7 h-7 rounded-full flex items-center justify-center shadow-subtle ${
                             isFailure
-                              ? 'bg-ws-danger-bg text-ws-danger-dot border border-ws-danger-border ring-2 ring-ws-danger-dot/25'
+                              ? 'bg-fl-danger-bg text-fl-danger-dot border border-fl-danger-border'
                               : isWarning
-                              ? 'bg-ws-warning-bg text-ws-warning-dot border border-ws-warning-border ring-2 ring-ws-warning-dot/25'
-                              : 'bg-ws-success-bg text-ws-success-dot border border-ws-success-border'
+                              ? 'bg-fl-warning-bg text-fl-warning-dot border border-fl-warning-border'
+                              : 'bg-fl-success-bg text-fl-success-dot border border-fl-success-border'
                           }`}
                         >
                           {isFailure ? (
-                            <AlertCircle className="w-4 h-4 stroke-[2.5]" />
+                            <AlertCircle className="w-4 h-4" aria-hidden="true" />
                           ) : isWarning ? (
-                            <AlertTriangle className="w-4 h-4 stroke-[2.5]" />
+                            <AlertTriangle className="w-4 h-4" aria-hidden="true" />
                           ) : (
-                            <CheckCircle2 className="w-4 h-4 stroke-[2.5]" />
+                            <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
                           )}
                         </div>
 
-                        {/* Connecting Line */}
                         {idx < incident.timeline.length - 1 && (
-                          <div className="w-px flex-1 bg-ws-border my-1.5" />
+                          <div className="w-px flex-1 bg-fl-border my-1.5" aria-hidden="true" />
                         )}
                       </div>
 
-                      {/* Event Card with Distinct Color Coding */}
                       <div
-                        className={`flex-1 mb-2 rounded-lg p-4 border border-l-4 transition-colors shadow-subtle ${
+                        className={`flex-1 mb-2 rounded-lg p-4 border border-l-4 shadow-subtle ${
                           isFailure
-                            ? 'bg-ws-danger-bg/25 border-ws-danger-border border-l-ws-danger-dot'
+                            ? 'bg-fl-danger-bg/40 border-fl-danger-border border-l-fl-danger-dot'
                             : isWarning
-                            ? 'bg-ws-warning-bg/15 border-ws-warning-border border-l-ws-warning-dot'
-                            : 'bg-ws-surface-subtle border-ws-border border-l-ws-success-dot'
+                            ? 'bg-fl-warning-bg/30 border-fl-warning-border border-l-fl-warning-dot'
+                            : 'bg-fl-surface-subtle border-fl-border border-l-fl-success-dot'
                         }`}
                       >
-                        {/* Card Header with State Pill */}
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`text-[13px] font-sans font-semibold ${
-                                isFailure ? 'text-ws-danger-text' : 'text-ws-ink'
-                              }`}
-                            >
-                              {item.title}
-                            </span>
-                          </div>
+                          <span
+                            className={`text-[13px] font-sans font-semibold ${
+                              isFailure ? 'text-fl-danger-text' : 'text-fl-ink'
+                            }`}
+                          >
+                            {item.title}
+                          </span>
 
-                          {/* Distinct State Badges */}
                           {isFailure ? (
-                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium uppercase tracking-wider bg-ws-danger-bg text-ws-danger-text border border-ws-danger-border">
-                              <span className="w-1.5 h-1.5 rounded-full bg-ws-danger-dot animate-pulse" />
-                              FAILURE CHECKPOINT
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium uppercase tracking-wider bg-fl-danger-bg text-fl-danger-text border border-fl-danger-border">
+                              Failure
                             </span>
                           ) : isWarning ? (
-                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium uppercase tracking-wider bg-ws-warning-bg text-ws-warning-text border border-ws-warning-border">
-                              <span className="w-1.5 h-1.5 rounded-full bg-ws-warning-dot" />
-                              WARNING / RETRY
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium uppercase tracking-wider bg-fl-warning-bg text-fl-warning-text border border-fl-warning-border">
+                              Retry / Warn
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium uppercase tracking-wider bg-ws-success-bg text-ws-success-text border border-ws-success-border">
-                              <span className="w-1.5 h-1.5 rounded-full bg-ws-success-dot" />
-                              VERIFIED INGRESS
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium uppercase tracking-wider bg-fl-success-bg text-fl-success-text border border-fl-success-border">
+                              Verified
                             </span>
                           )}
                         </div>
 
-                        {/* Description */}
-                        <p className="text-[13px] font-sans text-ws-secondary mt-1.5 leading-relaxed">
+                        <p className="text-[13px] font-sans text-fl-secondary mt-1.5 leading-relaxed">
                           {item.description}
                         </p>
 
-                        {/* Evidence Link Footer */}
                         {linkedEvidence && (
-                          <div className="mt-3 pt-2.5 border-t border-ws-border/50 flex items-center justify-between">
+                          <div className="mt-3 pt-2.5 border-t border-fl-border/60 flex items-center justify-between">
                             <button
+                              type="button"
                               onClick={() => onOpenEvidence(linkedEvidence)}
-                              className="inline-flex items-center gap-1.5 text-xs font-sans font-medium text-ws-accent hover:underline"
+                              className="inline-flex items-center gap-1.5 text-xs font-sans font-medium text-fl-accent-text hover:underline"
                             >
-                              <span>Inspect evidence record • <span className="font-mono">{linkedEvidence.id}</span></span>
-                              <ExternalLink className="w-3 h-3" />
+                              <span>
+                                Inspect evidence • <span className="font-mono">{linkedEvidence.id}</span>
+                              </span>
+                              <ExternalLink className="w-3 h-3" aria-hidden="true" />
                             </button>
-                            <span className="text-[10px] font-mono text-ws-muted uppercase">
+                            <span className="text-[10px] font-mono text-fl-muted uppercase">
                               Source: {linkedEvidence.source}
                             </span>
                           </div>
@@ -321,93 +306,104 @@ export const InvestigationView: React.FC<InvestigationViewProps> = ({
             </div>
           )}
 
-          {/* Tab 2: Evidence */}
           {activeTab === 'evidence' && (
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-3">
               {incident.evidence.length === 0 ? (
-                <div className="p-8 text-center text-xs font-sans text-ws-muted">
-                  No evidence records linked to this incident.
-                </div>
+                <EmptyState
+                  title="No evidence records linked"
+                  description="Supporting observations for this incident will appear here."
+                />
               ) : (
                 incident.evidence.map((ev) => (
-                  <div
+                  <button
                     key={ev.id}
+                    type="button"
                     onClick={() => onOpenEvidence(ev)}
-                    className="p-4 rounded-md bg-ws-surface-subtle border border-ws-border hover:border-ws-border-strong cursor-pointer transition-colors space-y-2 group"
+                    className="w-full text-left p-4 rounded-lg bg-fl-surface-subtle border border-fl-border hover:border-fl-border-strong transition-colors space-y-2 group"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-medium text-ws-accent group-hover:underline">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-mono text-xs font-medium text-fl-accent-text group-hover:underline">
                           {ev.id}
                         </span>
-                        <span className="text-[13px] font-sans font-semibold text-ws-ink">{ev.title}</span>
+                        <span className="text-[13px] font-sans font-semibold text-fl-ink truncate">
+                          {ev.title}
+                        </span>
                       </div>
                       <Badge epistemic={ev.epistemic} />
                     </div>
-                    <p className="text-[13px] font-sans text-ws-secondary leading-relaxed">{ev.description}</p>
-                    <div className="flex items-center justify-between pt-2 border-t border-ws-border text-xs text-ws-muted">
+                    <p className="text-[13px] font-sans text-fl-secondary leading-relaxed">
+                      {ev.description}
+                    </p>
+                    <div className="flex items-center justify-between pt-2 border-t border-fl-border text-xs text-fl-muted">
                       <span className="font-mono text-[10px]">Source: {ev.source}</span>
-                      <span className="text-ws-accent font-sans font-medium text-xs">Click to open drawer →</span>
+                      <span className="text-fl-accent-text font-sans font-medium text-xs">
+                        Open inspector →
+                      </span>
                     </div>
-                  </div>
+                  </button>
                 ))
               )}
             </div>
           )}
 
-          {/* Tab 3: Attempts */}
           {activeTab === 'attempts' && (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-[13px] font-sans">
-                <thead className="bg-ws-surface-subtle border-b border-ws-border text-xs font-sans font-medium text-ws-muted">
+            <div tabIndex={0} role="region" aria-label="Delivery attempts table" className="overflow-x-auto">
+              <table className="w-full text-left text-fl-table font-sans border-collapse">
+                <thead className="bg-fl-surface-subtle border-b border-fl-border text-xs font-sans font-medium text-fl-muted">
                   <tr>
                     <th className="py-3 px-4">Attempt</th>
                     <th className="py-3 px-4">Timestamp</th>
-                    <th className="py-3 px-4">HTTP status</th>
+                    <th className="py-3 px-4">HTTP Status</th>
                     <th className="py-3 px-4">Latency</th>
                     <th className="py-3 px-4">Evidence</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-ws-border">
+                <tbody className="divide-y divide-fl-border-subtle">
                   {incident.attempts.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-xs font-sans text-ws-muted">
-                        No delivery attempts recorded for this incident.
+                      <td colSpan={5}>
+                        <EmptyState title="No delivery attempts recorded" />
                       </td>
                     </tr>
                   ) : (
                     incident.attempts.map((att) => {
                       const linked = incident.evidence.find((e) => e.id === att.evidenceId);
                       return (
-                        <tr key={att.id} className="hover:bg-ws-surface-elevated/60 transition-colors">
-                          <td className="py-3 px-4 font-mono font-medium text-ws-ink text-xs">
+                        <tr key={att.id} className="hover:bg-fl-surface-subtle transition-colors">
+                          <td className="py-3 px-4 font-mono font-medium text-fl-ink text-xs">
                             attempt_0{att.attemptNumber}
                           </td>
-                          <td className="py-3 px-4 font-mono text-[11px] text-ws-muted tabular-nums">{att.time}</td>
+                          <td className="py-3 px-4 font-mono text-[11px] text-fl-muted tabular-nums">
+                            {att.time}
+                          </td>
                           <td className="py-3 px-4">
                             <span
                               className={`px-2 py-0.5 rounded text-[11px] font-mono font-medium tabular-nums ${
                                 att.status >= 500
-                                  ? 'bg-ws-danger-bg text-ws-danger-text border border-ws-danger-border'
+                                  ? 'bg-fl-danger-bg text-fl-danger-text border border-fl-danger-border'
                                   : att.status === 429
-                                  ? 'bg-ws-warning-bg text-ws-warning-text border border-ws-warning-border'
-                                  : 'bg-ws-surface-subtle text-ws-ink border border-ws-border'
+                                  ? 'bg-fl-warning-bg text-fl-warning-text border border-fl-warning-border'
+                                  : 'bg-fl-surface-subtle text-fl-ink border border-fl-border'
                               }`}
                             >
                               {att.status || 'OK'}
                             </span>
                           </td>
-                          <td className="py-3 px-4 font-mono text-xs text-ws-secondary tabular-nums">{att.durationMs}ms</td>
+                          <td className="py-3 px-4 font-mono text-xs text-fl-secondary tabular-nums">
+                            {att.durationMs}ms
+                          </td>
                           <td className="py-3 px-4">
                             {linked ? (
                               <button
+                                type="button"
                                 onClick={() => onOpenEvidence(linked)}
-                                className="font-mono text-xs text-ws-accent hover:underline font-medium"
+                                className="font-mono text-xs text-fl-accent-text hover:underline font-medium"
                               >
                                 {linked.id}
                               </button>
                             ) : (
-                              <span className="font-mono text-ws-muted text-[10px]">None</span>
+                              <span className="font-mono text-fl-muted text-[10px]">None</span>
                             )}
                           </td>
                         </tr>
@@ -419,129 +415,136 @@ export const InvestigationView: React.FC<InvestigationViewProps> = ({
             </div>
           )}
 
-          {/* Tab 4: Raw Payload */}
           {activeTab === 'raw' && (
             <div className="p-6 space-y-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-[13px] font-semibold text-ws-ink font-sans">
-                  <Terminal className="w-3.5 h-3.5 text-ws-accent" />
+                <div className="flex items-center gap-2 text-[13px] font-semibold text-fl-ink font-sans">
+                  <Terminal className="w-3.5 h-3.5 text-fl-accent" aria-hidden="true" />
                   Redacted Ingress JSON Payload
                 </div>
-                <button
+                <Button
+                  size="sm"
+                  variant="secondary"
                   onClick={handleCopyRaw}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium font-sans bg-ws-surface-subtle border border-ws-border hover:bg-ws-surface-elevated text-ws-secondary hover:text-ws-ink transition-colors"
+                  leadingIcon={
+                    copiedRaw ? (
+                      <Check className="w-3.5 h-3.5 text-fl-success-dot" />
+                    ) : (
+                      <Terminal className="w-3.5 h-3.5" />
+                    )
+                  }
                 >
-                  {copiedRaw ? <Check className="w-3.5 h-3.5 text-ws-success-dot" /> : <Terminal className="w-3.5 h-3.5" />}
                   {copiedRaw ? 'Copied' : 'Copy Payload'}
-                </button>
+                </Button>
               </div>
-              <div className="rounded-md border border-ws-border bg-ws-surface-subtle p-4 text-xs font-mono overflow-x-auto">
-                <pre className="text-ws-ink whitespace-pre-wrap leading-relaxed">
+              <div className="rounded-lg border border-fl-border bg-fl-surface-subtle p-4 text-xs font-mono overflow-x-auto">
+                <pre className="text-fl-ink whitespace-pre-wrap leading-relaxed">
                   {JSON.stringify(incident.rawPayload, null, 2)}
                 </pre>
               </div>
             </div>
           )}
-        </div>
+        </Panel>
 
-        {/* Right Rail: Rule Findings & AI Hypothesis Cards */}
-        <div className="space-y-6">
-          {/* Rule Findings (Deterministic) */}
-          <div className="p-5 rounded-lg bg-ws-surface border border-ws-border shadow-subtle space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-ws-border">
+        {/* Right Rail: Rule Receipts & Bounded AI Hypotheses */}
+        <div className="space-y-5">
+          <Panel padding="md" className="space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-fl-border">
               <div className="flex items-center gap-2">
-                <Cpu className="w-4 h-4 text-ws-lavender-dot" />
-                <h3 className="text-sm font-semibold text-ws-ink font-sans">
-                  Verified rule receipts
-                </h3>
+                <Cpu className="w-4 h-4 text-fl-violet-dot" aria-hidden="true" />
+                <h3 className="text-fl-card text-fl-ink font-sans">Verified Rule Receipts</h3>
               </div>
-              <span className="text-[10px] font-mono text-ws-lavender-text bg-ws-lavender-bg border border-ws-lavender-border px-2 py-0.5 rounded font-medium uppercase tracking-wide">
-                DETERMINISTIC
+              <span className="text-[10px] font-mono text-fl-violet-text bg-fl-violet-bg border border-fl-violet-border px-2 py-0.5 rounded font-medium uppercase tracking-wide">
+                Deterministic
               </span>
             </div>
 
             <div className="space-y-3">
               {incident.ruleFindings.length === 0 ? (
-                <div className="p-4 text-center text-xs font-sans text-ws-muted">
+                <div className="p-4 text-center text-xs font-sans text-fl-muted">
                   No rule findings registered yet.
                 </div>
               ) : (
                 incident.ruleFindings.map((rule) => (
                   <div
                     key={rule.ruleId}
-                    className="p-3 rounded-md bg-ws-surface-subtle border border-ws-border space-y-1.5"
+                    className="p-3 rounded-lg bg-fl-surface-subtle border border-fl-border space-y-1.5"
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-[13px] font-sans font-semibold text-ws-ink">{rule.name}</span>
-                      <span className="text-[10px] font-mono text-ws-accent bg-ws-accent-subtle border border-ws-accent-border px-1.5 py-0.5 rounded font-medium tabular-nums">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[13px] font-sans font-semibold text-fl-ink">
+                        {rule.name}
+                      </span>
+                      <span className="text-[10px] font-mono text-fl-accent-text bg-fl-accent-subtle border border-fl-accent-border px-1.5 py-0.5 rounded font-medium tabular-nums shrink-0">
                         {rule.matchedEvents} matched
                       </span>
                     </div>
-                    <p className="text-xs font-sans text-ws-secondary leading-relaxed">{rule.description}</p>
-                    <div className="font-mono text-[10px] text-ws-lavender-text pt-1 font-medium">
+                    <p className="text-xs font-sans text-fl-secondary leading-relaxed">
+                      {rule.description}
+                    </p>
+                    <div className="font-mono text-[10px] text-fl-violet-text pt-1 font-medium">
                       Receipt: {rule.ruleId}
                     </div>
                   </div>
                 ))
               )}
             </div>
-          </div>
+          </Panel>
 
-          {/* AI Hypothesis Card (Bounded) */}
-          <div className="p-5 rounded-lg bg-ws-surface border border-ws-border shadow-subtle space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-ws-border">
+          <Panel padding="md" className="space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-fl-border">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-ws-warning-dot" />
-                <h3 className="text-sm font-semibold text-ws-ink font-sans">
-                  AI investigation
-                </h3>
+                <Sparkles className="w-4 h-4 text-fl-warning-dot" aria-hidden="true" />
+                <h3 className="text-fl-card text-fl-ink font-sans">Hypotheses</h3>
               </div>
-              <span className="text-[10px] font-mono text-ws-warning-text bg-ws-warning-bg border border-ws-warning-border px-2 py-0.5 rounded font-medium uppercase">
-                [PROBABILISTIC]
+              <span className="text-[10px] font-mono text-fl-warning-text bg-fl-warning-bg border border-dashed border-fl-warning-border px-2 py-0.5 rounded font-medium uppercase">
+                Unverified
               </span>
             </div>
 
             {incident.hypotheses.map((hyp) => (
               <div
                 key={hyp.id}
-                className="p-3.5 rounded-md bg-ws-surface-subtle border border-ws-border space-y-3"
+                className="p-3.5 rounded-lg bg-fl-surface-subtle border border-fl-border space-y-3"
               >
                 <div>
-                  <div className="text-[13px] font-sans font-semibold text-ws-ink">{hyp.title}</div>
-                  <p className="text-xs font-sans text-ws-secondary mt-1 leading-relaxed">{hyp.reasoning}</p>
+                  <div className="text-[13px] font-sans font-semibold text-fl-ink">{hyp.title}</div>
+                  <p className="text-xs font-sans text-fl-secondary mt-1 leading-relaxed">
+                    {hyp.reasoning}
+                  </p>
                 </div>
 
-                <div className="p-2.5 rounded bg-ws-surface border border-ws-border text-xs font-sans text-ws-ink">
-                  <span className="text-ws-warning-text font-medium block text-[10px] font-mono uppercase mb-0.5">
-                    Suggested Verification:
+                <div className="p-2.5 rounded-md bg-fl-surface border border-fl-border text-xs font-sans text-fl-ink">
+                  <span className="text-fl-warning-text font-medium block text-[10px] font-mono uppercase mb-0.5">
+                    Suggested Check:
                   </span>
                   {hyp.suggestedCheck}
                 </div>
 
-                {/* User Feedback Buttons */}
-                <div className="pt-2 border-t border-ws-border flex items-center justify-between">
-                  <span className="text-xs font-sans text-ws-muted">Engineer feedback:</span>
+                <div className="pt-2 border-t border-fl-border flex items-center justify-between">
+                  <span className="text-xs font-sans text-fl-muted">Feedback:</span>
                   <div className="flex items-center gap-2">
                     <button
+                      type="button"
                       onClick={() => onFeedback(hyp.id, 'helpful')}
                       className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-sans font-medium transition-colors ${
                         hyp.feedback === 'helpful'
-                          ? 'bg-ws-success-bg text-ws-success-text border border-ws-success-border'
-                          : 'bg-ws-surface border border-ws-border text-ws-muted hover:text-ws-ink'
+                          ? 'bg-fl-success-bg text-fl-success-text border border-fl-success-border'
+                          : 'bg-fl-surface border border-fl-border text-fl-muted hover:text-fl-ink'
                       }`}
                     >
-                      <ThumbsUp className="w-3 h-3" />
+                      <ThumbsUp className="w-3 h-3" aria-hidden="true" />
                       Helpful
                     </button>
                     <button
+                      type="button"
                       onClick={() => onFeedback(hyp.id, 'false_positive')}
                       className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-sans font-medium transition-colors ${
                         hyp.feedback === 'false_positive'
-                          ? 'bg-ws-danger-bg text-ws-danger-text border border-ws-danger-border'
-                          : 'bg-ws-surface border border-ws-border text-ws-muted hover:text-ws-ink'
+                          ? 'bg-fl-danger-bg text-fl-danger-text border border-fl-danger-border'
+                          : 'bg-fl-surface border border-fl-border text-fl-muted hover:text-fl-ink'
                       }`}
                     >
-                      <ThumbsDown className="w-3 h-3" />
+                      <ThumbsDown className="w-3 h-3" aria-hidden="true" />
                       False Positive
                     </button>
                   </div>
@@ -549,11 +552,11 @@ export const InvestigationView: React.FC<InvestigationViewProps> = ({
               </div>
             ))}
 
-            <div className="pt-2 flex items-center gap-2 text-xs font-sans text-ws-muted">
-              <ShieldCheck className="w-3.5 h-3.5 text-ws-success-dot" />
-              <span>Read-only bounded diagnosis • No destructive action</span>
+            <div className="pt-1 flex items-center gap-2 text-xs font-sans text-fl-muted">
+              <ShieldCheck className="w-3.5 h-3.5 text-fl-success-dot" aria-hidden="true" />
+              <span>Read-only diagnosis • No destructive actions</span>
             </div>
-          </div>
+          </Panel>
         </div>
       </div>
     </div>

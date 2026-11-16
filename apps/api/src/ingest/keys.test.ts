@@ -42,7 +42,7 @@ async function assertEmpty(integrationId: string) {
 
 test("creation persists only a hash; a valid HTTP key stores one event, attempt, and outbox row", async () => {
   const f = await fixture();
-  assert.match(f.issued.key, /^wsk_[A-Za-z0-9_-]{43}$/);
+  assert.match(f.issued.key, /^flk_[A-Za-z0-9_-]{43}$/);
   const stored = await db.orm.public.IngestKey.where({ id: f.issued.id }).first();
   assert.equal(stored?.keyHash, hashIngestKey(f.issued.key));
   assert.equal(JSON.stringify(stored).includes(f.issued.key), false);

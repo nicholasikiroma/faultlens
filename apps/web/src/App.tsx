@@ -15,7 +15,7 @@ import { SettingsView } from './views/SettingsView';
 
 function getInitialTheme(): 'dark' | 'light' {
   try {
-    const saved = localStorage.getItem('ws_theme');
+    const saved = localStorage.getItem('fl_theme');
     if (saved === 'dark' || saved === 'light') {
       return saved;
     }
@@ -70,12 +70,24 @@ export const App: React.FC = () => {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     document.documentElement.classList.toggle('dark', theme === 'dark');
+    const meta = document.querySelector('meta[name="color-scheme"]');
+    if (meta) meta.setAttribute('content', theme);
     try {
-      localStorage.setItem('ws_theme', theme);
+      localStorage.setItem('fl_theme', theme);
     } catch {
       // Ignore storage write errors
     }
   }, [theme]);
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'fl_theme' && (e.newValue === 'dark' || e.newValue === 'light')) {
+        setTheme(e.newValue);
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
   // Live Backend Polling & Connection Health Monitor (3-second real-time streaming)
   useEffect(() => {
@@ -228,7 +240,7 @@ export const App: React.FC = () => {
   );
 
   return (
-    <div className="flex min-h-screen bg-ws-canvas text-ws-ink font-sans transition-colors duration-150">
+    <div className="flex min-h-screen bg-fl-canvas text-fl-ink font-sans transition-colors duration-150">
       {/* Fixed Sticky Sidebar */}
       <Sidebar
         currentPage={currentPage}
@@ -246,17 +258,16 @@ export const App: React.FC = () => {
             const next = !prev;
             showToast(
               next
-                ? 'Passive Wire Recorder: RESUMED (Active Ingress Stream Tap)'
-                : 'Passive Wire Recorder: ARMED STANDBY (Live Ingress Polling Suspended)'
+                ? 'Live stream polling resumed.'
+                : 'Live stream paused (standby mode).'
             );
             return next;
           });
         }}
         onFlushBuffer={() => {
-          showToast('Flushed telemetry buffer cache. Refreshing stream...');
+          showToast('Refreshing incident stream...');
           void apiStore.fetchIncidents().then((incs) => setIncidents(incs));
         }}
-        onShowToast={showToast}
       />
 
       {/* Main Content Area */}
@@ -368,8 +379,8 @@ export const App: React.FC = () => {
 
       {/* Global Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-ws-surface text-ws-ink border border-ws-border text-[13px] font-sans font-medium px-4 py-3 rounded-md shadow-elevated flex items-center gap-2.5">
-          <span className="w-2 h-2 rounded-full bg-ws-accent shrink-0" />
+        <div className="fixed bottom-6 right-6 z-50 bg-fl-surface text-fl-ink border border-fl-border text-[13px] font-sans font-medium px-4 py-3 rounded-lg shadow-elevated flex items-center gap-2.5">
+          <span className="w-2 h-2 rounded-full bg-fl-accent shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}

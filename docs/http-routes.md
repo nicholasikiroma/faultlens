@@ -4,7 +4,7 @@
 
 `apps/api/src/http/server.ts` is the HTTP adapter. It uses Hono (`hono` and `@hono/node-server`). `createApiApp` registers each mounted route with `app.on`. `createApiServer` passes `app.fetch` to `createAdaptorServer`. `apps/api/src/http/request.ts` parses headers, query strings, and bodies. A controller in `apps/api/src/http/controllers/` calls one domain function for the matched route. A success body and a domain-failure body are that function's result. `Date` values are JSON ISO-8601 strings. A refusal that happens before a domain call uses `error`. The domain functions do not import Hono.
 
-Admin routes require `Authorization: Bearer <WIRESLEUTH_ADMIN_TOKEN>`. The workspace id is `WIRESLEUTH_WORKSPACE_ID`, and the actor recorded on writes is `WIRESLEUTH_ADMIN_ACTOR`. The server does not read either value from the query string or the JSON body. A missing or wrong admin token is 401 with `WWW-Authenticate: Bearer` and this body.
+Admin routes require `Authorization: Bearer <FAULTLENS_ADMIN_TOKEN>`. The workspace id is `FAULTLENS_WORKSPACE_ID`, and the actor recorded on writes is `FAULTLENS_ADMIN_ACTOR`. The server does not read either value from the query string or the JSON body. A missing or wrong admin token is 401 with `WWW-Authenticate: Bearer` and this body.
 
 ```json
 { "kind": "unauthorized", "error": "unauthorized" }
@@ -14,7 +14,7 @@ A blank workspace id is the same 401. The server checks the token and the worksp
 
 A query key the route does not list is 400 `{ "error": "invalid_request", "field": "<key>" }`. `workspaceId` is never a listed key, so `?workspaceId=` is 400. A repeated query key is 400. The field names the key.
 
-`POST /hooks/:token` is mounted only when `WIRESLEUTH_SIMULATED_WEBHOOKS` is `1`. Otherwise that path is 404. Real deliveries use `POST /v1/ingest`.
+`POST /hooks/:token` is mounted only when `FAULTLENS_SIMULATED_WEBHOOKS` is `1`. Otherwise that path is 404. Real deliveries use `POST /v1/ingest`.
 
 No matching path is 404 `{ "error": "not_found" }`. A path that matches another method is 405 `{ "error": "method_not_allowed" }` and the `Allow` header lists the methods for that path.
 
@@ -22,7 +22,7 @@ No matching path is 404 `{ "error": "not_found" }`. A path that matches another 
 
 ### POST /v1/ingest
 
-Real traffic. The bearer token is a hashed API key that `ingest` resolves to an active key scoped to one integration, workspace, and environment. Revoked keys and legacy simulation endpoint tokens return 401 `unknown-token` without writing delivery records. See [ingest keys](ingest-keys.md) for provisioning, rotation, revocation, and upgrade instructions. The raw body is at most 1,048,576 bytes, which is `MAX_BODY_BYTES`. The server reads one extra byte and then stops, and `ingest` returns `oversized` when the body is longer than the limit. The signature header is `x-wiresleuth-signature`. Duplicate header values keep the first value. `authorization` and `cookie` are not forwarded.
+Real traffic. The bearer token is a hashed API key that `ingest` resolves to an active key scoped to one integration, workspace, and environment. Revoked keys and legacy simulation endpoint tokens return 401 `unknown-token` without writing delivery records. See [ingest keys](ingest-keys.md) for provisioning, rotation, revocation, and upgrade instructions. The raw body is at most 1,048,576 bytes, which is `MAX_BODY_BYTES`. The server reads one extra byte and then stops, and `ingest` returns `oversized` when the body is longer than the limit. The signature header is `x-faultlens-signature`. Duplicate header values keep the first value. `authorization` and `cookie` are not forwarded.
 
 There is no query contract. Ingest ignores the query string.
 
@@ -40,7 +40,7 @@ There is no query contract. Ingest ignores the query string.
 
 ### POST /hooks/:token
 
-Simulated and test traffic only. The credential is the `:token` path segment, resolved against the integration's legacy `endpointToken`; it is not an API key. The body, the signature header, and the status table are the same. The server calls `ingestSimulated` only when `WIRESLEUTH_SIMULATED_WEBHOOKS` is `1`. When that variable is unset or any other value, the path is not mounted and the response is 404.
+Simulated and test traffic only. The credential is the `:token` path segment, resolved against the integration's legacy `endpointToken`; it is not an API key. The body, the signature header, and the status table are the same. The server calls `ingestSimulated` only when `FAULTLENS_SIMULATED_WEBHOOKS` is `1`. When that variable is unset or any other value, the path is not mounted and the response is 404.
 
 ### GET /v1/events
 
@@ -95,7 +95,7 @@ Admin. Calls `exportIncident`. No query keys. The body has no signing secret and
 
 Admin write. Calls `transitionIncident`. `Content-Type` must be `application/json`. Any other media type is 415 `{ "error": "unsupported_media_type" }`. A body larger than 16,384 bytes is 413 `{ "error": "payload_too_large" }`. The server does not call `transitionIncident` in either case.
 
-The JSON object has one key, `status`. `status` is an `INCIDENT_STATUSES` label. The labels are `OPEN`, `INVESTIGATING`, `RESOLVED`, and `ARCHIVED`. Any other key, including `actor` and `workspaceId`, is 400. The actor is `WIRESLEUTH_ADMIN_ACTOR`.
+The JSON object has one key, `status`. `status` is an `INCIDENT_STATUSES` label. The labels are `OPEN`, `INVESTIGATING`, `RESOLVED`, and `ARCHIVED`. Any other key, including `actor` and `workspaceId`, is 400. The actor is `FAULTLENS_ADMIN_ACTOR`.
 
 | Outcome | Status |
 | --- | --- |
@@ -110,7 +110,7 @@ A repeated status is `unchanged` and writes no audit row. That stays inside `tra
 
 Admin write. Calls `rateFinding`. The content type and the size limit match `PUT /v1/incidents/:incidentId/status`.
 
-The JSON object requires `rating`. `rating` is `USEFUL` or `INCORRECT`. `note` is optional and is a string or null. Any other key, including `actor` and `workspaceId`, is 400. The actor is `WIRESLEUTH_ADMIN_ACTOR`. A second rating from that actor replaces the row.
+The JSON object requires `rating`. `rating` is `USEFUL` or `INCORRECT`. `note` is optional and is a string or null. Any other key, including `actor` and `workspaceId`, is 400. The actor is `FAULTLENS_ADMIN_ACTOR`. A second rating from that actor replaces the row.
 
 | Outcome | Status |
 | --- | --- |

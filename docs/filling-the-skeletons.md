@@ -58,7 +58,7 @@ Call `verify` and `redact`. Do not copy their logic into this file.
 
 The return type cannot say "unknown token" or "conflict". `attemptId` is a `string`. Change the return type when you need those results. Prefer a result you can switch on. Do not `throw` a plain string.
 
-The client is `src/prisma/db.ts`. `DATABASE_URL` points at the `wiresleuth` database.
+The client is `src/prisma/db.ts`. `DATABASE_URL` points at the `faultlens` database.
 
 Write this.
 

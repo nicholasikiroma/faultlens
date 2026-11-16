@@ -69,10 +69,10 @@ export function createApiApp(): Hono<ApiEnv> {
       allowHeaders: [
         "Content-Type",
         "Authorization",
-        "x-wiresleuth-signature",
-        "x-wiresleuth-episode",
+        "x-faultlens-signature",
+        "x-faultlens-episode",
       ],
-      exposeHeaders: ["Content-Length", "x-wiresleuth-signature"],
+      exposeHeaders: ["Content-Length", "x-faultlens-signature"],
       maxAge: 86400,
       credentials: true,
     }),
@@ -122,7 +122,7 @@ export async function startApiServer(options?: {
   const host = options?.host ?? config.httpHost;
   const port = options?.port ?? config.httpPort;
   if (!Number.isInteger(port) || port < 0 || port > 65535) {
-    throw new Error("Invalid WIRESLEUTH_API_PORT");
+    throw new Error("Invalid FAULTLENS_API_PORT");
   }
   const server = createApiServer();
   await new Promise<void>((resolve, reject) => {

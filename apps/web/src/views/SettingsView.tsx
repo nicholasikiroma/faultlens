@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Button, PageHeader, Panel } from '../components/ui';
 import { Sun, Moon, RotateCcw, Server, RefreshCw } from 'lucide-react';
 
 interface SettingsViewProps {
@@ -33,139 +34,129 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
   return (
     <div className="space-y-6 max-w-3xl">
-      {/* Header */}
-      <div className="pb-2 border-b border-ws-border">
-        <div className="ws-eyebrow text-ws-accent mb-1 flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-ws-accent animate-ping" />
-          WORKSPACE PREFERENCES // DIAGNOSTIC CONFIG
-        </div>
-        <h1 className="text-3xl font-bold tracking-tight text-ws-ink font-sans leading-tight">
-          Preferences & Diagnostics
-        </h1>
-        <p className="text-[14px] text-ws-secondary mt-1 font-sans leading-relaxed">
-          Configure visual appearance, live telemetry connections, and workstation diagnostic settings.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Workspace Preferences"
+        title="Settings"
+        description="Configure visual appearance, live backend connectivity, and workstation diagnostic defaults."
+      />
 
-      {/* Settings Panel */}
-      <div className="rounded-lg bg-ws-surface border border-ws-border shadow-subtle divide-y divide-ws-border">
-        {/* Backend API Service Row */}
+      <Panel padding="none" className="divide-y divide-fl-border">
         <div className="p-5 flex items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <Server className="w-4 h-4 text-ws-accent" />
-              <span className="text-sm font-semibold text-ws-ink font-sans">Live Backend API Service</span>
+              <Server className="w-4 h-4 text-fl-accent" aria-hidden="true" />
+              <span className="text-fl-card text-fl-ink font-sans">Backend API Service</span>
               <span
                 className={`text-[10px] font-mono font-medium px-2 py-0.5 rounded border uppercase ${
                   isLiveConnected
-                    ? 'bg-ws-success-bg text-ws-success-text border-ws-success-border'
-                    : 'bg-ws-warning-bg text-ws-warning-text border-ws-warning-border'
+                    ? 'bg-fl-success-bg text-fl-success-text border-fl-success-border'
+                    : 'bg-fl-warning-bg text-fl-warning-text border-fl-warning-border'
                 }`}
               >
-                {isLiveConnected ? `LIVE CONNECTED (${latencyMs ?? 1}ms)` : 'OFFLINE / LOCAL STANDBY'}
+                {isLiveConnected ? `Connected (${latencyMs ?? 1}ms)` : 'Offline / Local Mode'}
               </span>
             </div>
-            <p className="text-xs font-sans text-ws-secondary mt-0.5 leading-relaxed">
-              Hono HTTP service on <code className="font-mono text-ws-ink">127.0.0.1:3000</code>. Provides live telemetry, real-time triage queue, and deterministic classification.
+            <p className="text-xs font-sans text-fl-secondary mt-1 leading-relaxed">
+              Hono HTTP service on <code className="font-mono text-fl-ink">127.0.0.1:3000</code> providing
+              live triage queries and deterministic classification.
             </p>
           </div>
-          <button
+          <Button
+            size="sm"
+            variant="secondary"
             onClick={handleTest}
             disabled={testing}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-ws-surface-subtle border border-ws-border hover:border-ws-border-strong text-xs font-medium font-sans hover:bg-ws-surface-elevated text-ws-ink transition-colors flex-shrink-0 disabled:opacity-50"
+            leadingIcon={
+              <RefreshCw
+                className={`w-3.5 h-3.5 ${testing ? 'animate-spin text-fl-accent' : 'text-fl-muted'}`}
+              />
+            }
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${testing ? 'animate-spin text-ws-accent' : 'text-ws-muted'}`} />
-            <span>{testing ? 'Testing...' : 'Test Connection'}</span>
-          </button>
+            {testing ? 'Testing...' : 'Test Connection'}
+          </Button>
         </div>
 
-        {/* Appearance Row */}
         <div className="p-5 flex items-center justify-between gap-4">
           <div>
-            <div className="text-sm font-semibold text-ws-ink font-sans">Visual Appearance</div>
-            <p className="text-xs font-sans text-ws-secondary mt-0.5 leading-relaxed">
-              Switch between Bright White (Light Mode) and Pure Pitch Black + High Contrast (Dark Mode).
+            <div className="text-fl-card text-fl-ink font-sans">Appearance</div>
+            <p className="text-xs font-sans text-fl-secondary mt-1 leading-relaxed">
+              Switch between Obsidian (Dark) and Crisp Slate (Light) color schemes.
             </p>
           </div>
-          <button
+          <Button
+            size="sm"
+            variant="secondary"
             onClick={onToggleTheme}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-md bg-ws-surface-subtle border border-ws-border hover:border-ws-border-strong text-xs font-medium font-sans hover:bg-ws-surface-elevated text-ws-ink transition-colors flex-shrink-0"
+            leadingIcon={
+              theme === 'dark' ? (
+                <Sun className="w-3.5 h-3.5 text-fl-accent-text" />
+              ) : (
+                <Moon className="w-3.5 h-3.5 text-fl-accent" />
+              )
+            }
           >
-            {theme === 'dark' ? (
-              <>
-                <Sun className="w-3.5 h-3.5 text-ws-accent" />
-                <span>Switch to Light Mode</span>
-              </>
-            ) : (
-              <>
-                <Moon className="w-3.5 h-3.5 text-ws-accent" />
-                <span>Switch to Dark Mode</span>
-              </>
-            )}
-          </button>
+            {theme === 'dark' ? 'Switch to Light' : 'Switch to Dark'}
+          </Button>
         </div>
 
-        {/* Environment Row */}
         <div className="p-5 flex items-center justify-between gap-4">
           <div>
-            <div className="text-sm font-semibold text-ws-ink font-sans">Environment Mode</div>
-            <p className="text-xs font-sans text-ws-secondary mt-0.5 leading-relaxed">
-              Current workstation execution target and data boundary.
+            <div className="text-fl-card text-fl-ink font-sans">Environment Mode</div>
+            <p className="text-xs font-sans text-fl-secondary mt-1 leading-relaxed">
+              Current workstation execution target and data isolation boundary.
             </p>
           </div>
-          <span className="px-2.5 py-1 text-[11px] font-mono font-medium uppercase bg-ws-accent-subtle border border-ws-accent-border text-ws-accent rounded flex-shrink-0">
-            LOCAL DEMO WORKSTATION
+          <span className="px-2.5 py-1 text-[11px] font-mono font-medium uppercase bg-fl-accent-subtle border border-fl-accent-border text-fl-accent-text rounded shrink-0">
+            Local Workstation
           </span>
         </div>
 
-        {/* Raw Payload Retention Row */}
         <div className="p-5 flex items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-ws-ink font-sans">Raw Payload Retention</span>
-              <span className="text-[10px] font-mono font-medium uppercase text-ws-success-text bg-ws-success-bg border border-ws-success-border px-1.5 py-0.5 rounded">
-                SAFE DEFAULT
+              <span className="text-fl-card text-fl-ink font-sans">Payload Capture Policy</span>
+              <span className="text-[10px] font-mono font-medium uppercase text-fl-success-text bg-fl-success-bg border border-fl-success-border px-1.5 py-0.5 rounded">
+                Safe Default
               </span>
             </div>
-            <p className="text-xs font-sans text-ws-secondary mt-0.5 leading-relaxed">
-              Only stores cryptographic digests, timestamps, and redacted metadata. Secrets are masked at ingress.
+            <p className="text-xs font-sans text-fl-secondary mt-1 leading-relaxed">
+              Stores cryptographic digests, timestamps, and redacted metadata. Secrets are masked before persistence.
             </p>
           </div>
-          <span className="text-xs font-mono font-medium text-ws-secondary flex-shrink-0 uppercase">
-            OFF (REDACTED ONLY)
+          <span className="text-xs font-mono font-medium text-fl-secondary shrink-0 uppercase">
+            Metadata Only
           </span>
         </div>
 
-        {/* AI Bounded Diagnostics Row */}
         <div className="p-5 flex items-center justify-between gap-4">
           <div>
-            <div className="text-sm font-semibold text-ws-ink font-sans">Bounded AI Investigation</div>
-            <p className="text-xs font-sans text-ws-secondary mt-0.5 leading-relaxed">
-              Deterministic rule signatures run first; model analysis is read-only and restricted to current incident.
+            <div className="text-fl-card text-fl-ink font-sans">AI Investigation</div>
+            <p className="text-xs font-sans text-fl-secondary mt-1 leading-relaxed">
+              Optional read-only model assistance. Deterministic rule receipts run independently with no model key.
             </p>
           </div>
-          <span className="text-[11px] font-mono font-medium uppercase text-ws-accent flex-shrink-0">
-            ENABLED (BOUNDED)
+          <span className="text-[11px] font-mono font-medium uppercase text-fl-accent-text shrink-0">
+            Optional (Bounded)
           </span>
         </div>
 
-        {/* Reset Fixtures Row */}
         <div className="p-5 flex items-center justify-between gap-4">
           <div>
-            <div className="text-sm font-semibold text-ws-danger-text font-sans">Reset Demo Fixtures</div>
-            <p className="text-xs font-sans text-ws-secondary mt-0.5 leading-relaxed">
-              Restore initial seed incidents and clear simulated playground incidents.
+            <div className="text-fl-card text-fl-danger-text font-sans">Reset Demo Fixtures</div>
+            <p className="text-xs font-sans text-fl-secondary mt-1 leading-relaxed">
+              Restore initial seed incidents and clear simulated playground incidents from local storage.
             </p>
           </div>
-          <button
+          <Button
+            size="sm"
+            variant="danger"
             onClick={onResetFixtures}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-ws-danger-bg border border-ws-danger-border text-ws-danger-text hover:opacity-90 text-xs font-medium font-sans transition-opacity flex-shrink-0"
+            leadingIcon={<RotateCcw className="w-3.5 h-3.5" />}
           >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Reset Fixtures</span>
-          </button>
+            Reset Fixtures
+          </Button>
         </div>
-      </div>
+      </Panel>
     </div>
   );
 };

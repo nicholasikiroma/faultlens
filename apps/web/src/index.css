@@ -3,197 +3,194 @@
 @tailwind utilities;
 
 /* ==========================================================================
-   WireSleuth — Graphite + Soft Sage Design Tokens
-   Organized into logical categories:
-   1. Backgrounds
-   2. Surfaces
-   3. Text
-   4. Borders
-   5. Accents & Interactive States
-   6. Semantic Status Colours
-   7. Shadows & Overlays
+   FaultLens Design System — Obsidian + Electric Indigo/Cobalt Tokens
+   Tiers:
+     1. Color Scheme & Native UI Adaptation
+     2. Semantic Surface, Ink, Border, Accent & Status Tokens
+     3. Typography, Accessibility & Top-Layer Dialog Containment
    ========================================================================== */
+
+:root {
+  color-scheme: light dark;
+  --fl-font-sans: 'Geist', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --fl-font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  &:has(> head > meta[name="color-scheme"][content="dark"]) {
+    color-scheme: dark;
+  }
+  &:has(> head > meta[name="color-scheme"][content="light"]) {
+    color-scheme: light;
+  }
+}
 
 :root,
 [data-theme="light"] {
-  color-scheme: light;
-
-  /* 1. Backgrounds — Pure Bright White flagship experience */
-  --ws-canvas: #FFFFFF;
-  --ws-sidebar: #F8FAFC;
+  /* 1. Backgrounds */
+  --fl-canvas: #F8FAFC;
+  --fl-sidebar: #F1F5F9;
 
   /* 2. Surfaces */
-  --ws-surface: #FFFFFF;
-  --ws-surface-elevated: #FFFFFF;
-  --ws-surface-subtle: #F3F5F7;
+  --fl-surface: #FFFFFF;
+  --fl-surface-elevated: #FFFFFF;
+  --fl-surface-subtle: #F4F6FA;
 
-  /* 3. Text */
-  --ws-ink: #202923;
-  --ws-secondary: #667085;
-  --ws-muted: #98A2B3;
+  /* 3. Ink (WCAG AA >= 4.5:1 on light surfaces) */
+  --fl-ink: #0F172A;
+  --fl-secondary: #475569;
+  --fl-muted: #64748B;
 
-  /* 4. Borders */
-  --ws-border: #E5E7EB;
-  --ws-border-subtle: #F1F3F5;
-  --ws-border-strong: #D1D5DB;
+  /* 4. Borders (border-strong >= 3:1 for interactive control boundaries) */
+  --fl-border: #E2E8F0;
+  --fl-border-subtle: #EEF2F6;
+  --fl-border-strong: #94A3B8;
 
-  /* 5. Accents & Interactive States (Forest Sage #527B60) */
-  --ws-accent: #527B60;
-  --ws-accent-hover: #456851;
-  --ws-accent-active: #3A5643;
-  --ws-accent-subtle: rgba(82, 123, 96, 0.09);
-  --ws-accent-border: rgba(82, 123, 96, 0.25);
-  --ws-accent-ink: #FFFFFF;
-  --ws-focus: #527B60;
+  /* 5. Brand Accent — Electric Indigo */
+  --fl-accent: #4F46E5;
+  --fl-accent-hover: #4338CA;
+  --fl-accent-active: #3730A3;
+  --fl-accent-text: #4338CA;
+  --fl-accent-subtle: rgba(79, 70, 229, 0.08);
+  --fl-accent-border: rgba(79, 70, 229, 0.25);
+  --fl-accent-ink: #FFFFFF;
+  --fl-focus: #4F46E5;
 
-  /* Primary Action Button (Forest Sage) */
-  --ws-btn-primary-bg: #527B60;
-  --ws-btn-primary-hover: #456851;
-  --ws-btn-primary-active: #3A5643;
-  --ws-btn-primary-border: #456851;
-  --ws-btn-primary-ink: #FFFFFF;
+  /* Primary Button */
+  --fl-btn-primary-bg: #4F46E5;
+  --fl-btn-primary-hover: #4338CA;
+  --fl-btn-primary-active: #3730A3;
+  --fl-btn-primary-border: #4338CA;
+  --fl-btn-primary-ink: #FFFFFF;
 
-  /* 6. Semantic Status Colours */
-  /* Healthy / Forest Sage (#527B60) */
-  --ws-success-text: #245A38;
-  --ws-success-dot: #527B60;
-  --ws-success-bg: rgba(82, 123, 96, 0.10);
-  --ws-success-border: rgba(82, 123, 96, 0.25);
+  /* 6. Semantic Status Tokens */
+  --fl-success-text: #047857;
+  --fl-success-dot: #10B981;
+  --fl-success-bg: rgba(16, 185, 129, 0.10);
+  --fl-success-border: rgba(16, 185, 129, 0.28);
 
-  /* Warning / Butter Yellow (#E9B96E) */
-  --ws-warning-text: #925F11;
-  --ws-warning-dot: #D49B43;
-  --ws-warning-bg: rgba(233, 185, 110, 0.15);
-  --ws-warning-border: rgba(233, 185, 110, 0.35);
+  --fl-warning-text: #B45309;
+  --fl-warning-dot: #D97706;
+  --fl-warning-bg: rgba(245, 158, 11, 0.11);
+  --fl-warning-border: rgba(245, 158, 11, 0.30);
 
-  /* Critical / Soft Coral (#DB887C) */
-  --ws-danger-text: #B43E31;
-  --ws-danger-dot: #DB887C;
-  --ws-danger-bg: rgba(219, 136, 124, 0.14);
-  --ws-danger-border: rgba(219, 136, 124, 0.32);
+  --fl-danger-text: #B91C1C;
+  --fl-danger-dot: #EF4444;
+  --fl-danger-bg: rgba(239, 68, 68, 0.09);
+  --fl-danger-border: rgba(239, 68, 68, 0.28);
 
-  /* Informational / Muted Lavender (#A6A4CF) */
-  --ws-info-text: #48457D;
-  --ws-info-dot: #7874B5;
-  --ws-info-bg: rgba(166, 164, 207, 0.16);
-  --ws-info-border: rgba(166, 164, 207, 0.35);
+  --fl-info-text: #1D4ED8;
+  --fl-info-dot: #3B82F6;
+  --fl-info-bg: rgba(59, 130, 246, 0.10);
+  --fl-info-border: rgba(59, 130, 246, 0.28);
 
-  /* Lavender specific */
-  --ws-lavender-text: #48457D;
-  --ws-lavender-dot: #A6A4CF;
-  --ws-lavender-bg: rgba(166, 164, 207, 0.16);
-  --ws-lavender-border: rgba(166, 164, 207, 0.35);
+  --fl-violet-text: #6D28D9;
+  --fl-violet-dot: #7C3AED;
+  --fl-violet-bg: rgba(124, 58, 237, 0.10);
+  --fl-violet-border: rgba(124, 58, 237, 0.26);
 
   /* 7. Shadows & Overlays */
-  --ws-shadow-subtle: 0 1px 3px 0 rgba(16, 24, 40, 0.05), 0 1px 2px -1px rgba(16, 24, 40, 0.05);
-  --ws-shadow-elevated: 0 10px 25px -4px rgba(16, 24, 40, 0.08), 0 4px 10px -2px rgba(16, 24, 40, 0.04);
-  --ws-backdrop: rgba(15, 23, 42, 0.35);
+  --fl-shadow-subtle: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  --fl-shadow-elevated: 0 12px 28px -6px rgba(15, 23, 42, 0.10), 0 4px 10px -2px rgba(15, 23, 42, 0.05);
+  --fl-shadow-overlay: 0 20px 44px -12px rgba(15, 23, 42, 0.18), 0 8px 16px -4px rgba(15, 23, 42, 0.08);
+  --fl-backdrop: rgba(15, 23, 42, 0.42);
 }
 
 [data-theme="dark"] {
-  color-scheme: dark;
+  /* 1. Backgrounds — Calibrated Deep Obsidian */
+  --fl-canvas: #0B0D12;
+  --fl-sidebar: #0E1117;
 
-  /* 1. Backgrounds — True Pure Pitch Black */
-  --ws-canvas: #000000;
-  --ws-sidebar: #080808;
+  /* 2. Surfaces */
+  --fl-surface: #131722;
+  --fl-surface-elevated: #1A202E;
+  --fl-surface-subtle: #10141D;
 
-  /* 2. Surfaces (Pure Neutral Dark, No Green Tint) */
-  --ws-surface: #111111;
-  --ws-surface-elevated: #181818;
-  --ws-surface-subtle: #141414;
+  /* 3. Ink (WCAG AA >= 4.5:1 on #131722 / #0B0D12) */
+  --fl-ink: #F1F5F9;
+  --fl-secondary: #94A3B8;
+  --fl-muted: #7C8B9E;
 
-  /* 3. Text (Brilliant Pure White & High-Contrast Neutral Greys) */
-  --ws-ink: #FFFFFF;
-  --ws-secondary: #A1A1AA;
-  --ws-muted: #71717A;
+  /* 4. Borders (border-strong provides clear component contrast) */
+  --fl-border: #232A3B;
+  --fl-border-subtle: #1A202E;
+  --fl-border-strong: #3E4A63;
 
-  /* 4. Borders (Crisp Neutral Charcoal) */
-  --ws-border: #222222;
-  --ws-border-subtle: #1A1A1A;
-  --ws-border-strong: #333333;
+  /* 5. Brand Accent — Electric Indigo/Cobalt */
+  --fl-accent: #6366F1;
+  --fl-accent-hover: #818CF8;
+  --fl-accent-active: #4F46E5;
+  --fl-accent-text: #A5B4FC;
+  --fl-accent-subtle: rgba(99, 102, 241, 0.15);
+  --fl-accent-border: rgba(99, 102, 241, 0.36);
+  --fl-accent-ink: #FFFFFF;
+  --fl-focus: #818CF8;
 
-  /* 5. Accents & Interactive States (Luminous Mint/Emerald on Black) */
-  --ws-accent: #34D399;
-  --ws-accent-hover: #4ADE80;
-  --ws-accent-active: #10B981;
-  --ws-accent-subtle: rgba(52, 211, 153, 0.12);
-  --ws-accent-border: rgba(52, 211, 153, 0.28);
-  --ws-accent-ink: #000000;
-  --ws-focus: #34D399;
+  /* Primary Button */
+  --fl-btn-primary-bg: #4F46E5;
+  --fl-btn-primary-hover: #6366F1;
+  --fl-btn-primary-active: #4338CA;
+  --fl-btn-primary-border: #6366F1;
+  --fl-btn-primary-ink: #FFFFFF;
 
-  /* Primary Action Button (High-Contrast Radiant Accent on Black) */
-  --ws-btn-primary-bg: #34D399;
-  --ws-btn-primary-hover: #4ADE80;
-  --ws-btn-primary-active: #10B981;
-  --ws-btn-primary-border: #34D399;
-  --ws-btn-primary-ink: #000000;
+  /* 6. Semantic Status Tokens */
+  --fl-success-text: #34D399;
+  --fl-success-dot: #10B981;
+  --fl-success-bg: rgba(16, 185, 129, 0.12);
+  --fl-success-border: rgba(16, 185, 129, 0.32);
 
-  /* 6. Semantic Status Colours (High Contrast Complementing Accents) */
-  /* Healthy / Ingress Verified (Luminous Mint) */
-  --ws-success-text: #34D399;
-  --ws-success-dot: #34D399;
-  --ws-success-bg: rgba(52, 211, 153, 0.12);
-  --ws-success-border: rgba(52, 211, 153, 0.30);
+  --fl-warning-text: #FBBF24;
+  --fl-warning-dot: #F59E0B;
+  --fl-warning-bg: rgba(245, 158, 11, 0.12);
+  --fl-warning-border: rgba(245, 158, 11, 0.32);
 
-  /* Warning / Attention (Vivid Amber) */
-  --ws-warning-text: #FBBF24;
-  --ws-warning-dot: #FBBF24;
-  --ws-warning-bg: rgba(251, 191, 36, 0.12);
-  --ws-warning-border: rgba(251, 191, 36, 0.30);
+  --fl-danger-text: #F87171;
+  --fl-danger-dot: #EF4444;
+  --fl-danger-bg: rgba(239, 68, 68, 0.14);
+  --fl-danger-border: rgba(239, 68, 68, 0.34);
 
-  /* Critical / Anomalies (Vivid Ruby Coral) */
-  --ws-danger-text: #F87171;
-  --ws-danger-dot: #F87171;
-  --ws-danger-bg: rgba(248, 113, 113, 0.14);
-  --ws-danger-border: rgba(248, 113, 113, 0.32);
+  --fl-info-text: #60A5FA;
+  --fl-info-dot: #3B82F6;
+  --fl-info-bg: rgba(59, 130, 246, 0.14);
+  --fl-info-border: rgba(59, 130, 246, 0.32);
 
-  /* Informational / Rule Receipts (Vivid Lavender Violet) */
-  --ws-info-text: #C084FC;
-  --ws-info-dot: #C084FC;
-  --ws-info-bg: rgba(192, 132, 252, 0.14);
-  --ws-info-border: rgba(192, 132, 252, 0.30);
-
-  /* Lavender specific */
-  --ws-lavender-text: #C084FC;
-  --ws-lavender-dot: #C084FC;
-  --ws-lavender-bg: rgba(192, 132, 252, 0.14);
-  --ws-lavender-border: rgba(192, 132, 252, 0.30);
+  --fl-violet-text: #C4B5FD;
+  --fl-violet-dot: #8B5CF6;
+  --fl-violet-bg: rgba(139, 92, 246, 0.14);
+  --fl-violet-border: rgba(139, 92, 246, 0.34);
 
   /* 7. Shadows & Overlays */
-  --ws-shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.80);
-  --ws-shadow-elevated: 0 16px 36px -8px rgba(0, 0, 0, 0.95), 0 4px 12px -2px rgba(0, 0, 0, 0.80);
-  --ws-backdrop: rgba(0, 0, 0, 0.80);
+  --fl-shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.45);
+  --fl-shadow-elevated: 0 14px 32px -6px rgba(0, 0, 0, 0.65), 0 4px 12px -2px rgba(0, 0, 0, 0.45);
+  --fl-shadow-overlay: 0 24px 48px -12px rgba(0, 0, 0, 0.80), 0 8px 20px -4px rgba(0, 0, 0, 0.60);
+  --fl-backdrop: rgba(6, 8, 13, 0.72);
 }
 
-/* Custom telemetry scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+html {
+  accent-color: var(--fl-accent);
+  scrollbar-color: var(--fl-border-strong) transparent;
+  scrollbar-width: thin;
 }
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: var(--ws-border);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--ws-muted);
+
+@supports not (scrollbar-color: auto) {
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--fl-border-strong);
+    border-radius: 3px;
+  }
 }
 
 :focus-visible {
-  outline: 2px solid var(--ws-focus);
+  outline: 2px solid var(--fl-focus);
   outline-offset: 2px;
 }
 
-/* Centralized Typography Foundations */
-:root {
-  --ws-font-sans: 'Geist', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --ws-font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-}
-
 body {
-  font-family: var(--ws-font-sans);
+  font-family: var(--fl-font-sans);
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -204,52 +201,65 @@ body {
 code,
 pre,
 kbd {
-  font-family: var(--ws-font-mono);
-  letter-spacing: -0.02em;
+  font-family: var(--fl-font-mono);
+  letter-spacing: -0.015em;
 }
 
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
 
-/* Editorial & Tactile Developer Tool Utilities */
-.ws-hero-stat {
-  font-family: var(--ws-font-mono);
-  font-size: 2.75rem;
+/* Native <dialog> modal scroll containment & backdrop */
+dialog:modal {
+  overscroll-behavior: contain;
+}
+
+dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+  background: var(--fl-backdrop);
+  backdrop-filter: blur(4px);
+}
+
+/* Editorial & Precision Dev-Tool Utilities */
+.fl-hero-stat {
+  font-family: var(--fl-font-mono);
+  font-size: 2.5rem;
   line-height: 1;
   font-weight: 500;
   letter-spacing: -0.04em;
 }
 
-.ws-eyebrow {
-  font-family: var(--ws-font-mono);
+.fl-eyebrow {
+  font-family: var(--fl-font-mono);
   font-size: 0.6875rem;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-.ws-tactile-btn {
-  transition: all 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+.fl-tactile-btn {
+  transition: background-color 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+              color 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.12s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.ws-tactile-btn:active {
+
+.fl-tactile-btn:active:not(:disabled) {
   transform: translateY(1px);
 }
 
-/* Recorder Tape Reel Keyframes - Understated & Calm */
-@keyframes spin-reel {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
-.animate-spin-reel {
-  animation: spin-reel 10s linear infinite;
-}
-
-.animate-spin-reel-rev {
-  animation: spin-reel 10s linear infinite reverse;
+@media (forced-colors: active) {
+  :root {
+    --fl-border: CanvasText;
+    --fl-border-strong: CanvasText;
+    --fl-focus: Highlight;
+  }
 }

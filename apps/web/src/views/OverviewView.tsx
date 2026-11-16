@@ -2,18 +2,16 @@ import React, { useState } from 'react';
 import type { Incident } from '../types';
 import { Badge } from '../components/Badge';
 import { Sparkline } from '../components/Sparkline';
+import { Button, EmptyState, PageHeader, Panel } from '../components/ui';
 import {
   Zap,
   CheckCircle2,
   ArrowRight,
   Play,
-  Radio,
   Activity,
   Layers,
   ChevronRight,
-  ShieldAlert,
   Flame,
-  Clock,
   Cpu,
 } from 'lucide-react';
 
@@ -37,18 +35,15 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   const uniqueCount = Math.max(1, uniqueIntegrations.length);
   const reliabilityRate = Math.max(88, 100 - openCount * 2.2).toFixed(1);
 
-  // Always order cases by latest activity first
   const sortedIncidents = [...incidents].sort(
     (a, b) => (b.lastSeenTimestamp ?? 0) - (a.lastSeenTimestamp ?? 0)
   );
   const isRecent = (ts?: number) => Boolean(ts && Date.now() - ts < 60_000);
 
-  // Top 2 high priority incidents for the Hero Triage Station
   const priorityAnomalies = sortedIncidents
     .filter((i) => i.status === 'OPEN' || i.status === 'INVESTIGATING')
     .slice(0, 2);
 
-  // Compute breakdown by failure class for the Live Ingress Spectrum bar
   const classCounts = incidents.reduce((acc, inc) => {
     const cls = inc.cls || 'OTHER';
     acc[cls] = (acc[cls] || 0) + (inc.events || 1);
@@ -56,15 +51,14 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   }, {} as Record<string, number>);
 
   const classPercentages = [
-    { label: 'RATE_LIMIT', color: 'bg-ws-danger-dot', text: 'text-ws-danger-text', count: classCounts['RATE_LIMIT'] || 0 },
-    { label: 'SCHEMA_MISMATCH', color: 'bg-ws-warning-dot', text: 'text-ws-warning-text', count: classCounts['SCHEMA_MISMATCH'] || 0 },
-    { label: 'NETWORK_TIMEOUT', color: 'bg-ws-lavender-dot', text: 'text-ws-lavender-text', count: classCounts['NETWORK_TIMEOUT'] || 0 },
-    { label: 'INVALID_SIGNATURE', color: 'bg-ws-accent', text: 'text-ws-accent', count: classCounts['INVALID_SIGNATURE'] || 0 },
+    { label: 'RATE_LIMIT', color: 'bg-fl-danger-dot', count: classCounts['RATE_LIMIT'] || 0 },
+    { label: 'SCHEMA_MISMATCH', color: 'bg-fl-warning-dot', count: classCounts['SCHEMA_MISMATCH'] || 0 },
+    { label: 'NETWORK_TIMEOUT', color: 'bg-fl-violet-dot', count: classCounts['NETWORK_TIMEOUT'] || 0 },
+    { label: 'INVALID_SIGNATURE', color: 'bg-fl-accent', count: classCounts['INVALID_SIGNATURE'] || 0 },
   ];
 
   const totalClassEvents = Math.max(1, classPercentages.reduce((sum, c) => sum + c.count, 0));
 
-  // Filtered incidents for the lower Triage Matrix
   const filteredIncidents = sortedIncidents.filter((inc) => {
     if (triageFilter === 'CRITICAL') return inc.severity === 'CRITICAL' || inc.severity === 'HIGH';
     if (triageFilter === 'INVESTIGATING') return inc.status === 'INVESTIGATING';
@@ -73,208 +67,191 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   });
 
   return (
-    <div className="space-y-8">
-      {/* 1. Header & Live Operations Ticker (Editorial & Confident) */}
-      <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5 pb-2 border-b border-ws-border">
-        <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="ws-eyebrow text-ws-accent flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-ws-accent animate-ping" />
-              TELEMETRY COCKPIT // CLUSTER INGRESS-01
-            </span>
-            <span className="text-[10px] font-mono text-ws-muted">·</span>
-            <span className="text-[10px] font-mono text-ws-muted">127.0.0.1:3000</span>
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-ws-ink font-sans leading-tight">
-            System Telemetry & Ingress Flight Deck
-          </h1>
-          <p className="text-[14px] text-ws-secondary mt-1 font-sans max-w-2xl leading-relaxed">
-            Lossless passive wiretap monitoring <strong className="text-ws-ink font-mono font-medium">{incidents.length}</strong> incident clusters across {uniqueIntegrations.slice(0, 3).join(', ')} & internal queues.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow="Incident Overview"
+        title="System Health & Triage"
+        description={
+          <>
+            Investigating{' '}
+            <strong className="text-fl-ink font-mono font-medium">{incidents.length}</strong> incident
+            clusters across {uniqueIntegrations.slice(0, 3).join(', ') || 'connected sources'}.
+          </>
+        }
+        actions={
+          <Button
+            variant="primary"
             onClick={() => onNavigate('playground')}
-            className="ws-tactile-btn inline-flex items-center gap-2.5 px-4 py-2 rounded-lg bg-ws-btn-primary hover:bg-ws-btn-primary-hover active:bg-ws-btn-primary-active text-ws-btn-primary-ink border border-ws-btn-primary-border text-[13px] font-medium font-sans shadow-subtle"
+            leadingIcon={<Play className="w-3.5 h-3.5 fill-current" />}
           >
-            <Play className="w-3.5 h-3.5 fill-current" />
-            <span>Simulate Anomaly</span>
-            <kbd className="hidden sm:inline-block px-1.5 py-0.2 text-[10px] font-mono font-medium bg-ws-accent-active/40 text-ws-accent-ink rounded border border-ws-accent-border/40">
-              ⌘S
-            </kbd>
-          </button>
-        </div>
-      </div>
+            Simulate Anomaly
+          </Button>
+        }
+      />
 
-      {/* 2. Asymmetric Command Bridge: Operational Hero Alert + Unified Telemetry Deck */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-        {/* Left Panel: Hero Operational Alert Station (Urgency & Immediate Action) */}
-        <div className="lg:col-span-5 p-6 rounded-xl bg-ws-surface border border-ws-border shadow-subtle flex flex-col justify-between relative overflow-hidden group hover:border-ws-border-strong transition-all">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-ws-danger-dot via-ws-warning-dot to-ws-accent" />
-          
+      {/* Asymmetric Command Grid: Active Triage Station + Unified Telemetry Deck */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+        <Panel padding="lg" className="lg:col-span-5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between pb-3 border-b border-ws-border-subtle">
+            <div className="flex items-center justify-between pb-3 border-b border-fl-border-subtle">
               <div className="flex items-center gap-2">
-                <Flame className="w-4 h-4 text-ws-danger-dot" />
-                <span className="font-sans text-[13px] font-semibold text-ws-ink uppercase tracking-wider">
-                  Active Triage Station
+                <Flame className="w-4 h-4 text-fl-danger-dot" aria-hidden="true" />
+                <span className="font-sans text-[13px] font-semibold text-fl-ink">
+                  Active Triage Queue
                 </span>
               </div>
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-semibold uppercase tracking-wider bg-ws-danger-bg text-ws-danger-text border border-ws-danger-border">
-                <span className="w-1.5 h-1.5 rounded-full bg-ws-danger-dot animate-pulse" />
-                {openCount} AWAITING TRIAGE
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-semibold uppercase tracking-wider bg-fl-danger-bg text-fl-danger-text border border-fl-danger-border">
+                <span className="w-1.5 h-1.5 rounded-full bg-fl-danger-dot" aria-hidden="true" />
+                {openCount} Open
               </span>
             </div>
 
-            {/* Huge Raycast-style Hero Number */}
             <div className="mt-4 flex items-baseline gap-3">
-              <span className="ws-hero-stat text-ws-ink">
+              <span className="fl-hero-stat text-fl-ink tabular-nums">
                 {openCount < 10 ? `0${openCount}` : openCount}
               </span>
               <div className="text-xs font-sans">
-                <span className="text-ws-danger-text font-mono font-semibold block">
-                  {criticalCount} Critical Priority
+                <span className="text-fl-danger-text font-mono font-semibold block">
+                  {criticalCount} High / Critical
                 </span>
-                <span className="text-ws-muted block">
+                <span className="text-fl-muted block">
                   Across {uniqueCount} upstream provider{uniqueCount === 1 ? '' : 's'}
                 </span>
               </div>
             </div>
 
-            {/* Embedded Live Action Stream (Direct one-click inspection) */}
-            <div className="mt-4 space-y-2">
-              <div className="text-[10px] font-mono font-medium text-ws-muted uppercase tracking-wider">
-                TOP ANOMALIES REQUIRING ATTENTION
+            <div className="mt-5 space-y-2">
+              <div className="text-[10px] font-mono font-medium text-fl-muted uppercase tracking-wider">
+                Priority Cases
               </div>
               {priorityAnomalies.length === 0 ? (
-                <div className="p-3 rounded-lg bg-ws-surface-subtle text-xs text-ws-muted text-center font-sans">
-                  No critical anomalies active in the triage queue.
+                <div className="p-3.5 rounded-lg bg-fl-surface-subtle border border-fl-border text-xs text-fl-muted text-center font-sans">
+                  No open anomalies require triage.
                 </div>
               ) : (
                 priorityAnomalies.map((inc) => (
-                  <div
+                  <button
                     key={inc.id}
+                    type="button"
                     onClick={() => onSelectIncident(inc.id)}
-                    className="p-3 rounded-lg bg-ws-surface-subtle border border-ws-border hover:border-ws-accent-border hover:bg-ws-surface-elevated cursor-pointer transition-all flex items-center justify-between group/case"
+                    className="w-full text-left p-3 rounded-lg bg-fl-surface-subtle border border-fl-border hover:border-fl-accent-border hover:bg-fl-surface-elevated transition-colors flex items-center justify-between group"
                   >
                     <div className="min-w-0 pr-2">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-[11px] font-semibold text-ws-accent">
+                        <span className="font-mono text-[11px] font-semibold text-fl-accent-text">
                           {inc.key}
                         </span>
-                        <span className="text-[10px] font-mono px-1.5 py-0.2 rounded border bg-ws-danger-bg text-ws-danger-text border-ws-danger-border">
+                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border bg-fl-danger-bg text-fl-danger-text border-fl-danger-border">
                           {inc.cls}
                         </span>
                       </div>
-                      <div className="text-[13px] font-medium text-ws-ink font-sans truncate mt-0.5 group-hover/case:text-ws-accent transition-colors">
+                      <div className="text-[13px] font-medium text-fl-ink font-sans truncate mt-1 group-hover:text-fl-accent-text transition-colors">
                         {inc.title}
                       </div>
-                      <div className="text-[11px] font-sans text-ws-muted mt-0.5">
-                        {inc.integration} • <span className="font-mono text-ws-secondary font-medium tabular-nums">{inc.events}</span> events
+                      <div className="text-[11px] font-sans text-fl-muted mt-0.5">
+                        {inc.integration} •{' '}
+                        <span className="font-mono text-fl-secondary font-medium tabular-nums">
+                          {inc.events}
+                        </span>{' '}
+                        events
                       </div>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-ws-muted group-hover/case:text-ws-accent transition-colors shrink-0" />
-                  </div>
+                    <ChevronRight
+                      className="w-4 h-4 text-fl-muted group-hover:text-fl-accent-text transition-colors shrink-0"
+                      aria-hidden="true"
+                    />
+                  </button>
                 ))
               )}
             </div>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-ws-border-subtle flex items-center justify-between text-xs font-sans">
-            <span className="text-ws-muted">Fast triage shortcut:</span>
+          <div className="mt-5 pt-3 border-t border-fl-border-subtle flex items-center justify-between text-xs font-sans">
+            <span className="text-fl-muted">All grouped clusters</span>
             <button
+              type="button"
               onClick={() => onNavigate('incidents')}
-              className="text-ws-accent hover:underline font-medium text-xs inline-flex items-center gap-1 font-sans"
+              className="text-fl-accent-text hover:underline font-medium text-xs inline-flex items-center gap-1"
             >
-              <span>Open full queue ({sortedIncidents.length})</span>
-              <ArrowRight className="w-3 h-3" />
+              <span>View full queue ({sortedIncidents.length})</span>
+              <ArrowRight className="w-3 h-3" aria-hidden="true" />
             </button>
           </div>
-        </div>
+        </Panel>
 
-        {/* Right Panel: Unified Telemetry & Reliability Deck (Secondary Backing, Not Identical Boxes!) */}
-        <div className="lg:col-span-7 p-6 rounded-xl bg-ws-surface-subtle border border-ws-border shadow-subtle flex flex-col justify-between space-y-6">
+        <Panel variant="subtle" padding="lg" className="lg:col-span-7 flex flex-col justify-between space-y-5">
           <div>
-            {/* Top Stat Row with Crisp Hairline Dividers */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pb-6 border-b border-ws-border">
-              {/* Stat 1: Ingress Throughput */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pb-5 border-b border-fl-border">
               <div className="space-y-1">
-                <div className="flex items-center gap-1.5 text-ws-muted text-[11px] font-sans font-medium">
-                  <Zap className="w-3.5 h-3.5 text-ws-accent fill-ws-accent" />
-                  <span>Cumulative Ingress</span>
+                <div className="flex items-center gap-1.5 text-fl-muted text-[11px] font-sans font-medium">
+                  <Zap className="w-3.5 h-3.5 text-fl-accent" aria-hidden="true" />
+                  <span>Observed Events</span>
                 </div>
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-3xl font-mono font-medium text-ws-ink tracking-tight tabular-nums">
+                  <span className="text-fl-metric font-mono text-fl-ink tabular-nums">
                     {totalEvents.toLocaleString()}
                   </span>
-                  <span className="text-xs font-sans text-ws-muted">events</span>
+                  <span className="text-xs font-sans text-fl-muted">total</span>
                 </div>
-                <div className="text-[11px] font-mono text-ws-secondary tabular-nums">
+                <div className="text-[11px] font-mono text-fl-secondary tabular-nums">
                   ~{Math.max(1, Math.round(totalEvents / Math.max(1, incidents.length)))} ev/case avg
                 </div>
               </div>
 
-              {/* Stat 2: Ingress Reliability Index */}
               <div className="space-y-1">
-                <div className="flex items-center gap-1.5 text-ws-muted text-[11px] font-sans font-medium">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-ws-success-dot" />
-                  <span>Reliability Index</span>
+                <div className="flex items-center gap-1.5 text-fl-muted text-[11px] font-sans font-medium">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-fl-success-dot" aria-hidden="true" />
+                  <span>Delivery Health</span>
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-mono font-medium text-ws-ink tracking-tight tabular-nums">
+                  <span className="text-fl-metric font-mono text-fl-ink tabular-nums">
                     {reliabilityRate}
                   </span>
-                  <span className="text-sm font-mono text-ws-secondary font-medium">%</span>
+                  <span className="text-sm font-mono text-fl-secondary font-medium">%</span>
                 </div>
-                {/* Tactile Mini Segment Bar */}
                 <div className="pt-1 space-y-1">
-                  <div className="h-1.5 w-full bg-ws-surface rounded-full overflow-hidden border border-ws-border">
+                  <div className="h-1.5 w-full bg-fl-surface rounded-full overflow-hidden border border-fl-border">
                     <div
-                      className="h-full bg-ws-accent rounded-full transition-all duration-500"
+                      className="h-full bg-fl-accent rounded-full transition-all duration-500"
                       style={{ width: `${Math.min(100, Math.max(0, parseFloat(reliabilityRate)))}%` }}
                     />
                   </div>
-                  <div className="text-[10px] font-mono text-ws-success-text font-medium flex items-center justify-between">
-                    <span>SLA: 95.0%</span>
-                    <span>PASSING</span>
+                  <div className="text-[10px] font-mono text-fl-success-text font-medium flex items-center justify-between">
+                    <span>Target: 95.0%</span>
+                    <span>Healthy</span>
                   </div>
                 </div>
               </div>
 
-              {/* Stat 3: Flight Recorder Wire Tap */}
               <div className="space-y-1">
-                <div className="flex items-center gap-1.5 text-ws-muted text-[11px] font-sans font-medium">
-                  <Radio className="w-3.5 h-3.5 text-ws-accent" />
-                  <span>Passive Wire Tap</span>
+                <div className="flex items-center gap-1.5 text-fl-muted text-[11px] font-sans font-medium">
+                  <Activity className="w-3.5 h-3.5 text-fl-accent" aria-hidden="true" />
+                  <span>Ingest Capture</span>
                 </div>
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-3xl font-mono font-medium text-ws-accent tracking-tight tabular-nums">
+                  <span className="text-fl-metric font-mono text-fl-accent-text tabular-nums">
                     0%
                   </span>
-                  <span className="text-xs font-mono text-ws-muted">frame loss</span>
+                  <span className="text-xs font-mono text-fl-muted">dropped</span>
                 </div>
-                <div className="text-[11px] font-mono text-ws-secondary flex items-center gap-1.5">
-                  <Activity className="w-3 h-3 text-ws-success-dot" />
-                  <span>ALS Ringbuffer Active</span>
+                <div className="text-[11px] font-mono text-fl-secondary">
+                  Redacted metadata active
                 </div>
               </div>
             </div>
 
-            {/* Bottom Ingress Failure Spectrum Bar (High information density) */}
             <div className="pt-4 space-y-2.5">
               <div className="flex items-center justify-between text-xs font-sans">
-                <span className="font-semibold text-ws-ink flex items-center gap-2">
-                  <Layers className="w-3.5 h-3.5 text-ws-accent" />
-                  Live Ingress Failure Spectrum
+                <span className="font-semibold text-fl-ink flex items-center gap-2">
+                  <Layers className="w-3.5 h-3.5 text-fl-accent" aria-hidden="true" />
+                  Failure Class Breakdown
                 </span>
-                <span className="font-mono text-[11px] text-ws-muted tabular-nums">
-                  {totalClassEvents} Classified Failures
+                <span className="font-mono text-[11px] text-fl-muted tabular-nums">
+                  {totalClassEvents} classified events
                 </span>
               </div>
 
-              {/* Multi-segmented Horizontal Spectrum Bar */}
-              <div className="h-3 w-full bg-ws-surface rounded-full overflow-hidden flex border border-ws-border">
+              <div className="h-2.5 w-full bg-fl-surface rounded-full overflow-hidden flex border border-fl-border">
                 {classPercentages.map((item) => {
                   const pct = Math.round((item.count / totalClassEvents) * 100);
                   if (pct <= 0) return null;
@@ -282,22 +259,21 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                     <div
                       key={item.label}
                       title={`${item.label}: ${pct}% (${item.count} events)`}
-                      className={`${item.color} h-full transition-all duration-300 first:rounded-l-full last:rounded-r-full`}
+                      className={`${item.color} h-full transition-all duration-300`}
                       style={{ width: `${pct}%` }}
                     />
                   );
                 })}
               </div>
 
-              {/* Legend with exact count and percentages */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[11px] font-mono">
                 {classPercentages.map((item) => {
                   const pct = Math.round((item.count / totalClassEvents) * 100);
                   return (
                     <div key={item.label} className="flex items-center gap-1.5">
-                      <span className={`w-2 h-2 rounded-full ${item.color} shrink-0`} />
-                      <span className="text-ws-muted truncate">{item.label}</span>
-                      <span className="text-ws-ink font-semibold ml-auto tabular-nums">{pct}%</span>
+                      <span className={`w-2 h-2 rounded-full ${item.color} shrink-0`} aria-hidden="true" />
+                      <span className="text-fl-muted truncate">{item.label}</span>
+                      <span className="text-fl-ink font-semibold ml-auto tabular-nums">{pct}%</span>
                     </div>
                   );
                 })}
@@ -305,63 +281,62 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             </div>
           </div>
 
-          <div className="pt-3 border-t border-ws-border flex items-center justify-between text-xs text-ws-muted font-sans">
+          <div className="pt-3 border-t border-fl-border flex items-center justify-between text-xs text-fl-muted font-sans">
             <span className="flex items-center gap-1.5">
-              <Cpu className="w-3.5 h-3.5 text-ws-accent" />
-              <span>Deterministic classification engine: Online</span>
+              <Cpu className="w-3.5 h-3.5 text-fl-accent" aria-hidden="true" />
+              <span>Deterministic classification engine online</span>
             </span>
-            <span className="font-mono text-[11px]">Buffer: 4.8 / 64 KB</span>
+            <span className="font-mono text-[11px]">No AI key required</span>
           </div>
-        </div>
+        </Panel>
       </div>
 
-      {/* 3. Central Telemetry Waveform Stage (Central Visual Feature!) */}
-      <div className="p-6 rounded-xl bg-ws-surface border border-ws-border shadow-subtle">
-        <Sparkline incidents={incidents} onSelectIncident={onSelectIncident} />
-      </div>
+      {/* Activity Waveform */}
+      <Panel padding="lg">
+        <Sparkline incidents={incidents} />
+      </Panel>
 
-      {/* 4. Linear-Style Refined Incident Stream & Triage Board (Lighter, modern, refined) */}
-      <div className="rounded-xl bg-ws-surface border border-ws-border shadow-subtle overflow-hidden">
-        {/* Triage Console Bar */}
-        <div className="p-5 border-b border-ws-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-ws-surface-subtle">
+      {/* Active Incident Clusters */}
+      <Panel padding="none" className="overflow-hidden">
+        <div className="p-5 border-b border-fl-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-fl-surface-subtle">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-base font-bold text-ws-ink font-sans tracking-tight">
-                Active Triage Queue & Incident Clusters
+              <h2 className="text-fl-section text-fl-ink font-sans">
+                Recent Incident Clusters
               </h2>
-              <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-ws-surface border border-ws-border text-ws-secondary tabular-nums">
-                {filteredIncidents.length} Records
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-fl-surface border border-fl-border text-fl-secondary tabular-nums">
+                {filteredIncidents.length}
               </span>
             </div>
-            <p className="text-xs font-sans text-ws-secondary mt-0.5">
-              Sorted by latest stream activity. Select an incident to inspect sanitized traces and rule receipts.
+            <p className="text-xs font-sans text-fl-secondary mt-0.5">
+              Grouped by failure fingerprint. Select a case to inspect its evidence timeline.
             </p>
           </div>
 
-          {/* Filter Pills */}
-          <div className="flex items-center gap-1.5 p-1 rounded-lg bg-ws-surface border border-ws-border text-xs font-sans">
+          <div className="flex items-center gap-1 p-1 rounded-lg bg-fl-surface border border-fl-border text-xs font-sans self-start sm:self-auto">
             {(['ALL', 'CRITICAL', 'INVESTIGATING', 'RESOLVED'] as const).map((filter) => (
               <button
                 key={filter}
+                type="button"
                 onClick={() => setTriageFilter(filter)}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                   triageFilter === filter
-                    ? 'bg-ws-surface-subtle text-ws-ink font-semibold border border-ws-border shadow-subtle'
-                    : 'text-ws-muted hover:text-ws-secondary'
+                    ? 'bg-fl-surface-elevated text-fl-ink font-semibold border border-fl-border shadow-subtle'
+                    : 'text-fl-muted hover:text-fl-secondary border border-transparent'
                 }`}
               >
-                {filter === 'ALL' ? 'All Cases' : filter}
+                {filter === 'ALL' ? 'All' : filter}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Linear-Style High-Density Refined List */}
-        <div className="divide-y divide-ws-border-subtle">
+        <div className="divide-y divide-fl-border-subtle">
           {filteredIncidents.length === 0 ? (
-            <div className="p-12 text-center text-xs font-sans text-ws-muted">
-              No incident cases match the selected filter.
-            </div>
+            <EmptyState
+              title="No matching incidents"
+              description="No incident clusters match the selected status filter."
+            />
           ) : (
             filteredIncidents.map((inc) => {
               const isUrgent = inc.severity === 'CRITICAL' || inc.severity === 'HIGH';
@@ -369,56 +344,55 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               const activeRecent = isRecent(inc.lastSeenTimestamp);
 
               return (
-                <div
+                <button
                   key={inc.id}
+                  type="button"
                   onClick={() => onSelectIncident(inc.id)}
-                  className="px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-ws-surface-subtle/80 cursor-pointer transition-colors group relative"
+                  className="w-full text-left px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-fl-surface-subtle transition-colors group relative"
                 >
-                  {/* Left State Ribbon Indicator */}
                   <div
-                    className={`absolute left-0 top-2 bottom-2 w-1 rounded-r-sm transition-colors ${
+                    className={`absolute left-0 top-2 bottom-2 w-0.5 rounded-r ${
                       isResolved
-                        ? 'bg-ws-success-dot'
+                        ? 'bg-fl-success-dot'
                         : isUrgent
-                        ? 'bg-ws-danger-dot'
-                        : 'bg-ws-warning-dot'
+                        ? 'bg-fl-danger-dot'
+                        : 'bg-fl-warning-dot'
                     }`}
+                    aria-hidden="true"
                   />
 
-                  {/* Incident Identity & Context */}
                   <div className="pl-2 min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-xs font-semibold text-ws-accent">
+                      <span className="font-mono text-xs font-semibold text-fl-accent-text">
                         {inc.key}
                       </span>
-                      <span className="text-[14px] font-semibold text-ws-ink font-sans group-hover:text-ws-accent transition-colors">
+                      <span className="text-[14px] font-semibold text-fl-ink font-sans group-hover:text-fl-accent-text transition-colors">
                         {inc.title}
                       </span>
                       {activeRecent && (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-mono font-medium bg-ws-success-bg text-ws-success-text border border-ws-success-border">
-                          <span className="w-1.5 h-1.5 rounded-full bg-ws-success-dot animate-pulse" />
-                          ACTIVE 60S
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-fl-success-bg text-fl-success-text border border-fl-success-border">
+                          <span className="w-1.5 h-1.5 rounded-full bg-fl-success-dot" aria-hidden="true" />
+                          Recent
                         </span>
                       )}
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 text-xs font-sans text-ws-secondary mt-1">
-                      <span className="font-medium text-ws-ink">{inc.integration}</span>
-                      <span>•</span>
-                      <span className="font-mono text-[11px] text-ws-muted bg-ws-surface px-1.5 py-0.2 rounded border border-ws-border">
+                    <div className="flex flex-wrap items-center gap-2 text-xs font-sans text-fl-secondary mt-1">
+                      <span className="font-medium text-fl-ink">{inc.integration}</span>
+                      <span aria-hidden="true">•</span>
+                      <span className="font-mono text-[11px] text-fl-muted bg-fl-surface-subtle px-1.5 py-0.5 rounded border border-fl-border">
                         {inc.cls}
                       </span>
-                      <span>•</span>
-                      <span className="text-ws-muted line-clamp-1">{inc.known}</span>
+                      <span aria-hidden="true">•</span>
+                      <span className="text-fl-muted line-clamp-1">{inc.known}</span>
                     </div>
                   </div>
 
-                  {/* Telemetry Stats & Badges */}
                   <div className="flex items-center gap-4 sm:justify-end shrink-0 pl-2 sm:pl-0">
                     <div className="text-right">
-                      <span className="font-mono text-xs font-semibold text-ws-ink tabular-nums block">
+                      <span className="font-mono text-xs font-semibold text-fl-ink tabular-nums block">
                         {inc.events} events
                       </span>
-                      <span className="font-mono text-[11px] text-ws-muted tabular-nums block">
+                      <span className="font-mono text-[11px] text-fl-muted tabular-nums block">
                         {inc.seen}
                       </span>
                     </div>
@@ -428,28 +402,34 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                       <Badge status={inc.status} withPulse={inc.status === 'INVESTIGATING'} />
                     </div>
 
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center text-xs font-sans font-medium text-ws-accent gap-1">
-                      <span>Inspect</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </div>
+                    <ArrowRight
+                      className="w-4 h-4 text-fl-muted opacity-0 group-hover:opacity-100 group-hover:text-fl-accent-text transition-all"
+                      aria-hidden="true"
+                    />
                   </div>
-                </div>
+                </button>
               );
             })
           )}
         </div>
 
-        {/* Footer info bar */}
-        <div className="p-4 border-t border-ws-border bg-ws-surface-subtle flex items-center justify-between text-xs text-ws-muted font-sans">
-          <span>Keyboard triage: Select any case or press <kbd className="font-mono text-[10px] px-1.5 py-0.5 bg-ws-surface border border-ws-border rounded">⌘K</kbd> to search</span>
+        <div className="px-5 py-3 border-t border-fl-border bg-fl-surface-subtle flex items-center justify-between text-xs text-fl-muted font-sans">
+          <span>
+            Press{' '}
+            <kbd className="font-mono text-[10px] px-1.5 py-0.5 bg-fl-surface border border-fl-border rounded">
+              ⌘K
+            </kbd>{' '}
+            to search across all incidents
+          </span>
           <button
+            type="button"
             onClick={() => onNavigate('incidents')}
-            className="text-ws-accent hover:underline font-medium text-xs font-sans"
+            className="text-fl-accent-text hover:underline font-medium text-xs"
           >
-            Go to Triage Queue console →
+            Open Triage Queue →
           </button>
         </div>
-      </div>
+      </Panel>
     </div>
   );
 };

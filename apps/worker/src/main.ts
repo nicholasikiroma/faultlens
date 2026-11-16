@@ -50,7 +50,7 @@ const isEntrypoint =
 
 if (isEntrypoint) {
   const runtime = await startWorker();
-  console.log('wiresleuth worker started');
+  console.log('faultlens worker started');
 
   let shuttingDown = false;
   const shutdown = async (): Promise<void> => {

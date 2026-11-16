@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ArrowRight, X, Radio } from 'lucide-react';
+import { ArrowRight, X, AlertCircle } from 'lucide-react';
 import type { Incident } from '../types';
 
 interface IncidentToastProps {
@@ -23,47 +23,33 @@ export const IncidentToast: React.FC<IncidentToastProps> = ({
 
   if (!incident) return null;
 
-  const severityColor =
-    incident.severity === 'CRITICAL'
-      ? 'border-ws-danger-border bg-ws-danger-bg/90 text-ws-danger-text'
-      : incident.severity === 'HIGH'
-      ? 'border-ws-warning-border bg-ws-warning-bg/90 text-ws-warning-text'
-      : 'border-ws-border bg-ws-surface/95 text-ws-ink';
-
-  const badgeColor =
-    incident.severity === 'CRITICAL'
-      ? 'bg-ws-danger-bg text-ws-danger-text border-ws-danger-border'
-      : incident.severity === 'HIGH'
-      ? 'bg-ws-warning-bg text-ws-warning-text border-ws-warning-border'
-      : 'bg-ws-surface-subtle text-ws-secondary border-ws-border';
+  const borderAccent =
+    incident.severity === 'CRITICAL' || incident.severity === 'HIGH'
+      ? 'border-fl-danger-border'
+      : 'border-fl-border-strong';
 
   return (
     <div
       role="alert"
       aria-live="polite"
-      className="fixed bottom-6 right-6 z-50 max-w-sm w-full animate-in fade-in slide-in-from-bottom-4 duration-200"
+      className="fixed bottom-6 right-6 z-50 max-w-sm w-full"
     >
       <div
-        className={`rounded-lg border shadow-overlay backdrop-blur-md p-4 transition-all ${severityColor}`}
+        className={`rounded-xl border ${borderAccent} bg-fl-surface shadow-overlay p-4 space-y-2.5`}
       >
         <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-ws-danger-dot opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-ws-danger-dot" />
-            </span>
-            <div className="flex items-center gap-1.5 text-xs font-sans font-semibold text-ws-danger-text">
-              <Radio className="w-3.5 h-3.5 animate-pulse" />
-              <span>Real-Time Anomaly Stream</span>
-            </div>
+          <div className="flex items-center gap-2 text-xs font-sans font-semibold text-fl-ink">
+            <AlertCircle className="w-3.5 h-3.5 text-fl-danger-dot" aria-hidden="true" />
+            <span>New Incident Activity</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-ws-surface/90 border border-ws-border text-ws-ink font-medium tabular-nums">
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-fl-surface-subtle border border-fl-border text-fl-secondary font-medium tabular-nums">
               {incident.events} events
             </span>
             <button
+              type="button"
               onClick={onDismiss}
-              className="text-ws-muted hover:text-ws-ink transition-colors p-0.5 rounded"
+              className="text-fl-muted hover:text-fl-ink transition-colors p-0.5 rounded"
               aria-label="Dismiss notification"
             >
               <X className="w-4 h-4" />
@@ -71,36 +57,31 @@ export const IncidentToast: React.FC<IncidentToastProps> = ({
           </div>
         </div>
 
-        <div className="mt-2.5">
+        <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="font-mono text-xs font-medium text-ws-ink">
+            <span className="font-mono text-xs font-medium text-fl-accent-text">
               {incident.key}
             </span>
-            <span
-              className={`text-[10px] font-mono px-1.5 py-0.5 rounded border uppercase ${badgeColor}`}
-            >
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border border-fl-border bg-fl-surface-subtle text-fl-secondary uppercase">
               {incident.cls}
             </span>
-            <span className="text-xs font-sans text-ws-muted truncate">
-              {incident.integration}
-            </span>
           </div>
-          <p className="text-[13px] font-sans text-ws-ink font-medium line-clamp-2 leading-snug">
+          <p className="text-[13px] font-sans text-fl-ink font-medium line-clamp-2 leading-snug">
             {incident.title}
           </p>
         </div>
 
-        <div className="mt-3 flex items-center justify-between pt-2.5 border-t border-ws-border/50 text-xs font-sans">
-          <span className="text-[11px] font-mono text-ws-muted flex items-center gap-1.5 tabular-nums">
-            <span className="w-1.5 h-1.5 rounded-full bg-ws-success-dot animate-pulse" />
-            Active {incident.seen}
+        <div className="flex items-center justify-between pt-2.5 border-t border-fl-border text-xs font-sans">
+          <span className="text-[11px] font-mono text-fl-muted tabular-nums">
+            {incident.integration} • {incident.seen}
           </span>
           <button
+            type="button"
             onClick={() => onInvestigate(incident.id)}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-ws-accent text-ws-accent-ink hover:opacity-90 font-medium font-sans text-xs transition-opacity shadow-subtle"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-fl-btn-primary text-fl-btn-primary-ink hover:bg-fl-btn-primary-hover font-medium font-sans text-xs transition-colors"
           >
-            <span>Investigate Case</span>
-            <ArrowRight className="w-3 h-3" />
+            <span>Investigate</span>
+            <ArrowRight className="w-3 h-3" aria-hidden="true" />
           </button>
         </div>
       </div>

@@ -11,7 +11,7 @@ import { listIncidents } from './incidents.ts';
 const TEST_ADMIN_TOKEN = 'test-admin-token-secret-value';
 
 beforeEach(() => {
-  process.env['WIRESLEUTH_ADMIN_TOKEN'] = TEST_ADMIN_TOKEN;
+  process.env['FAULTLENS_ADMIN_TOKEN'] = TEST_ADMIN_TOKEN;
 });
 
 after(async () => {

@@ -12,7 +12,7 @@ services:
       POSTGRES_DB: lab
     volumes:
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-      - ./db/wiresleuth.sql:/docker-entrypoint-initdb.d/wiresleuth.sql:ro
+      - ./db/faultlens.sql:/docker-entrypoint-initdb.d/faultlens.sql:ro
       - pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"

@@ -2,32 +2,32 @@ import "dotenv/config";
 
 export const config = {
   get adminToken(): string {
-    return process.env["WIRESLEUTH_ADMIN_TOKEN"] ?? "local-dev-admin-token";
+    return process.env["FAULTLENS_ADMIN_TOKEN"] ?? "local-dev-admin-token";
   },
   get workspaceId(): string {
-    return process.env["WIRESLEUTH_WORKSPACE_ID"] ?? "workspace-1";
+    return process.env["FAULTLENS_WORKSPACE_ID"] ?? "workspace-1";
   },
   get adminActor(): string {
-    return process.env["WIRESLEUTH_ADMIN_ACTOR"] ?? "local-admin";
+    return process.env["FAULTLENS_ADMIN_ACTOR"] ?? "local-admin";
   },
   get httpHost(): string {
-    return process.env["WIRESLEUTH_API_HOST"] ?? "127.0.0.1";
+    return process.env["FAULTLENS_API_HOST"] ?? "127.0.0.1";
   },
   get httpPort(): number {
-    const raw = process.env["WIRESLEUTH_API_PORT"] ?? "3000";
+    const raw = process.env["FAULTLENS_API_PORT"] ?? "3000";
     if (!/^\d+$/.test(raw)) {
-      throw new Error("Invalid WIRESLEUTH_API_PORT");
+      throw new Error("Invalid FAULTLENS_API_PORT");
     }
     const port = Number(raw);
     if (!Number.isInteger(port) || port > 65535) {
-      throw new Error("Invalid WIRESLEUTH_API_PORT");
+      throw new Error("Invalid FAULTLENS_API_PORT");
     }
     return port;
   },
   get simulatedWebhooks(): boolean {
-    return process.env["WIRESLEUTH_SIMULATED_WEBHOOKS"] === "1";
+    return process.env["FAULTLENS_SIMULATED_WEBHOOKS"] === "1";
   },
   get corsOrigin(): string | undefined {
-    return process.env["WIRESLEUTH_CORS_ORIGIN"];
+    return process.env["FAULTLENS_CORS_ORIGIN"];
   },
 } as const;

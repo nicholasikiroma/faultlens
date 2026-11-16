@@ -9,7 +9,7 @@ async function main(): Promise<void> {
     throw new Error("Usage: npm run ingest-key -- create <integrationId> | rotate <keyId> | revoke <keyId>");
   }
   const workspaceId = config.workspaceId;
-  if (workspaceId.trim().length === 0) throw new Error("WIRESLEUTH_WORKSPACE_ID must not be blank");
+  if (workspaceId.trim().length === 0) throw new Error("FAULTLENS_WORKSPACE_ID must not be blank");
   const result = command === "create"
     ? await createIngestKey({ workspaceId, integrationId: id })
     : command === "rotate"

@@ -8,7 +8,7 @@ Run `npx prisma db migrate` to apply `20261108T2356_hashed_ingest_keys`. Existin
 
 ## Operator commands
 
-These commands require direct database access through `DATABASE_URL`. They are not public HTTP endpoints. Set `WIRESLEUTH_WORKSPACE_ID` to the intended workspace (the local default is `workspace-1`). They refuse integrations or keys outside that workspace.
+These commands require direct database access through `DATABASE_URL`. They are not public HTTP endpoints. Set `FAULTLENS_WORKSPACE_ID` to the intended workspace (the local default is `workspace-1`). They refuse integrations or keys outside that workspace.
 
 ```sh
 npm run ingest-key -- create <integrationId>
@@ -18,7 +18,7 @@ npm run ingest-key -- revoke <keyId>
 
 Creation returns JSON with `outcome: created`, `id`, `key`, `integrationId`, `workspaceId`, `environment`, and `createdAt`. Rotation returns the same fields with `outcome: rotated`. **The raw `key` is shown only in these responses.** Copy it to the caller's secret store. Protect terminal output and do not send it to shared logs. The raw key cannot be retrieved later; rotate if it is lost. Revocation is idempotent (`revoked` then `unchanged`). Missing or wrong-workspace objects return `missing` and a nonzero exit code.
 
-Keys contain 32 cryptographically random bytes encoded as base64url with a `wsk_` prefix. Only the SHA-256 hash is stored in `ingest_keys`, together with its scope, creation time, and optional revocation time. High-entropy random credentials do not need password hashing. Signing secrets remain on integrations and are not included in key results, event reads, or incident exports.
+Keys contain 32 cryptographically random bytes encoded as base64url with a `flk_` prefix. Only the SHA-256 hash is stored in `ingest_keys`, together with its scope, creation time, and optional revocation time. High-entropy random credentials do not need password hashing. Signing secrets remain on integrations and are not included in key results, event reads, or incident exports.
 
 Rotation atomically revokes the old key and creates its replacement with the same scope. It does not provide an overlap period. For a staged rollout, create a second key, deploy it, then revoke the old key. Rotating an already revoked key returns `missing` rather than reactivating it.
 
@@ -26,7 +26,7 @@ Ingest holds a row lock on the authorized key until its transaction finishes. Re
 
 ## Simulated webhooks
 
-`POST /hooks/:token` uses the legacy integration endpoint token and is mounted only when `WIRESLEUTH_SIMULATED_WEBHOOKS=1`. It never interprets that token as an API key. Do not enable this route for real production observations. Direct domain callers must explicitly choose `ingestSimulated`; `ingest` always requires an API key.
+`POST /hooks/:token` uses the legacy integration endpoint token and is mounted only when `FAULTLENS_SIMULATED_WEBHOOKS=1`. It never interprets that token as an API key. Do not enable this route for real production observations. Direct domain callers must explicitly choose `ingestSimulated`; `ingest` always requires an API key.
 
 ## Tests
 

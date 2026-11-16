@@ -6,13 +6,13 @@ import { headerPairs, optionalInstant, readCommand, type ApiEnv } from "./reques
 import { JSON_BODY_LIMIT } from "./routes.ts";
 import { closeServer, createApiApp } from "./server.ts";
 
-const envKeys = ["WIRESLEUTH_ADMIN_TOKEN", "WIRESLEUTH_WORKSPACE_ID", "WIRESLEUTH_SIMULATED_WEBHOOKS"] as const;
+const envKeys = ["FAULTLENS_ADMIN_TOKEN", "FAULTLENS_WORKSPACE_ID", "FAULTLENS_SIMULATED_WEBHOOKS"] as const;
 let saved: (string | undefined)[];
 beforeEach(() => {
   saved = envKeys.map((key) => process.env[key]);
-  process.env["WIRESLEUTH_ADMIN_TOKEN"] = "transport-test-secret";
-  process.env["WIRESLEUTH_WORKSPACE_ID"] = "workspace-1";
-  delete process.env["WIRESLEUTH_SIMULATED_WEBHOOKS"];
+  process.env["FAULTLENS_ADMIN_TOKEN"] = "transport-test-secret";
+  process.env["FAULTLENS_WORKSPACE_ID"] = "workspace-1";
+  delete process.env["FAULTLENS_SIMULATED_WEBHOOKS"];
 });
 afterEach(() => {
   envKeys.forEach((key, index) => {
