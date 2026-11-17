@@ -36,6 +36,10 @@ enum SourceKind {
   DELIVERY_ATTEMPT
   WEBHOOK_EVENT
   FIXTURE
+  FLIGHT_RECORDER_EPISODE
+  DOWNSTREAM_SPAN
+  HOST_EXCEPTION
+  SOCKET_TIMING
 }
 
 enum FailureClass {
@@ -47,6 +51,11 @@ enum FailureClass {
   INVALID_SIGNATURE
   DUPLICATE_DELIVERY
   OUT_OF_ORDER
+  INGRESS_ABORTED
+  DECRYPT_FAILURE
+  DOWNSTREAM_NETWORK_ERROR
+  UNHANDLED_EXCEPTION
+  ASYNC_ESCAPE_FAILURE
   UNKNOWN
 }
 
@@ -57,19 +66,42 @@ enum IncidentStatus {
   ARCHIVED
 }
 
+enum EpistemicStatus {
+  OBSERVED
+  INFERRED
+  HYPOTHESIS
+  UNVERIFIED
+}
+
+enum HypothesisConfidence {
+  HIGH
+  MEDIUM
+  LOW
+}
+
 enum FeedbackRating {
   USEFUL
   INCORRECT
 }
 
+enum HypothesisFeedbackRating {
+  USEFUL
+  INCORRECT
+  UNVERIFIED
+}
+
 enum AuditAction {
   INCIDENT_STATUS_CHANGED
   FINDING_RATED
+  HYPOTHESIS_RATED
+  AI_INVESTIGATION_REQUESTED
 }
 
 enum AuditObjectType {
   INCIDENT
   FINDING
+  HYPOTHESIS
+  INVESTIGATION_RUN
 }
 
 enum RunMode {
@@ -87,6 +119,12 @@ enum RunState {
   CANCELLED
 }
 
+enum ToolCallStatus {
+  SUCCEEDED
+  FAILED
+  REJECTED
+}
+
 model Integration {
   id            String @id @default(uuid())
   workspaceId   String @map("workspace_id")
@@ -95,8 +133,8 @@ model Integration {
   environment   String @default("local")
   endpoint      String @default("/")
 
-  events   WebhookEvent[]
-  attempts DeliveryAttempt[]
+  events     WebhookEvent[]
+  attempts   DeliveryAttempt[]
   ingestKeys IngestKey[]
 
   @@map("integrations")
@@ -163,13 +201,15 @@ model DeliveryAttempt {
 }
 
 model Evidence {
-  id             String     @id @default(uuid())
-  sourceKind     SourceKind @map("source_kind")
-  sourceRecordId String     @map("source_record_id")
-  summary        String
-  sha256Digest   String     @map("sha256_digest")
-  trustTier      TrustTier  @map("trust_tier")
-  workspaceId    String     @map("workspace_id")
+  id                 String     @id @default(uuid())
+  sourceKind         SourceKind @map("source_kind")
+  sourceRecordId     String     @map("source_record_id")
+  summary            String
+  sha256Digest       String     @map("sha256_digest")
+  trustTier          TrustTier  @map("trust_tier")
+  workspaceId        String     @map("workspace_id")
+  recordedAt         DateTime?  @map("recorded_at")
+  structuredDataJson Json?      @map("structured_data_json")
 
   findingLinks FindingEvidence[]
 
@@ -202,9 +242,10 @@ model Incident {
   lastSeenAt    DateTime       @map("last_seen_at")
   eventCount    Int            @map("event_count")
 
-  events   IncidentEvent[]
-  findings Finding[]
-  runs     InvestigationRun[]
+  events     IncidentEvent[]
+  findings   Finding[]
+  runs       InvestigationRun[]
+  hypotheses Hypothesis[]
 
   @@unique([workspaceId, fingerprint, ruleVersion])
   @@map("incidents")
@@ -254,20 +295,76 @@ model FindingEvidence {
 }
 
 model InvestigationRun {
-  id             String   @id @default(uuid())
-  incidentId     String   @map("incident_id")
-  eventId        String   @map("event_id")
+  id             String    @id @default(uuid())
+  workspaceId    String    @default("workspace-1") @map("workspace_id")
+  incidentId     String    @map("incident_id")
+  eventId        String?   @map("event_id")
   mode           RunMode
   state          RunState
-  rulesetVersion String   @map("ruleset_version")
-  startedAt      DateTime @map("started_at")
-  endedAt        DateTime @map("ended_at")
+  triggeredBy    String    @default("system") @map("triggered_by")
+  triggerReason  String?   @map("trigger_reason")
+  modelId        String?   @map("model_id")
+  promptVersion  String?   @map("prompt_version")
+  rulesetVersion String    @map("ruleset_version")
+  tokenUsage     Json?     @map("token_usage")
+  toolCallCount  Int       @default(0) @map("tool_call_count")
+  errorCode      String?   @map("error_code")
+  errorMessage   String?   @map("error_message")
+  summaryJson    Json?     @map("summary_json")
+  startedAt      DateTime  @map("started_at")
+  endedAt        DateTime? @map("ended_at")
 
-  incident Incident     @relation(fields: [incidentId], references: [id], onDelete: Restrict)
-  event    WebhookEvent @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  incident   Incident      @relation(fields: [incidentId], references: [id], onDelete: Restrict)
+  event      WebhookEvent? @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  toolCalls  ToolCall[]
+  hypotheses Hypothesis[]
 
   @@unique([eventId, incidentId, mode, rulesetVersion])
+  @@index([workspaceId, incidentId, startedAt])
   @@map("investigation_runs")
+}
+
+model ToolCall {
+  id                 String         @id @default(uuid())
+  investigationRunId String         @map("investigation_run_id")
+  workspaceId        String         @map("workspace_id")
+  stepIndex          Int            @map("step_index")
+  toolName           String         @map("tool_name")
+  safeArgumentsJson  Json           @map("safe_arguments_json")
+  resultEvidenceIds  String[]       @map("result_evidence_ids")
+  resultSummary      String         @map("result_summary")
+  status             ToolCallStatus
+  errorCode          String?        @map("error_code")
+  startedAt          DateTime       @map("started_at")
+  endedAt            DateTime       @map("ended_at")
+
+  investigationRun InvestigationRun @relation(fields: [investigationRunId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, investigationRunId, stepIndex])
+  @@map("tool_calls")
+}
+
+model Hypothesis {
+  id                 String                   @id @default(uuid())
+  workspaceId        String                   @map("workspace_id")
+  incidentId         String                   @map("incident_id")
+  investigationRunId String                   @map("investigation_run_id")
+  title              String
+  reasoning          String
+  epistemicStatus    EpistemicStatus          @map("epistemic_status")
+  confidence         HypothesisConfidence
+  citedEvidenceIds   String[]                 @map("cited_evidence_ids")
+  missingInformation String[]                 @map("missing_information")
+  suggestedCheck     String                   @map("suggested_check")
+  remediationJson    Json?                    @map("remediation_json")
+  feedback           HypothesisFeedbackRating @default(UNVERIFIED)
+  createdAt          DateTime                 @map("created_at")
+
+  incident         Incident         @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  investigationRun InvestigationRun @relation(fields: [investigationRunId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, incidentId, createdAt])
+  @@map("hypotheses")
 }
 
 model Feedback {

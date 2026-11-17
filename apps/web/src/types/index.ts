@@ -6,11 +6,18 @@ export type FailureClass =
   | 'HTTP_5XX'
   | 'DUPLICATE_DELIVERY'
   | 'OUT_OF_ORDER'
-  | 'AUTH_FAILURE';
+  | 'AUTH_FAILURE'
+  | 'INGRESS_ABORTED'
+  | 'DECRYPT_FAILURE'
+  | 'DOWNSTREAM_NETWORK_ERROR'
+  | 'UNHANDLED_EXCEPTION'
+  | 'ASYNC_ESCAPE_FAILURE'
+  | 'UNKNOWN';
 
 export type IncidentSeverity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 export type IncidentStatus = 'OPEN' | 'INVESTIGATING' | 'RESOLVED' | 'IGNORED';
 export type EpistemicType = 'OBSERVED' | 'RULE' | 'AI_HYPOTHESIS' | 'REDACTED';
+export type HypothesisEpistemicStatus = 'OBSERVED' | 'INFERRED' | 'HYPOTHESIS' | 'UNVERIFIED';
 
 export interface TimelineEvent {
   id: string;
@@ -46,13 +53,66 @@ export interface RuleFinding {
   matchedEvents: number;
 }
 
+export interface RemediationProposal {
+  kind: 'command' | 'config_diff' | 'code_pattern';
+  summary: string;
+  snippet: string;
+  safetyNote: string;
+}
+
 export interface HypothesisItem {
   id: string;
   title: string;
   reasoning: string;
+  epistemicStatus?: HypothesisEpistemicStatus;
   confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+  citedEvidenceIds?: string[];
+  missingInformation?: string[];
   suggestedCheck: string;
-  feedback?: 'none' | 'helpful' | 'false_positive';
+  remediation?: RemediationProposal | null;
+  isPersisted?: boolean;
+  feedback?: 'none' | 'helpful' | 'false_positive' | 'unverified';
+}
+
+export interface AgentRunSummary {
+  id: string;
+  mode: 'RULES' | 'AI_ASSISTED';
+  state: 'NOT_STARTED' | 'QUEUED' | 'RUNNING' | 'NEEDS_REVIEW' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+  triggeredBy: string;
+  triggerReason: string | null;
+  modelId: string | null;
+  promptVersion: string | null;
+  toolCallCount: number;
+  errorCode: string | null;
+  errorMessage: string | null;
+  startedAt: string;
+  endedAt: string | null;
+}
+
+export interface ToolCallSummary {
+  id: string;
+  investigationRunId: string;
+  stepIndex: number;
+  toolName: string;
+  safeArgumentsJson: Record<string, unknown>;
+  resultEvidenceIds: string[];
+  resultSummary: string;
+  status: 'SUCCEEDED' | 'FAILED' | 'REJECTED';
+  errorCode: string | null;
+  startedAt: string;
+  endedAt: string;
+}
+
+export interface AgentSettingsSummary {
+  enabled: boolean;
+  autoInvestigate: boolean;
+  provider: string;
+  model: string;
+  baseUrlConfigured: boolean;
+  budgets: {
+    maxToolCalls: number;
+    maxDurationMs: number;
+  };
 }
 
 export interface Incident {
@@ -75,6 +135,8 @@ export interface Incident {
   attempts: AttemptItem[];
   ruleFindings: RuleFinding[];
   hypotheses: HypothesisItem[];
+  agentRuns?: AgentRunSummary[];
+  toolCalls?: ToolCallSummary[];
   rawPayload: Record<string, unknown>;
 }
 
@@ -94,4 +156,3 @@ export interface PlaygroundScenario {
   description: string;
   samplePayload: Record<string, unknown>;
 }
-

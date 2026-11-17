@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { apiStore, PLAYGROUND_SCENARIOS, INITIAL_INCIDENTS } from './api/client';
-import type { Incident, EvidenceItem, PlaygroundScenario, IncidentStatus } from './types';
+import type {
+  AgentSettingsSummary,
+  Incident,
+  EvidenceItem,
+  PlaygroundScenario,
+  IncidentStatus,
+} from './types';
 import { Sidebar } from './components/Sidebar';
 import { Topbar } from './components/Topbar';
 import { CommandPalette } from './components/CommandPalette';
@@ -45,6 +51,8 @@ export const App: React.FC = () => {
   const [isLiveConnected, setIsLiveConnected] = useState<boolean>(false);
   const [latencyMs, setLatencyMs] = useState<number | null>(null);
   const [isLoadingDetail, setIsLoadingDetail] = useState<boolean>(false);
+  const [isTriggeringAgent, setIsTriggeringAgent] = useState<boolean>(false);
+  const [agentSettings, setAgentSettings] = useState<AgentSettingsSummary | null>(null);
 
   const [isRecording, setIsRecording] = useState<boolean>(true);
   const [sessionUptime, setSessionUptime] = useState<number>(0);
@@ -103,6 +111,9 @@ export const App: React.FC = () => {
       setLatencyMs(health.latencyMs);
 
       if (health.connected) {
+        void apiStore.fetchAgentSettings().then((settings) => {
+          if (isMounted && settings) setAgentSettings(settings);
+        });
         const liveIncidents = await apiStore.fetchIncidents();
         if (isMounted && liveIncidents.length > 0) {
           const prevStats = prevIncidentStatsRef.current;
@@ -195,11 +206,53 @@ export const App: React.FC = () => {
     return newInc;
   };
 
-  const handleFeedback = async (hypothesisId: string, feedback: 'helpful' | 'false_positive') => {
+  const handleFeedback = async (
+    hypothesisId: string,
+    feedback: 'helpful' | 'false_positive' | 'unverified',
+  ) => {
     if (selectedIncidentId) {
       await apiStore.updateHypothesisFeedback(selectedIncidentId, hypothesisId, feedback);
       setIncidents(apiStore.getIncidents());
-      showToast(feedback === 'helpful' ? 'Marked hypothesis as helpful.' : 'Marked hypothesis as false positive.');
+      showToast(
+        feedback === 'helpful'
+          ? 'Marked hypothesis as helpful.'
+          : feedback === 'false_positive'
+          ? 'Marked hypothesis as false positive.'
+          : 'Marked hypothesis as unverified.',
+      );
+    }
+  };
+
+  const handleTriggerInvestigation = async (incidentId: string) => {
+    setIsTriggeringAgent(true);
+    try {
+      const res = await apiStore.triggerInvestigation(incidentId);
+      if (res.outcome === 'queued' || res.outcome === 'already-running') {
+        showToast(
+          res.outcome === 'queued'
+            ? 'AI investigation queued. Collecting evidence...'
+            : 'An AI investigation is already running for this incident.',
+        );
+        // Poll detail briefly until the bounded run finishes
+        for (let i = 0; i < 12; i += 1) {
+          await new Promise((r) => setTimeout(r, 1500));
+          const updated = await apiStore.fetchIncidentDetail(incidentId);
+          setIncidents(apiStore.getIncidents());
+          const latestRun = updated.agentRuns?.[0];
+          if (latestRun && latestRun.state !== 'QUEUED' && latestRun.state !== 'RUNNING') {
+            showToast(`Investigation ${latestRun.state.toLowerCase()}.`);
+            break;
+          }
+        }
+      } else if (res.outcome === 'ai-disabled') {
+        showToast('AI agent is disabled (FAULTLENS_AI_ENABLED=0). Showing deterministic rule findings.');
+      } else if (res.outcome === 'queue-unavailable') {
+        showToast('Investigation queue is unavailable (check Redis connection).');
+      } else {
+        showToast('Running deterministic check in offline mode.');
+      }
+    } finally {
+      setIsTriggeringAgent(false);
     }
   };
 
@@ -304,11 +357,14 @@ export const App: React.FC = () => {
             <InvestigationView
               incident={currentIncident}
               isLoadingDetail={isLoadingDetail}
+              isTriggeringAgent={isTriggeringAgent}
+              aiEnabled={agentSettings?.enabled ?? false}
               onBack={() => setCurrentPage('incidents')}
               onOpenEvidence={(ev) => setSelectedEvidence(ev)}
               onShowToast={showToast}
               onFeedback={handleFeedback}
               onStatusChange={handleStatusChange}
+              onTriggerInvestigation={() => void handleTriggerInvestigation(currentIncident.id)}
             />
           )}
 
@@ -336,6 +392,7 @@ export const App: React.FC = () => {
               theme={theme}
               isLiveConnected={isLiveConnected}
               latencyMs={latencyMs}
+              agentSettings={agentSettings}
               onToggleTheme={toggleTheme}
               onResetFixtures={handleResetFixtures}
               onTestConnection={handleRetryConnection}

@@ -6,13 +6,23 @@ import type {
   Evidence,
   FailureClass,
   IncidentContext,
+  RuleMatch,
   WebhookEvent,
 } from "#domain";
 import { RULES, fingerprint } from "#rules";
+import { config } from "./config.ts";
+import { enqueueInvestigationRun } from "./investigation-queue.ts";
 
 type Tx = PostgresTransactionContext<Contract>;
+const AUTO_ESCALATION_COOLDOWN_MS = 5 * 60_000;
 
 export async function classifyJob(eventId: string): Promise<void> {
+  const autoEscalations: Array<{
+    workspaceId: string;
+    incidentId: string;
+    reason: string;
+  }> = [];
+
   await db.transaction(async (tx) => {
     const event = await tx.orm.public.WebhookEvent.where({
       id: eventId,
@@ -33,9 +43,13 @@ export async function classifyJob(eventId: string): Promise<void> {
     const evidenceRows = (await tx.orm.public.Evidence.all()).filter(
       (row) =>
         row.workspaceId === event.workspaceId &&
-        ((row.sourceKind === "WEBHOOK_EVENT" &&
+        (((row.sourceKind === "WEBHOOK_EVENT" ||
+          row.sourceKind === "FLIGHT_RECORDER_EPISODE") &&
           row.sourceRecordId === eventId) ||
-          (row.sourceKind === "DELIVERY_ATTEMPT" &&
+          ((row.sourceKind === "DELIVERY_ATTEMPT" ||
+            row.sourceKind === "DOWNSTREAM_SPAN" ||
+            row.sourceKind === "HOST_EXCEPTION" ||
+            row.sourceKind === "SOCKET_TIMING") &&
             attemptIds.has(row.sourceRecordId))),
     );
     const ctx: IncidentContext = {
@@ -46,6 +60,8 @@ export async function classifyJob(eventId: string): Promise<void> {
       evidence: evidenceRows.map(toEvidence),
     };
     const seenAt = event.firstReceivedAt;
+    const allMatches: Array<{ match: RuleMatch; incidentId: string }> = [];
+
     for (const rule of RULES) {
       const matches = await rule.evaluate(ctx);
       for (const match of matches) {
@@ -80,13 +96,98 @@ export async function classifyJob(eventId: string): Promise<void> {
           await placeFindingEvidence(tx, { findingId, evidenceId });
         }
         await placeRun(tx, {
+          workspaceId: event.workspaceId,
           incidentId: incident.id,
           eventId,
           rulesetVersion: rule.version,
           seenAt,
         });
+        allMatches.push({ match, incidentId: incident.id });
       }
     }
+
+    if (config.aiEnabled && config.aiAutoInvestigate) {
+      const competing = allMatches.length > 1;
+      for (const { match, incidentId } of allMatches) {
+        const reason = escalationReason(match, competing);
+        if (reason !== null && !autoEscalations.some((e) => e.incidentId === incidentId)) {
+          autoEscalations.push({
+            workspaceId: event.workspaceId,
+            incidentId,
+            reason,
+          });
+        }
+      }
+    }
+  });
+
+  // Hybrid auto-trigger: enqueue AI investigation outside the deterministic tx, non-fatally.
+  for (const candidate of autoEscalations) {
+    try {
+      const runId = await scheduleAutoInvestigationRun(candidate);
+      if (runId !== null) {
+        await enqueueInvestigationRun(runId);
+      }
+    } catch {
+      // Deterministic classification must never fail if Redis/AI queue is unavailable.
+    }
+  }
+}
+
+function escalationReason(match: RuleMatch, competing: boolean): string | null {
+  if (match.failureClass === "UNKNOWN") return "auto_escalation:unknown_failure_class";
+  if (match.severityHint === "CRITICAL" || match.severityHint === "HIGH") {
+    return `auto_escalation:severity_${match.severityHint.toLowerCase()}`;
+  }
+  if (competing) return "auto_escalation:competing_causes";
+  return null;
+}
+
+async function scheduleAutoInvestigationRun(input: {
+  workspaceId: string;
+  incidentId: string;
+  reason: string;
+}): Promise<string | null> {
+  const now = new Date();
+  return db.transaction(async (tx) => {
+    const existingRuns = await tx.orm.public.InvestigationRun.where({
+      workspaceId: input.workspaceId,
+      incidentId: input.incidentId,
+      mode: "AI_ASSISTED",
+    }).all();
+
+    const activeOrRecent = existingRuns.some((run) => {
+      if (run.state === "QUEUED" || run.state === "RUNNING") return true;
+      return now.getTime() - run.startedAt.getTime() < AUTO_ESCALATION_COOLDOWN_MS;
+    });
+    if (activeOrRecent) {
+      return null;
+    }
+
+    const runId = randomUUID();
+    await tx.query(
+      tx.raw.sql`
+        INSERT INTO investigation_runs (
+          id, workspace_id, incident_id, event_id, mode, state, triggered_by,
+          trigger_reason, ruleset_version, started_at
+        )
+        VALUES (
+          ${runId},
+          ${input.workspaceId},
+          ${input.incidentId},
+          NULL,
+          CAST(${"AI_ASSISTED"} AS "RunMode"),
+          CAST(${"QUEUED"} AS "RunState"),
+          ${"system"},
+          ${input.reason},
+          ${"0"},
+          CAST(${now.toISOString()} AS timestamptz)
+        )
+      `
+        .affectedCount()
+        .build(),
+    );
+    return runId;
   });
 }
 
@@ -265,6 +366,7 @@ async function placeFindingEvidence(
 async function placeRun(
   tx: Tx,
   input: {
+    workspaceId: string;
     incidentId: string;
     eventId: string;
     rulesetVersion: string;
@@ -274,14 +376,16 @@ async function placeRun(
   await tx.query(
     tx.raw.sql`
       INSERT INTO investigation_runs (
-        id, incident_id, event_id, mode, state, ruleset_version, started_at, ended_at
+        id, workspace_id, incident_id, event_id, mode, state, triggered_by, ruleset_version, started_at, ended_at
       )
       VALUES (
         ${randomUUID()},
+        ${input.workspaceId},
         ${input.incidentId},
         ${input.eventId},
         CAST(${"RULES"} AS "RunMode"),
         CAST(${"COMPLETED"} AS "RunState"),
+        ${"system"},
         ${input.rulesetVersion},
         CAST(${input.seenAt.toISOString()} AS timestamptz),
         CAST(${input.seenAt.toISOString()} AS timestamptz)
@@ -354,6 +458,8 @@ function toEvidence(row: {
   summary: string;
   sha256Digest: string;
   trustTier: Evidence["trustTier"];
+  recordedAt: Date | null;
+  structuredDataJson: unknown;
 }): Evidence {
   return {
     id: row.id,
@@ -362,5 +468,7 @@ function toEvidence(row: {
     summary: row.summary,
     sha256Digest: row.sha256Digest,
     trustTier: row.trustTier,
+    recordedAt: row.recordedAt,
+    structuredDataJson: row.structuredDataJson,
   };
 }

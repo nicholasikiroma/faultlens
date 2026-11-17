@@ -3,12 +3,16 @@ import { db } from "#db";
 import {
   AUDIT_OBJECT_TYPE,
   FEEDBACK_RATINGS,
+  HYPOTHESIS_FEEDBACK_RATINGS,
   INCIDENT_TRANSITIONS,
+  RUN_STATES,
   type AuditAction,
   type AuditEvent,
   type AuditObjectType,
   type FeedbackRating,
+  type HypothesisFeedbackRating,
   type IncidentStatus,
+  type RunState,
 } from "#domain";
 import { verifyAdminToken } from "../read/auth.ts";
 
@@ -30,6 +34,22 @@ export type AuditEntry =
       objectId: string;
       oldState: FeedbackRating | null;
       newState: FeedbackRating;
+    }
+  | {
+      action: "HYPOTHESIS_RATED";
+      workspaceId: string;
+      actor: string;
+      objectId: string;
+      oldState: HypothesisFeedbackRating | null;
+      newState: HypothesisFeedbackRating;
+    }
+  | {
+      action: "AI_INVESTIGATION_REQUESTED";
+      workspaceId: string;
+      actor: string;
+      objectId: string;
+      oldState: RunState | null;
+      newState: RunState;
     };
 
 export interface AuditRow {
@@ -102,11 +122,12 @@ export async function listAuditEvents(
 }
 
 export function toAuditEvent(row: AuditRow): AuditEvent {
+  if (row.objectType !== AUDIT_OBJECT_TYPE[row.action]) {
+    throw new Error(`audit row ${row.id} has invalid object type`);
+  }
+
   switch (row.action) {
     case "INCIDENT_STATUS_CHANGED":
-      if (row.objectType !== AUDIT_OBJECT_TYPE[row.action]) {
-        throw new Error(`audit row ${row.id} has invalid object type`);
-      }
       return {
         id: row.id,
         workspaceId: row.workspaceId,
@@ -119,9 +140,6 @@ export function toAuditEvent(row: AuditRow): AuditEvent {
         timestamp: row.timestamp,
       };
     case "FINDING_RATED":
-      if (row.objectType !== AUDIT_OBJECT_TYPE[row.action]) {
-        throw new Error(`audit row ${row.id} has invalid object type`);
-      }
       return {
         id: row.id,
         workspaceId: row.workspaceId,
@@ -134,6 +152,34 @@ export function toAuditEvent(row: AuditRow): AuditEvent {
             ? null
             : parseFeedbackRating(row.oldState, row.id),
         newState: parseFeedbackRating(row.newState, row.id),
+        timestamp: row.timestamp,
+      };
+    case "HYPOTHESIS_RATED":
+      return {
+        id: row.id,
+        workspaceId: row.workspaceId,
+        actor: row.actor,
+        action: row.action,
+        objectType: AUDIT_OBJECT_TYPE[row.action],
+        objectId: row.objectId,
+        oldState:
+          row.oldState === null
+            ? null
+            : parseHypothesisFeedbackRating(row.oldState, row.id),
+        newState: parseHypothesisFeedbackRating(row.newState, row.id),
+        timestamp: row.timestamp,
+      };
+    case "AI_INVESTIGATION_REQUESTED":
+      return {
+        id: row.id,
+        workspaceId: row.workspaceId,
+        actor: row.actor,
+        action: row.action,
+        objectType: AUDIT_OBJECT_TYPE[row.action],
+        objectId: row.objectId,
+        oldState:
+          row.oldState === null ? null : parseRunState(row.oldState, row.id),
+        newState: parseRunState(row.newState, row.id),
         timestamp: row.timestamp,
       };
     default: {
@@ -165,10 +211,33 @@ function parseFeedbackRating(
   throw new Error(`audit row ${id} has invalid feedback rating`);
 }
 
+function parseHypothesisFeedbackRating(
+  value: string | null,
+  id: string,
+): HypothesisFeedbackRating {
+  if (value !== null && isHypothesisFeedbackRating(value)) {
+    return value;
+  }
+  throw new Error(`audit row ${id} has invalid hypothesis feedback rating`);
+}
+
+function parseRunState(value: string | null, id: string): RunState {
+  if (value !== null && (RUN_STATES as readonly string[]).includes(value)) {
+    return value as RunState;
+  }
+  throw new Error(`audit row ${id} has invalid run state`);
+}
+
 function isIncidentStatus(value: string): value is IncidentStatus {
   return Object.hasOwn(INCIDENT_TRANSITIONS, value);
 }
 
 function isFeedbackRating(value: string): value is FeedbackRating {
   return (FEEDBACK_RATINGS as readonly string[]).includes(value);
+}
+
+function isHypothesisFeedbackRating(
+  value: string,
+): value is HypothesisFeedbackRating {
+  return (HYPOTHESIS_FEEDBACK_RATINGS as readonly string[]).includes(value);
 }

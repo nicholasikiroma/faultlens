@@ -2,6 +2,10 @@ import { db } from '#db';
 import { config } from './config.ts';
 import { createOutboxWorker } from './consumer.ts';
 import { closeQueue, dispatchPending } from './dispatcher.ts';
+import {
+  closeInvestigationQueue,
+  createInvestigationWorker,
+} from './investigation-queue.ts';
 
 export interface WorkerRuntime {
   close: () => Promise<void>;
@@ -12,6 +16,7 @@ export async function startWorker(options?: {
 }): Promise<WorkerRuntime> {
   const intervalMs = options?.dispatchIntervalMs ?? config.dispatchIntervalMs;
   const worker = createOutboxWorker();
+  const investigationWorker = createInvestigationWorker();
   let stopped = false;
   let dispatching = false;
 
@@ -39,7 +44,9 @@ export async function startWorker(options?: {
       stopped = true;
       clearInterval(timer);
       await worker.close();
+      await investigationWorker.close();
       await closeQueue();
+      await closeInvestigationQueue();
     },
   };
 }

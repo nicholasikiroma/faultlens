@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import type { AgentSettingsSummary } from '../types';
 import { Button, PageHeader, Panel } from '../components/ui';
 import { Sun, Moon, RotateCcw, Server, RefreshCw } from 'lucide-react';
 
@@ -6,6 +7,7 @@ interface SettingsViewProps {
   theme: 'dark' | 'light';
   isLiveConnected?: boolean;
   latencyMs?: number | null;
+  agentSettings?: AgentSettingsSummary | null;
   onToggleTheme: () => void;
   onResetFixtures: () => void;
   onTestConnection?: () => Promise<void>;
@@ -15,6 +17,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   theme,
   isLiveConnected = false,
   latencyMs = null,
+  agentSettings = null,
   onToggleTheme,
   onResetFixtures,
   onTestConnection,
@@ -130,13 +133,26 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
         <div className="p-5 flex items-center justify-between gap-4">
           <div>
-            <div className="text-fl-card text-fl-ink font-sans">AI Investigation</div>
+            <div className="flex items-center gap-2">
+              <span className="text-fl-card text-fl-ink font-sans">AI Investigation Agent</span>
+              <span
+                className={`text-[10px] font-mono font-medium px-2 py-0.5 rounded border uppercase ${
+                  agentSettings?.enabled
+                    ? 'bg-fl-success-bg text-fl-success-text border-fl-success-border'
+                    : 'bg-fl-surface-subtle text-fl-muted border-fl-border'
+                }`}
+              >
+                {agentSettings?.enabled ? 'Enabled' : 'Disabled (Deterministic)'}
+              </span>
+            </div>
             <p className="text-xs font-sans text-fl-secondary mt-1 leading-relaxed">
-              Optional read-only model assistance. Deterministic rule receipts run independently with no model key.
+              {agentSettings?.enabled
+                ? `Provider: ${agentSettings.provider} (${agentSettings.model}) • Max ${agentSettings.budgets.maxToolCalls} tool calls / ${Math.round(agentSettings.budgets.maxDurationMs / 1000)}s • Auto-escalation: ${agentSettings.autoInvestigate ? 'ON' : 'OFF'}.`
+                : 'Optional read-only model assistance. Deterministic rule receipts run independently with no model key.'}
             </p>
           </div>
           <span className="text-[11px] font-mono font-medium uppercase text-fl-accent-text shrink-0">
-            Optional (Bounded)
+            Read-Only (Bounded)
           </span>
         </div>
 

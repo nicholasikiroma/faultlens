@@ -19,6 +19,12 @@ import {
   handleTransitionIncident,
 } from "./controllers/incidents.controller.ts";
 import {
+  handleGetAgentSettings,
+  handleListIncidentInvestigations,
+  handleRateHypothesis,
+  handleTriggerInvestigation,
+} from "./controllers/investigations.controller.ts";
+import {
   adminSession,
   headerPairs,
   invalidRequest,
@@ -51,6 +57,10 @@ const adminHandlers = {
   rateFinding: handleRateFinding,
   listFindingFeedback: handleListFindingFeedback,
   listAuditEvents: handleListAuditEvents,
+  triggerInvestigation: handleTriggerInvestigation,
+  listIncidentInvestigations: handleListIncidentInvestigations,
+  rateHypothesis: handleRateHypothesis,
+  getAgentSettings: handleGetAgentSettings,
 } satisfies Record<AdminRouteId, AdminHandler>;
 
 export function createApiApp(): Hono<ApiEnv> {
@@ -162,7 +172,11 @@ function isMounted(route: Route): boolean {
 }
 
 function dispatch(c: ApiContext, route: Route): Promise<Response> {
-  if (route.id === "ingest" || route.id === "simulateWebhook") {
+  if (
+    route.id === "ingest" ||
+    route.id === "simulateWebhook" ||
+    route.id === "ingestEpisode"
+  ) {
     return handleIngest(c, route);
   }
   return dispatchAdmin(c, route.id);

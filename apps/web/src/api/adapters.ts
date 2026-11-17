@@ -1,9 +1,13 @@
 import type {
+  AgentRunSummary,
   FailureClass,
+  HypothesisItem,
   Incident,
   IncidentSeverity,
   IncidentStatus,
+  RemediationProposal,
   TimelineEvent,
+  ToolCallSummary,
   EvidenceItem,
   AttemptItem,
   RuleFinding,
@@ -58,6 +62,8 @@ export interface BackendEvidence {
   summary: string;
   sha256Digest: string;
   trustTier: string;
+  recordedAt?: string | Date | null;
+  structuredDataJson?: unknown | null;
 }
 
 export interface BackendExportedFinding {
@@ -71,6 +77,55 @@ export interface BackendExportedFinding {
   evidenceIds: readonly string[];
 }
 
+export interface BackendHypothesis {
+  id: string;
+  investigationRunId: string;
+  title: string;
+  reasoning: string;
+  epistemicStatus: 'OBSERVED' | 'INFERRED' | 'HYPOTHESIS' | 'UNVERIFIED';
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+  citedEvidenceIds: readonly string[];
+  missingInformation: readonly string[];
+  suggestedCheck: string;
+  remediation: RemediationProposal | null;
+  feedback: 'USEFUL' | 'INCORRECT' | 'UNVERIFIED';
+  createdAt: string | Date;
+}
+
+export interface BackendInvestigationRun {
+  id: string;
+  mode: 'RULES' | 'AI_ASSISTED';
+  state: 'NOT_STARTED' | 'QUEUED' | 'RUNNING' | 'NEEDS_REVIEW' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+  triggeredBy: string;
+  triggerReason: string | null;
+  modelId: string | null;
+  promptVersion: string | null;
+  toolCallCount: number;
+  errorCode: string | null;
+  errorMessage: string | null;
+  summary: {
+    knownSummary: string;
+    suspectSummary: string;
+    nextSafeCheckSummary: string;
+  } | null;
+  startedAt: string | Date;
+  endedAt: string | Date | null;
+}
+
+export interface BackendToolCall {
+  id: string;
+  investigationRunId: string;
+  stepIndex: number;
+  toolName: string;
+  safeArgumentsJson: Record<string, unknown>;
+  resultEvidenceIds: readonly string[];
+  resultSummary: string;
+  status: 'SUCCEEDED' | 'FAILED' | 'REJECTED';
+  errorCode: string | null;
+  startedAt: string | Date;
+  endedAt: string | Date;
+}
+
 export interface BackendExportIncidentResult {
   kind: 'ok' | 'missing' | 'unauthorized';
   incidentId: string;
@@ -80,6 +135,9 @@ export interface BackendExportIncidentResult {
   attempts: readonly BackendDeliveryAttempt[];
   evidence: readonly BackendEvidence[];
   findings: readonly BackendExportedFinding[];
+  hypotheses?: readonly BackendHypothesis[];
+  agentRuns?: readonly BackendInvestigationRun[];
+  toolCalls?: readonly BackendToolCall[];
 }
 
 function normalizeFailureClass(cls: string): FailureClass {
@@ -92,6 +150,12 @@ function normalizeFailureClass(cls: string): FailureClass {
   if (upper === 'DUPLICATE_DELIVERY') return 'DUPLICATE_DELIVERY';
   if (upper === 'OUT_OF_ORDER') return 'OUT_OF_ORDER';
   if (upper === 'AUTH_FAILURE') return 'AUTH_FAILURE';
+  if (upper === 'INGRESS_ABORTED') return 'INGRESS_ABORTED';
+  if (upper === 'DECRYPT_FAILURE') return 'DECRYPT_FAILURE';
+  if (upper === 'DOWNSTREAM_NETWORK_ERROR') return 'DOWNSTREAM_NETWORK_ERROR';
+  if (upper === 'UNHANDLED_EXCEPTION') return 'UNHANDLED_EXCEPTION';
+  if (upper === 'ASYNC_ESCAPE_FAILURE') return 'ASYNC_ESCAPE_FAILURE';
+  if (upper === 'UNKNOWN') return 'UNKNOWN';
   return 'HTTP_5XX';
 }
 
@@ -272,13 +336,16 @@ export function toFrontendIncidentDetail(exportData: BackendExportIncidentResult
       title: `${ev.sourceKind}: ${ev.summary.split('.')[0] || 'Evidence Record'}`,
       description: ev.summary,
       source: ev.sourceKind,
-      epistemic: ev.trustTier === 'TAMPER_EVIDENT' ? 'OBSERVED' : 'RULE',
+      epistemic: ev.trustTier === 'A' ? 'OBSERVED' : 'RULE',
       data: {
         id: ev.id,
         sourceKind: ev.sourceKind,
         sourceRecordId: ev.sourceRecordId,
         sha256Digest: ev.sha256Digest,
         trustTier: ev.trustTier,
+        ...(ev.structuredDataJson !== undefined && ev.structuredDataJson !== null
+          ? { structuredData: ev.structuredDataJson }
+          : {}),
       },
     };
     evidenceMap.set(ev.id, item);
@@ -369,12 +436,68 @@ export function toFrontendIncidentDetail(exportData: BackendExportIncidentResult
     matchedEvents: 1,
   }));
 
+  const agentRuns: AgentRunSummary[] = (exportData.agentRuns ?? []).map((r) => ({
+    id: r.id,
+    mode: r.mode,
+    state: r.state,
+    triggeredBy: r.triggeredBy,
+    triggerReason: r.triggerReason,
+    modelId: r.modelId,
+    promptVersion: r.promptVersion,
+    toolCallCount: r.toolCallCount,
+    errorCode: r.errorCode,
+    errorMessage: r.errorMessage,
+    startedAt: new Date(r.startedAt).toISOString(),
+    endedAt: r.endedAt ? new Date(r.endedAt).toISOString() : null,
+  }));
+
+  const toolCalls: ToolCallSummary[] = (exportData.toolCalls ?? []).map((tc) => ({
+    id: tc.id,
+    investigationRunId: tc.investigationRunId,
+    stepIndex: tc.stepIndex,
+    toolName: tc.toolName,
+    safeArgumentsJson: tc.safeArgumentsJson,
+    resultEvidenceIds: [...tc.resultEvidenceIds],
+    resultSummary: tc.resultSummary,
+    status: tc.status,
+    errorCode: tc.errorCode,
+    startedAt: new Date(tc.startedAt).toISOString(),
+    endedAt: new Date(tc.endedAt).toISOString(),
+  }));
+
+  const persistedHypotheses: HypothesisItem[] = (exportData.hypotheses ?? []).map((h) => ({
+    id: h.id,
+    title: h.title,
+    reasoning: h.reasoning,
+    epistemicStatus: h.epistemicStatus,
+    confidence: h.confidence,
+    citedEvidenceIds: [...h.citedEvidenceIds],
+    missingInformation: [...h.missingInformation],
+    suggestedCheck: h.suggestedCheck,
+    remediation: h.remediation,
+    isPersisted: true,
+    feedback:
+      h.feedback === 'USEFUL'
+        ? 'helpful'
+        : h.feedback === 'INCORRECT'
+        ? 'false_positive'
+        : 'unverified',
+  }));
+
+  const latestAiSummary = exportData.agentRuns?.find((r) => r.summary !== null)?.summary ?? null;
+
   return {
     ...base,
+    known: latestAiSummary?.knownSummary ?? base.known,
+    suspect: latestAiSummary?.suspectSummary ?? base.suspect,
+    next: latestAiSummary?.nextSafeCheckSummary ?? base.next,
     timeline: timelineList.length > 0 ? timelineList : base.timeline,
     evidence: evidenceList.length > 0 ? evidenceList : base.evidence,
     attempts: attemptsList.length > 0 ? attemptsList : base.attempts,
     ruleFindings: ruleFindingsList.length > 0 ? ruleFindingsList : base.ruleFindings,
+    hypotheses: persistedHypotheses.length > 0 ? persistedHypotheses : base.hypotheses,
+    agentRuns,
+    toolCalls,
     rawPayload: {
       incidentId: exportData.incidentId,
       fingerprint: exportData.incident.fingerprint,

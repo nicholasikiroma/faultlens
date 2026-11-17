@@ -7,7 +7,8 @@
     "#sql": "./src/prisma/sql.ts",
     "#domain": "./packages/domain/src/index.ts",
     "#rules": "./packages/rules/src/index.ts",
-    "#sdk": "./packages/sdk/src/index.ts"
+    "#sdk": "./packages/sdk/src/index.ts",
+    "#agent": "./packages/agent/src/index.ts"
   },
   "devDependencies": {
     "@prisma/cli-engine": "^0.9.0",
@@ -40,6 +41,7 @@
     "ingest-key": "tsx apps/api/src/ingest/keys-cli.ts",
     "test:keys": "node --import tsx --test apps/api/src/ingest/keys.test.ts",
     "test:http": "node --import tsx --test apps/api/src/http/routes.test.ts apps/api/src/http/transport.test.ts",
-    "test": "node --import tsx --test --test-concurrency=1 packages/sdk/src/sdk.test.ts packages/rules/src/rules.test.ts apps/api/src/ingest/verify.test.ts apps/api/src/ingest/redact.test.ts apps/api/src/ingest/ingest.test.ts apps/api/src/ingest/keys.test.ts apps/api/src/incidents/lifecycle.test.ts apps/api/src/feedback/feedback.test.ts apps/api/src/read/read.test.ts apps/worker/src/classify-job.test.ts apps/api/src/http/routes.test.ts apps/api/src/http/transport.test.ts apps/api/src/http/server.test.ts apps/api/src/seed/seed.test.ts"
+    "test:agent": "node --import tsx --test packages/agent/src/agent.test.ts packages/agent/src/eval.test.ts",
+    "test": "node --import tsx --test --test-concurrency=1 packages/sdk/src/sdk.test.ts packages/rules/src/rules.test.ts packages/agent/src/agent.test.ts packages/agent/src/eval.test.ts apps/api/src/ingest/verify.test.ts apps/api/src/ingest/redact.test.ts apps/api/src/ingest/ingest.test.ts apps/api/src/ingest/episode-ingest.test.ts apps/api/src/ingest/keys.test.ts apps/api/src/incidents/lifecycle.test.ts apps/api/src/feedback/feedback.test.ts apps/api/src/read/read.test.ts apps/worker/src/classify-job.test.ts apps/worker/src/investigation-job.test.ts apps/api/src/http/routes.test.ts apps/api/src/http/transport.test.ts apps/api/src/http/server.test.ts apps/api/src/seed/seed.test.ts"
   }
 }

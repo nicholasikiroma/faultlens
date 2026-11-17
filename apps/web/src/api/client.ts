@@ -1,4 +1,9 @@
-import type { Incident, IntegrationItem, PlaygroundScenario } from '../types';
+import type {
+  AgentSettingsSummary,
+  Incident,
+  IntegrationItem,
+  PlaygroundScenario,
+} from '../types';
 import {
   toFrontendIncidentSummary,
   toFrontendIncidentDetail,
@@ -679,21 +684,28 @@ export class ApiStore {
   async updateHypothesisFeedback(
     incidentId: string,
     hypothesisId: string,
-    feedback: 'helpful' | 'false_positive'
+    feedback: 'helpful' | 'false_positive' | 'unverified'
   ): Promise<void> {
     const incident = this.incidents.find((i) => i.id === incidentId);
-    if (incident) {
-      const hyp = incident.hypotheses.find((h) => h.id === hypothesisId);
-      if (hyp) {
-        hyp.feedback = feedback;
-        this.save();
-      }
+    const targetHyp = incident?.hypotheses.find((h) => h.id === hypothesisId);
+    if (targetHyp) {
+      targetHyp.feedback = feedback;
+      this.save();
     }
 
-    // Attempt backend sync
+    // Attempt backend sync only for persisted hypotheses
+    if (!targetHyp?.isPersisted) {
+      return;
+    }
+
     try {
-      const rating = feedback === 'helpful' ? 'USEFUL' : 'INCORRECT';
-      await fetch(`${this.baseUrl}/v1/findings/${hypothesisId}/feedback`, {
+      const rating =
+        feedback === 'helpful'
+          ? 'USEFUL'
+          : feedback === 'false_positive'
+          ? 'INCORRECT'
+          : 'UNVERIFIED';
+      await fetch(`${this.baseUrl}/v1/hypotheses/${hypothesisId}/feedback`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -703,6 +715,58 @@ export class ApiStore {
       });
     } catch {
       // Offline fallback
+    }
+  }
+
+  async triggerInvestigation(incidentId: string): Promise<{
+    outcome: 'queued' | 'already-running' | 'ai-disabled' | 'missing' | 'queue-unavailable' | 'offline';
+    runId?: string;
+  }> {
+    try {
+      const res = await fetch(`${this.baseUrl}/v1/incidents/${incidentId}/investigate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.adminToken}`,
+        },
+        body: JSON.stringify({ reason: 'manual_workbench_trigger' }),
+      });
+      const body = (await res.json()) as { outcome?: string; runId?: string };
+      if (
+        body.outcome === 'queued' ||
+        body.outcome === 'already-running' ||
+        body.outcome === 'ai-disabled' ||
+        body.outcome === 'missing' ||
+        body.outcome === 'queue-unavailable'
+      ) {
+        return { outcome: body.outcome, runId: body.runId };
+      }
+      return { outcome: 'offline' };
+    } catch {
+      return { outcome: 'offline' };
+    }
+  }
+
+  async fetchAgentSettings(): Promise<AgentSettingsSummary | null> {
+    try {
+      const res = await fetch(`${this.baseUrl}/v1/settings/agent`, {
+        headers: {
+          Authorization: `Bearer ${this.adminToken}`,
+        },
+      });
+      if (!res.ok) return null;
+      const body = (await res.json()) as AgentSettingsSummary & { kind?: string };
+      if (body.kind !== 'ok') return null;
+      return {
+        enabled: body.enabled,
+        autoInvestigate: body.autoInvestigate,
+        provider: body.provider,
+        model: body.model,
+        baseUrlConfigured: body.baseUrlConfigured,
+        budgets: body.budgets,
+      };
+    } catch {
+      return null;
     }
   }
 

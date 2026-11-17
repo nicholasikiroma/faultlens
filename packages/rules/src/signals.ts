@@ -1,5 +1,11 @@
 import type { DeliveryAttempt, Evidence, IncidentContext } from '#domain';
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
 export function authFailures(ctx: Readonly<IncidentContext>): readonly DeliveryAttempt[] {
   return ctx.attempts.filter((attempt) => attempt.httpStatus === 401);
 }
@@ -45,6 +51,47 @@ export function duplicateDeliveries(ctx: Readonly<IncidentContext>): readonly De
   return sameDigest.length >= 2 ? sameDigest : [];
 }
 
+export function ingressAbortedEvidence(ctx: Readonly<IncidentContext>): readonly Evidence[] {
+  return ctx.evidence.filter((item) => {
+    if (item.sourceKind !== 'SOCKET_TIMING') return false;
+    const data = asRecord(item.structuredDataJson);
+    return data?.['closeFired'] === true && data?.['writableEndedAtClose'] === false;
+  });
+}
+
+export function decryptFailureEvidence(ctx: Readonly<IncidentContext>): readonly Evidence[] {
+  return ctx.evidence.filter((item) => {
+    if (item.sourceKind !== 'FLIGHT_RECORDER_EPISODE') return false;
+    const data = asRecord(item.structuredDataJson);
+    const enc = asRecord(data?.['encryption']);
+    return enc !== null && enc['scheme'] !== 'NONE' && enc['decryptedOk'] === false;
+  });
+}
+
+export function downstreamNetworkErrorEvidence(ctx: Readonly<IncidentContext>): readonly Evidence[] {
+  return ctx.evidence.filter((item) => {
+    if (item.sourceKind !== 'DOWNSTREAM_SPAN') return false;
+    const data = asRecord(item.structuredDataJson);
+    return typeof data?.['subHttpFailureType'] === 'string' || typeof data?.['errorCode'] === 'string';
+  });
+}
+
+export function asyncEscapeEvidence(ctx: Readonly<IncidentContext>): readonly Evidence[] {
+  return ctx.evidence.filter((item) => {
+    if (item.sourceKind !== 'HOST_EXCEPTION') return false;
+    const data = asRecord(item.structuredDataJson);
+    return data?.['escapedAfterResponse'] === true;
+  });
+}
+
+export function unhandledExceptionEvidence(ctx: Readonly<IncidentContext>): readonly Evidence[] {
+  return ctx.evidence.filter((item) => {
+    if (item.sourceKind !== 'HOST_EXCEPTION') return false;
+    const data = asRecord(item.structuredDataJson);
+    return data?.['escapedAfterResponse'] !== true;
+  });
+}
+
 export function anySpecific(ctx: Readonly<IncidentContext>): boolean {
   return (
     authFailures(ctx).length > 0 ||
@@ -53,7 +100,12 @@ export function anySpecific(ctx: Readonly<IncidentContext>): boolean {
     upstreamFailures(ctx).length > 0 ||
     schemaMismatches(ctx).length > 0 ||
     invalidSignatures(ctx).length > 0 ||
-    duplicateDeliveries(ctx).length > 0
+    duplicateDeliveries(ctx).length > 0 ||
+    ingressAbortedEvidence(ctx).length > 0 ||
+    decryptFailureEvidence(ctx).length > 0 ||
+    downstreamNetworkErrorEvidence(ctx).length > 0 ||
+    unhandledExceptionEvidence(ctx).length > 0 ||
+    asyncEscapeEvidence(ctx).length > 0
   );
 }
 
@@ -71,5 +123,11 @@ export function evidenceIds(
 }
 
 function citesAttempt(item: Evidence, sources: ReadonlySet<string>): boolean {
-  return item.sourceKind === 'DELIVERY_ATTEMPT' && sources.has(item.sourceRecordId);
+  return (
+    (item.sourceKind === 'DELIVERY_ATTEMPT' ||
+      item.sourceKind === 'SOCKET_TIMING' ||
+      item.sourceKind === 'DOWNSTREAM_SPAN' ||
+      item.sourceKind === 'HOST_EXCEPTION') &&
+    sources.has(item.sourceRecordId)
+  );
 }

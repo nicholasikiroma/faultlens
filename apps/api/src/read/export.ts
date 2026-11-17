@@ -3,8 +3,16 @@ import type {
   DeliveryAttempt,
   Evidence,
   FailureClass,
+  HypothesisRecord,
+  InvestigationRunRecord,
+  ToolCallRecord,
   WebhookEvent,
 } from "#domain";
+import {
+  toHypothesisRecord,
+  toInvestigationRunRecord,
+  toToolCallRecord,
+} from "../investigations/investigate.ts";
 import { verifyAdminToken } from "./auth.ts";
 import {
   compareEventOrder,
@@ -42,6 +50,9 @@ export type ExportIncidentResult =
       attempts: readonly DeliveryAttempt[];
       evidence: readonly Evidence[];
       findings: readonly ExportedFinding[];
+      hypotheses: readonly HypothesisRecord[];
+      agentRuns: readonly InvestigationRunRecord[];
+      toolCalls: readonly ToolCallRecord[];
     };
 
 export async function exportIncident(
@@ -117,6 +128,8 @@ export async function exportIncident(
         summary: row.summary,
         sha256Digest: row.sha256Digest,
         trustTier: row.trustTier,
+        recordedAt: row.recordedAt,
+        structuredDataJson: row.structuredDataJson,
       },
     ]),
   );
@@ -148,6 +161,46 @@ export async function exportIncident(
     };
   });
 
+  const hypothesisRows = (
+    await db.orm.public.Hypothesis.where({
+      workspaceId: input.workspaceId,
+      incidentId: incidentRow.id,
+    }).all()
+  ).sort(
+    (left, right) =>
+      right.createdAt.getTime() - left.createdAt.getTime() ||
+      left.id.localeCompare(right.id),
+  );
+  const hypotheses = hypothesisRows.map(toHypothesisRecord);
+  for (const hyp of hypotheses) {
+    for (const evId of hyp.citedEvidenceIds) {
+      if (evidenceById.has(evId)) citedEvidenceIds.add(evId);
+    }
+  }
+
+  const runRows = (
+    await db.orm.public.InvestigationRun.where({
+      workspaceId: input.workspaceId,
+      incidentId: incidentRow.id,
+    }).all()
+  )
+    .filter((row) => row.mode === "AI_ASSISTED")
+    .sort(
+      (left, right) =>
+        right.startedAt.getTime() - left.startedAt.getTime() ||
+        left.id.localeCompare(right.id),
+    );
+  const agentRuns = runRows.map(toInvestigationRunRecord);
+  const agentRunIds = new Set(agentRuns.map((r) => r.id));
+  const toolCalls = (
+    await db.orm.public.ToolCall.where({
+      workspaceId: input.workspaceId,
+    }).all()
+  )
+    .filter((tc) => agentRunIds.has(tc.investigationRunId))
+    .sort((a, b) => a.stepIndex - b.stepIndex || a.startedAt.getTime() - b.startedAt.getTime())
+    .map(toToolCallRecord);
+
   const evidence = [...citedEvidenceIds]
     .sort((left, right) => left.localeCompare(right))
     .map((id) => evidenceById.get(id)!)
@@ -162,5 +215,8 @@ export async function exportIncident(
     attempts,
     evidence,
     findings,
+    hypotheses,
+    agentRuns,
+    toolCalls,
   };
 }

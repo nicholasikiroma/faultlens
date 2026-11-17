@@ -38,6 +38,19 @@ There is no query contract. Ingest ignores the query string.
 
 `stored` and `duplicate` use 200 so the HTTP status matches `DeliveryAttempt.httpStatus` for those outcomes. The body is the `IngestResult`.
 
+### POST /v1/ingest/episodes
+
+Real traffic. Accepts a redacted `FlightRecorder` `Episode` JSON body authenticated with a scoped, hashed `IngestKey` (`Authorization: Bearer`). Persists a normalized event, delivery attempt, runtime evidence (`FLIGHT_RECORDER_EPISODE`, `SOCKET_TIMING`, `DOWNSTREAM_SPAN`, `HOST_EXCEPTION`), and outbox row.
+
+| Outcome | Status |
+| --- | --- |
+| `stored` | 200 |
+| `duplicate` | 200 |
+| `conflict` | 409 |
+| `schema-error` | 400 |
+| `unknown-token` | 401 |
+| `oversized` | 413 |
+
 ### POST /hooks/:token
 
 Simulated and test traffic only. The credential is the `:token` path segment, resolved against the integration's legacy `endpointToken`; it is not an API key. The body, the signature header, and the status table are the same. The server calls `ingestSimulated` only when `FAULTLENS_SIMULATED_WEBHOOKS` is `1`. When that variable is unset or any other value, the path is not mounted and the response is 404.
@@ -129,7 +142,48 @@ Admin. Calls `listFindingFeedback`. No query keys.
 
 ### GET /v1/audit-events
 
-Admin. Calls `listAuditEvents`. Query keys are `objectType` and `objectId`. `objectType` is `INCIDENT` or `FINDING`. `objectId` is the incident id or the finding id.
+Admin. Calls `listAuditEvents`. Query keys are `objectType` and `objectId`. `objectType` is `INCIDENT`, `FINDING`, `HYPOTHESIS`, or `INVESTIGATION_RUN`. `objectId` is the target object id.
+
+| Kind | Status |
+| --- | --- |
+| `ok` | 200 |
+| `unauthorized` | 401 |
+
+### POST /v1/incidents/:incidentId/investigate
+
+Admin write. Calls `triggerInvestigation`. Enqueues an optional `AI_ASSISTED` investigation run for the incident when `FAULTLENS_AI_ENABLED=1`. Optional JSON body `{ "reason": "<text>" }`.
+
+| Outcome | Status |
+| --- | --- |
+| `queued` | 202 |
+| `already-running` | 409 |
+| `missing` | 404 |
+| `ai-disabled` | 503 |
+| `queue-unavailable` | 503 |
+
+### GET /v1/incidents/:incidentId/investigations
+
+Admin. Calls `listIncidentInvestigations`. No query keys. Returns `runs`, `toolCalls`, `hypotheses`, and `latestSummary` for the incident.
+
+| Kind | Status |
+| --- | --- |
+| `ok` | 200 |
+| `missing` | 404 |
+| `unauthorized` | 401 |
+
+### PUT /v1/hypotheses/:hypothesisId/feedback
+
+Admin write. Calls `rateHypothesis`. The JSON body has `{ "rating": "USEFUL" | "INCORRECT" | "UNVERIFIED" }`.
+
+| Outcome | Status |
+| --- | --- |
+| `rated` | 200 |
+| `unchanged` | 200 |
+| `missing` | 404 |
+
+### GET /v1/settings/agent
+
+Admin. Calls `getAgentSettings`. Returns non-secret AI configuration (`enabled`, `autoInvestigate`, `provider`, `model`, `baseUrlConfigured`, `budgets`). Never exposes API keys.
 
 | Kind | Status |
 | --- | --- |

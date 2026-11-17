@@ -28,6 +28,10 @@
       "model": "Finding",
       "namespace": "public"
     },
+    "hypotheses": {
+      "model": "Hypothesis",
+      "namespace": "public"
+    },
     "incident_events": {
       "model": "IncidentEvent",
       "namespace": "public"
@@ -50,6 +54,10 @@
     },
     "outbox": {
       "model": "Outbox",
+      "namespace": "public"
+    },
+    "tool_calls": {
+      "model": "ToolCall",
       "namespace": "public"
     },
     "webhook_events": {
@@ -368,6 +376,16 @@
                   "kind": "scalar"
                 }
               },
+              "recordedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamp-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
               "sha256Digest": {
                 "nullable": false,
                 "type": {
@@ -389,6 +407,13 @@
                 "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "structuredDataJson": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/jsonb@1",
                   "kind": "scalar"
                 }
               },
@@ -439,6 +464,9 @@
                 "id": {
                   "column": "id"
                 },
+                "recordedAt": {
+                  "column": "recorded_at"
+                },
                 "sha256Digest": {
                   "column": "sha256_digest"
                 },
@@ -447,6 +475,9 @@
                 },
                 "sourceRecordId": {
                   "column": "source_record_id"
+                },
+                "structuredDataJson": {
+                  "column": "structured_data_json"
                 },
                 "summary": {
                   "column": "summary"
@@ -797,6 +828,208 @@
               "table": "finding_evidence"
             }
           },
+          "Hypothesis": {
+            "fields": {
+              "citedEvidenceIds": {
+                "many": {
+                  "elementNullable": true
+                },
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "confidence": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/enum@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "typeName": "HypothesisConfidence"
+                  }
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamp-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "epistemicStatus": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/enum@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "typeName": "EpistemicStatus"
+                  }
+                }
+              },
+              "feedback": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/enum@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "typeName": "HypothesisFeedbackRating"
+                  }
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "incidentId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "investigationRunId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "missingInformation": {
+                "many": {
+                  "elementNullable": true
+                },
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "reasoning": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "remediationJson": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/jsonb@1",
+                  "kind": "scalar"
+                }
+              },
+              "suggestedCheck": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "title": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "workspaceId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "incident": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "incidentId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Incident",
+                  "namespace": "public"
+                }
+              },
+              "investigationRun": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "investigationRunId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "InvestigationRun",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "citedEvidenceIds": {
+                  "column": "cited_evidence_ids"
+                },
+                "confidence": {
+                  "column": "confidence"
+                },
+                "createdAt": {
+                  "column": "created_at"
+                },
+                "epistemicStatus": {
+                  "column": "epistemic_status"
+                },
+                "feedback": {
+                  "column": "feedback"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "incidentId": {
+                  "column": "incident_id"
+                },
+                "investigationRunId": {
+                  "column": "investigation_run_id"
+                },
+                "missingInformation": {
+                  "column": "missing_information"
+                },
+                "reasoning": {
+                  "column": "reasoning"
+                },
+                "remediationJson": {
+                  "column": "remediation_json"
+                },
+                "suggestedCheck": {
+                  "column": "suggested_check"
+                },
+                "title": {
+                  "column": "title"
+                },
+                "workspaceId": {
+                  "column": "workspace_id"
+                }
+              },
+              "namespaceId": "public",
+              "table": "hypotheses"
+            }
+          },
           "Incident": {
             "fields": {
               "endpoint": {
@@ -924,6 +1157,21 @@
                 },
                 "to": {
                   "model": "Finding",
+                  "namespace": "public"
+                }
+              },
+              "hypotheses": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "incidentId"
+                  ]
+                },
+                "to": {
+                  "model": "Hypothesis",
                   "namespace": "public"
                 }
               },
@@ -1287,7 +1535,7 @@
           "InvestigationRun": {
             "fields": {
               "endedAt": {
-                "nullable": false,
+                "nullable": true,
                 "type": {
                   "codecId": "pg/timestamp-date@1",
                   "kind": "scalar",
@@ -1296,8 +1544,22 @@
                   }
                 }
               },
+              "errorCode": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "errorMessage": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "eventId": {
-                "nullable": false,
+                "nullable": true,
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
@@ -1327,6 +1589,20 @@
                   }
                 }
               },
+              "modelId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "promptVersion": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "rulesetVersion": {
                 "nullable": false,
                 "type": {
@@ -1353,12 +1629,54 @@
                     "typeName": "RunState"
                   }
                 }
+              },
+              "summaryJson": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/jsonb@1",
+                  "kind": "scalar"
+                }
+              },
+              "tokenUsage": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/jsonb@1",
+                  "kind": "scalar"
+                }
+              },
+              "toolCallCount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "triggerReason": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "triggeredBy": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "workspaceId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
               }
             },
             "relations": {
               "event": {
                 "cardinality": "N:1",
-                "nullable": false,
+                "nullable": true,
                 "on": {
                   "localFields": [
                     "eventId"
@@ -1369,6 +1687,21 @@
                 },
                 "to": {
                   "model": "WebhookEvent",
+                  "namespace": "public"
+                }
+              },
+              "hypotheses": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "investigationRunId"
+                  ]
+                },
+                "to": {
+                  "model": "Hypothesis",
                   "namespace": "public"
                 }
               },
@@ -1387,12 +1720,33 @@
                   "model": "Incident",
                   "namespace": "public"
                 }
+              },
+              "toolCalls": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "investigationRunId"
+                  ]
+                },
+                "to": {
+                  "model": "ToolCall",
+                  "namespace": "public"
+                }
               }
             },
             "storage": {
               "fields": {
                 "endedAt": {
                   "column": "ended_at"
+                },
+                "errorCode": {
+                  "column": "error_code"
+                },
+                "errorMessage": {
+                  "column": "error_message"
                 },
                 "eventId": {
                   "column": "event_id"
@@ -1406,6 +1760,12 @@
                 "mode": {
                   "column": "mode"
                 },
+                "modelId": {
+                  "column": "model_id"
+                },
+                "promptVersion": {
+                  "column": "prompt_version"
+                },
                 "rulesetVersion": {
                   "column": "ruleset_version"
                 },
@@ -1414,6 +1774,24 @@
                 },
                 "state": {
                   "column": "state"
+                },
+                "summaryJson": {
+                  "column": "summary_json"
+                },
+                "tokenUsage": {
+                  "column": "token_usage"
+                },
+                "toolCallCount": {
+                  "column": "tool_call_count"
+                },
+                "triggerReason": {
+                  "column": "trigger_reason"
+                },
+                "triggeredBy": {
+                  "column": "triggered_by"
+                },
+                "workspaceId": {
+                  "column": "workspace_id"
                 }
               },
               "namespaceId": "public",
@@ -1505,6 +1883,166 @@
               },
               "namespaceId": "public",
               "table": "outbox"
+            }
+          },
+          "ToolCall": {
+            "fields": {
+              "endedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamp-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "errorCode": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "investigationRunId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "resultEvidenceIds": {
+                "many": {
+                  "elementNullable": true
+                },
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "resultSummary": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "safeArgumentsJson": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/jsonb@1",
+                  "kind": "scalar"
+                }
+              },
+              "startedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamp-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "status": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/enum@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "typeName": "ToolCallStatus"
+                  }
+                }
+              },
+              "stepIndex": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "toolName": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "workspaceId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "investigationRun": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "investigationRunId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "InvestigationRun",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "endedAt": {
+                  "column": "ended_at"
+                },
+                "errorCode": {
+                  "column": "error_code"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "investigationRunId": {
+                  "column": "investigation_run_id"
+                },
+                "resultEvidenceIds": {
+                  "column": "result_evidence_ids"
+                },
+                "resultSummary": {
+                  "column": "result_summary"
+                },
+                "safeArgumentsJson": {
+                  "column": "safe_arguments_json"
+                },
+                "startedAt": {
+                  "column": "started_at"
+                },
+                "status": {
+                  "column": "status"
+                },
+                "stepIndex": {
+                  "column": "step_index"
+                },
+                "toolName": {
+                  "column": "tool_name"
+                },
+                "workspaceId": {
+                  "column": "workspace_id"
+                }
+              },
+              "namespaceId": "public",
+              "table": "tool_calls"
             }
           },
           "WebhookEvent": {
@@ -1742,7 +2280,9 @@
               "kind": "postgres-enum",
               "members": [
                 "INCIDENT_STATUS_CHANGED",
-                "FINDING_RATED"
+                "FINDING_RATED",
+                "HYPOTHESIS_RATED",
+                "AI_INVESTIGATION_REQUESTED"
               ],
               "typeName": "AuditAction"
             },
@@ -1750,9 +2290,21 @@
               "kind": "postgres-enum",
               "members": [
                 "INCIDENT",
-                "FINDING"
+                "FINDING",
+                "HYPOTHESIS",
+                "INVESTIGATION_RUN"
               ],
               "typeName": "AuditObjectType"
+            },
+            "EpistemicStatus": {
+              "kind": "postgres-enum",
+              "members": [
+                "OBSERVED",
+                "INFERRED",
+                "HYPOTHESIS",
+                "UNVERIFIED"
+              ],
+              "typeName": "EpistemicStatus"
             },
             "FailureClass": {
               "kind": "postgres-enum",
@@ -1765,6 +2317,11 @@
                 "INVALID_SIGNATURE",
                 "DUPLICATE_DELIVERY",
                 "OUT_OF_ORDER",
+                "INGRESS_ABORTED",
+                "DECRYPT_FAILURE",
+                "DOWNSTREAM_NETWORK_ERROR",
+                "UNHANDLED_EXCEPTION",
+                "ASYNC_ESCAPE_FAILURE",
                 "UNKNOWN"
               ],
               "typeName": "FailureClass"
@@ -1785,6 +2342,24 @@
                 "FAILED"
               ],
               "typeName": "HandlerState"
+            },
+            "HypothesisConfidence": {
+              "kind": "postgres-enum",
+              "members": [
+                "HIGH",
+                "MEDIUM",
+                "LOW"
+              ],
+              "typeName": "HypothesisConfidence"
+            },
+            "HypothesisFeedbackRating": {
+              "kind": "postgres-enum",
+              "members": [
+                "USEFUL",
+                "INCORRECT",
+                "UNVERIFIED"
+              ],
+              "typeName": "HypothesisFeedbackRating"
             },
             "IncidentStatus": {
               "kind": "postgres-enum",
@@ -1832,9 +2407,22 @@
               "members": [
                 "DELIVERY_ATTEMPT",
                 "WEBHOOK_EVENT",
-                "FIXTURE"
+                "FIXTURE",
+                "FLIGHT_RECORDER_EPISODE",
+                "DOWNSTREAM_SPAN",
+                "HOST_EXCEPTION",
+                "SOCKET_TIMING"
               ],
               "typeName": "SourceKind"
+            },
+            "ToolCallStatus": {
+              "kind": "postgres-enum",
+              "members": [
+                "SUCCEEDED",
+                "FAILED",
+                "REJECTED"
+              ],
+              "typeName": "ToolCallStatus"
             },
             "TrustTier": {
               "kind": "postgres-enum",
@@ -2082,6 +2670,14 @@
                   "dataType": "pg/text",
                   "nullable": false
                 },
+                "recorded_at": {
+                  "codecId": "pg/timestamp-date@1",
+                  "dataType": "pg/timestamp",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
                 "sha256_digest": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
@@ -2105,6 +2701,11 @@
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
                   "nullable": false
+                },
+                "structured_data_json": {
+                  "codecId": "pg/jsonb@1",
+                  "dataType": "pg/jsonb",
+                  "nullable": true
                 },
                 "summary": {
                   "codecId": "pg/text@1",
@@ -2405,6 +3006,175 @@
                   ],
                   "name": "findings_event_id_rule_id_rule_version_key",
                   "unique": true
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
+            "hypotheses": {
+              "columns": {
+                "cited_evidence_ids": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "many": {
+                    "elementNullable": true
+                  },
+                  "nullable": true
+                },
+                "confidence": {
+                  "codecId": "pg/enum@1",
+                  "dataType": "pg/enum",
+                  "nullable": false,
+                  "typeParams": {
+                    "typeName": "HypothesisConfidence"
+                  },
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "HypothesisConfidence",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "created_at": {
+                  "codecId": "pg/timestamp-date@1",
+                  "dataType": "pg/timestamp",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "epistemic_status": {
+                  "codecId": "pg/enum@1",
+                  "dataType": "pg/enum",
+                  "nullable": false,
+                  "typeParams": {
+                    "typeName": "EpistemicStatus"
+                  },
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "EpistemicStatus",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "feedback": {
+                  "codecId": "pg/enum@1",
+                  "dataType": "pg/enum",
+                  "default": {
+                    "kind": "literal",
+                    "value": "UNVERIFIED"
+                  },
+                  "nullable": false,
+                  "typeParams": {
+                    "typeName": "HypothesisFeedbackRating"
+                  },
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "HypothesisFeedbackRating",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "incident_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "investigation_run_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "missing_information": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "many": {
+                    "elementNullable": true
+                  },
+                  "nullable": true
+                },
+                "reasoning": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "remediation_json": {
+                  "codecId": "pg/jsonb@1",
+                  "dataType": "pg/jsonb",
+                  "nullable": true
+                },
+                "suggested_check": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "title": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "workspace_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "cascade",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "incident_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "hypotheses"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "incidents"
+                  }
+                },
+                {
+                  "onDelete": "cascade",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "investigation_run_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "hypotheses"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "investigation_runs"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "workspace_id",
+                    "incident_id",
+                    "created_at"
+                  ],
+                  "name": "hypotheses_workspace_id_incident_id_created_at_idx",
+                  "unique": false
                 }
               ],
               "primaryKey": {
@@ -2739,15 +3509,25 @@
                 "ended_at": {
                   "codecId": "pg/timestamp-date@1",
                   "dataType": "pg/timestamp",
-                  "nullable": false,
+                  "nullable": true,
                   "typeParams": {
                     "precision": 3
                   }
                 },
+                "error_code": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
+                "error_message": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
                 "event_id": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
-                  "nullable": false
+                  "nullable": true
                 },
                 "id": {
                   "codecId": "pg/text@1",
@@ -2772,6 +3552,16 @@
                     "namespaceId": "public",
                     "plane": "storage"
                   }
+                },
+                "model_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
+                "prompt_version": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
                 },
                 "ruleset_version": {
                   "codecId": "pg/text@1",
@@ -2799,6 +3589,48 @@
                     "namespaceId": "public",
                     "plane": "storage"
                   }
+                },
+                "summary_json": {
+                  "codecId": "pg/jsonb@1",
+                  "dataType": "pg/jsonb",
+                  "nullable": true
+                },
+                "token_usage": {
+                  "codecId": "pg/jsonb@1",
+                  "dataType": "pg/jsonb",
+                  "nullable": true
+                },
+                "tool_call_count": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "default": {
+                    "kind": "literal",
+                    "value": 0
+                  },
+                  "nullable": false
+                },
+                "trigger_reason": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
+                "triggered_by": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "default": {
+                    "kind": "literal",
+                    "value": "system"
+                  },
+                  "nullable": false
+                },
+                "workspace_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "default": {
+                    "kind": "literal",
+                    "value": "workspace-1"
+                  },
+                  "nullable": false
                 }
               },
               "foreignKeys": [
@@ -2852,6 +3684,15 @@
                   ],
                   "name": "investigation_runs_event_id_incident_id_mode_ruleset_versio_key",
                   "unique": true
+                },
+                {
+                  "columns": [
+                    "workspace_id",
+                    "incident_id",
+                    "started_at"
+                  ],
+                  "name": "investigation_runs_workspace_id_incident_id_started_at_idx",
+                  "unique": false
                 }
               ],
               "primaryKey": {
@@ -2926,6 +3767,125 @@
                 }
               ],
               "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
+            "tool_calls": {
+              "columns": {
+                "ended_at": {
+                  "codecId": "pg/timestamp-date@1",
+                  "dataType": "pg/timestamp",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "error_code": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "investigation_run_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "result_evidence_ids": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "many": {
+                    "elementNullable": true
+                  },
+                  "nullable": true
+                },
+                "result_summary": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "safe_arguments_json": {
+                  "codecId": "pg/jsonb@1",
+                  "dataType": "pg/jsonb",
+                  "nullable": false
+                },
+                "started_at": {
+                  "codecId": "pg/timestamp-date@1",
+                  "dataType": "pg/timestamp",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "status": {
+                  "codecId": "pg/enum@1",
+                  "dataType": "pg/enum",
+                  "nullable": false,
+                  "typeParams": {
+                    "typeName": "ToolCallStatus"
+                  },
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "ToolCallStatus",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "step_index": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": false
+                },
+                "tool_name": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "workspace_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "cascade",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "investigation_run_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "tool_calls"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "investigation_runs"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "workspace_id",
+                    "investigation_run_id",
+                    "step_index"
+                  ],
+                  "name": "tool_calls_workspace_id_investigation_run_id_step_index_idx",
+                  "unique": false
+                }
+              ],
               "primaryKey": {
                 "columns": [
                   "id"
@@ -3052,14 +4012,27 @@
               "kind": "valueSet",
               "values": [
                 "INCIDENT_STATUS_CHANGED",
-                "FINDING_RATED"
+                "FINDING_RATED",
+                "HYPOTHESIS_RATED",
+                "AI_INVESTIGATION_REQUESTED"
               ]
             },
             "AuditObjectType": {
               "kind": "valueSet",
               "values": [
                 "INCIDENT",
-                "FINDING"
+                "FINDING",
+                "HYPOTHESIS",
+                "INVESTIGATION_RUN"
+              ]
+            },
+            "EpistemicStatus": {
+              "kind": "valueSet",
+              "values": [
+                "OBSERVED",
+                "INFERRED",
+                "HYPOTHESIS",
+                "UNVERIFIED"
               ]
             },
             "FailureClass": {
@@ -3073,6 +4046,11 @@
                 "INVALID_SIGNATURE",
                 "DUPLICATE_DELIVERY",
                 "OUT_OF_ORDER",
+                "INGRESS_ABORTED",
+                "DECRYPT_FAILURE",
+                "DOWNSTREAM_NETWORK_ERROR",
+                "UNHANDLED_EXCEPTION",
+                "ASYNC_ESCAPE_FAILURE",
                 "UNKNOWN"
               ]
             },
@@ -3089,6 +4067,22 @@
                 "PENDING",
                 "PROCESSED",
                 "FAILED"
+              ]
+            },
+            "HypothesisConfidence": {
+              "kind": "valueSet",
+              "values": [
+                "HIGH",
+                "MEDIUM",
+                "LOW"
+              ]
+            },
+            "HypothesisFeedbackRating": {
+              "kind": "valueSet",
+              "values": [
+                "USEFUL",
+                "INCORRECT",
+                "UNVERIFIED"
               ]
             },
             "IncidentStatus": {
@@ -3133,7 +4127,19 @@
               "values": [
                 "DELIVERY_ATTEMPT",
                 "WEBHOOK_EVENT",
-                "FIXTURE"
+                "FIXTURE",
+                "FLIGHT_RECORDER_EPISODE",
+                "DOWNSTREAM_SPAN",
+                "HOST_EXCEPTION",
+                "SOCKET_TIMING"
+              ]
+            },
+            "ToolCallStatus": {
+              "kind": "valueSet",
+              "values": [
+                "SUCCEEDED",
+                "FAILED",
+                "REJECTED"
               ]
             },
             "TrustTier": {
@@ -3158,10 +4164,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "4a8360364ef68361027912468ca5b834e3021eb93e348ba39934c388bb01721b"
+    "storageHash": "4a9c6e25fcf6533be988b06df029aff2bff3e429df0bdea6ea0d1c355b2a5303"
   },
   "execution": {
-    "executionHash": "97c83c21317aad10f28572b191c5c5379ade5037cf6d801aac3f82c41d9d6f99",
+    "executionHash": "bc3b6f6bf380bc82d4820a53e26beed244d7f31ec1173cf0f04f6b04ed993374",
     "mutations": {
       "defaults": [
         {
@@ -3225,6 +4231,17 @@
             "kind": "generator"
           },
           "ref": {
+            "entry": "hypotheses",
+            "field": "id",
+            "namespace": "public"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
             "entry": "incidents",
             "field": "id",
             "namespace": "public"
@@ -3270,6 +4287,17 @@
           },
           "ref": {
             "entry": "outbox",
+            "field": "id",
+            "namespace": "public"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "entry": "tool_calls",
             "field": "id",
             "namespace": "public"
           }

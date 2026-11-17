@@ -23,10 +23,23 @@ EXCEPTION
 END $$;
 
 DO $$ BEGIN
-  CREATE TYPE "SourceKind" AS ENUM ('DELIVERY_ATTEMPT', 'WEBHOOK_EVENT', 'FIXTURE');
+  CREATE TYPE "SourceKind" AS ENUM (
+    'DELIVERY_ATTEMPT',
+    'WEBHOOK_EVENT',
+    'FIXTURE',
+    'FLIGHT_RECORDER_EPISODE',
+    'DOWNSTREAM_SPAN',
+    'HOST_EXCEPTION',
+    'SOCKET_TIMING'
+  );
 EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;
+
+ALTER TYPE "SourceKind" ADD VALUE IF NOT EXISTS 'FLIGHT_RECORDER_EPISODE';
+ALTER TYPE "SourceKind" ADD VALUE IF NOT EXISTS 'DOWNSTREAM_SPAN';
+ALTER TYPE "SourceKind" ADD VALUE IF NOT EXISTS 'HOST_EXCEPTION';
+ALTER TYPE "SourceKind" ADD VALUE IF NOT EXISTS 'SOCKET_TIMING';
 
 DO $$ BEGIN
   CREATE TYPE "FailureClass" AS ENUM (
@@ -38,14 +51,37 @@ DO $$ BEGIN
     'INVALID_SIGNATURE',
     'DUPLICATE_DELIVERY',
     'OUT_OF_ORDER',
+    'INGRESS_ABORTED',
+    'DECRYPT_FAILURE',
+    'DOWNSTREAM_NETWORK_ERROR',
+    'UNHANDLED_EXCEPTION',
+    'ASYNC_ESCAPE_FAILURE',
     'UNKNOWN'
   );
 EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;
 
+ALTER TYPE "FailureClass" ADD VALUE IF NOT EXISTS 'INGRESS_ABORTED';
+ALTER TYPE "FailureClass" ADD VALUE IF NOT EXISTS 'DECRYPT_FAILURE';
+ALTER TYPE "FailureClass" ADD VALUE IF NOT EXISTS 'DOWNSTREAM_NETWORK_ERROR';
+ALTER TYPE "FailureClass" ADD VALUE IF NOT EXISTS 'UNHANDLED_EXCEPTION';
+ALTER TYPE "FailureClass" ADD VALUE IF NOT EXISTS 'ASYNC_ESCAPE_FAILURE';
+
 DO $$ BEGIN
   CREATE TYPE "IncidentStatus" AS ENUM ('OPEN', 'INVESTIGATING', 'RESOLVED', 'ARCHIVED');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE "EpistemicStatus" AS ENUM ('OBSERVED', 'INFERRED', 'HYPOTHESIS', 'UNVERIFIED');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE "HypothesisConfidence" AS ENUM ('HIGH', 'MEDIUM', 'LOW');
 EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;
@@ -65,22 +101,45 @@ EXCEPTION
 END $$;
 
 DO $$ BEGIN
+  CREATE TYPE "ToolCallStatus" AS ENUM ('SUCCEEDED', 'FAILED', 'REJECTED');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
   CREATE TYPE "FeedbackRating" AS ENUM ('USEFUL', 'INCORRECT');
 EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  CREATE TYPE "AuditAction" AS ENUM ('INCIDENT_STATUS_CHANGED', 'FINDING_RATED');
+  CREATE TYPE "HypothesisFeedbackRating" AS ENUM ('USEFUL', 'INCORRECT', 'UNVERIFIED');
 EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  CREATE TYPE "AuditObjectType" AS ENUM ('INCIDENT', 'FINDING');
+  CREATE TYPE "AuditAction" AS ENUM (
+    'INCIDENT_STATUS_CHANGED',
+    'FINDING_RATED',
+    'HYPOTHESIS_RATED',
+    'AI_INVESTIGATION_REQUESTED'
+  );
 EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;
+
+ALTER TYPE "AuditAction" ADD VALUE IF NOT EXISTS 'HYPOTHESIS_RATED';
+ALTER TYPE "AuditAction" ADD VALUE IF NOT EXISTS 'AI_INVESTIGATION_REQUESTED';
+
+DO $$ BEGIN
+  CREATE TYPE "AuditObjectType" AS ENUM ('INCIDENT', 'FINDING', 'HYPOTHESIS', 'INVESTIGATION_RUN');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+ALTER TYPE "AuditObjectType" ADD VALUE IF NOT EXISTS 'HYPOTHESIS';
+ALTER TYPE "AuditObjectType" ADD VALUE IF NOT EXISTS 'INVESTIGATION_RUN';
 
 CREATE TABLE IF NOT EXISTS integrations (
   id text PRIMARY KEY,
@@ -156,8 +215,14 @@ CREATE TABLE IF NOT EXISTS evidence (
   summary text NOT NULL,
   sha256_digest text NOT NULL,
   trust_tier "TrustTier" NOT NULL,
-  workspace_id text NOT NULL
+  workspace_id text NOT NULL,
+  recorded_at timestamp(3),
+  structured_data_json jsonb
 );
+
+ALTER TABLE evidence
+  ADD COLUMN IF NOT EXISTS recorded_at timestamp(3),
+  ADD COLUMN IF NOT EXISTS structured_data_json jsonb;
 
 CREATE TABLE IF NOT EXISTS outbox (
   id text PRIMARY KEY,
@@ -214,17 +279,84 @@ CREATE TABLE IF NOT EXISTS finding_evidence (
 
 CREATE TABLE IF NOT EXISTS investigation_runs (
   id text PRIMARY KEY,
+  workspace_id text NOT NULL DEFAULT 'workspace-1',
   incident_id text NOT NULL REFERENCES incidents (id) ON DELETE RESTRICT ON UPDATE CASCADE,
-  event_id text NOT NULL REFERENCES webhook_events (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  event_id text REFERENCES webhook_events (id) ON DELETE RESTRICT ON UPDATE CASCADE,
   mode "RunMode" NOT NULL,
   state "RunState" NOT NULL,
+  triggered_by text NOT NULL DEFAULT 'system',
+  trigger_reason text,
+  model_id text,
+  prompt_version text,
   ruleset_version text NOT NULL,
+  token_usage jsonb,
+  tool_call_count integer NOT NULL DEFAULT 0,
+  error_code text,
+  error_message text,
+  summary_json jsonb,
+  started_at timestamp(3) NOT NULL,
+  ended_at timestamp(3)
+);
+
+ALTER TABLE investigation_runs
+  ADD COLUMN IF NOT EXISTS workspace_id text NOT NULL DEFAULT 'workspace-1',
+  ADD COLUMN IF NOT EXISTS triggered_by text NOT NULL DEFAULT 'system',
+  ADD COLUMN IF NOT EXISTS trigger_reason text,
+  ADD COLUMN IF NOT EXISTS model_id text,
+  ADD COLUMN IF NOT EXISTS prompt_version text,
+  ADD COLUMN IF NOT EXISTS token_usage jsonb,
+  ADD COLUMN IF NOT EXISTS tool_call_count integer NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS error_code text,
+  ADD COLUMN IF NOT EXISTS error_message text,
+  ADD COLUMN IF NOT EXISTS summary_json jsonb;
+
+ALTER TABLE investigation_runs
+  ALTER COLUMN event_id DROP NOT NULL,
+  ALTER COLUMN ended_at DROP NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS investigation_runs_event_id_incident_id_mode_ruleset_versio_key
+  ON investigation_runs (event_id, incident_id, mode, ruleset_version);
+
+CREATE INDEX IF NOT EXISTS investigation_runs_workspace_id_incident_id_started_at_idx
+  ON investigation_runs (workspace_id, incident_id, started_at);
+
+CREATE TABLE IF NOT EXISTS tool_calls (
+  id text PRIMARY KEY,
+  investigation_run_id text NOT NULL REFERENCES investigation_runs (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  workspace_id text NOT NULL,
+  step_index integer NOT NULL,
+  tool_name text NOT NULL,
+  safe_arguments_json jsonb NOT NULL,
+  result_evidence_ids text[] NOT NULL DEFAULT '{}',
+  result_summary text NOT NULL,
+  status "ToolCallStatus" NOT NULL,
+  error_code text,
   started_at timestamp(3) NOT NULL,
   ended_at timestamp(3) NOT NULL
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS investigation_runs_event_id_incident_id_mode_ruleset_versio_key
-  ON investigation_runs (event_id, incident_id, mode, ruleset_version);
+CREATE INDEX IF NOT EXISTS tool_calls_workspace_id_investigation_run_id_step_index_idx
+  ON tool_calls (workspace_id, investigation_run_id, step_index);
+
+CREATE TABLE IF NOT EXISTS hypotheses (
+  id text PRIMARY KEY,
+  workspace_id text NOT NULL,
+  incident_id text NOT NULL REFERENCES incidents (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  investigation_run_id text NOT NULL REFERENCES investigation_runs (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  title text NOT NULL,
+  reasoning text NOT NULL,
+  epistemic_status "EpistemicStatus" NOT NULL,
+  confidence "HypothesisConfidence" NOT NULL,
+  cited_evidence_ids text[] NOT NULL DEFAULT '{}',
+  missing_information text[] NOT NULL DEFAULT '{}',
+  suggested_check text NOT NULL,
+  remediation_json jsonb,
+  feedback "HypothesisFeedbackRating" NOT NULL DEFAULT 'UNVERIFIED',
+  created_at timestamp(3) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS hypotheses_workspace_id_incident_id_created_at_idx
+  ON hypotheses (workspace_id, incident_id, created_at);
 
 -- CREATE TABLE IF NOT EXISTS does not change keys that already exist.
 ALTER TABLE incident_events DROP CONSTRAINT IF EXISTS incident_events_incident_id_fkey;

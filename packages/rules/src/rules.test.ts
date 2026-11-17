@@ -156,6 +156,84 @@ test('two timeouts for one integration and endpoint share a fingerprint', () => 
   assert.notEqual(first, other);
 });
 
+test('runtime FlightRecorder evidence classifies ingress abort, decrypt, downstream network, unhandled, and async escape', async () => {
+  const cases: Array<{
+    expected: string;
+    ev: Evidence;
+  }> = [
+    {
+      expected: 'INGRESS_ABORTED',
+      ev: {
+        id: 'ev-sock',
+        sourceKind: 'SOCKET_TIMING',
+        sourceRecordId: 'attempt-1',
+        summary: 'Client disconnected early',
+        sha256Digest: 'd1',
+        trustTier: 'B',
+        structuredDataJson: { closeFired: true, writableEndedAtClose: false, eventLoopMaxLagMs: 65 },
+      },
+    },
+    {
+      expected: 'DECRYPT_FAILURE',
+      ev: {
+        id: 'ev-dec',
+        sourceKind: 'FLIGHT_RECORDER_EPISODE',
+        sourceRecordId: 'event-1',
+        summary: 'AES-GCM decrypt failed',
+        sha256Digest: 'd2',
+        trustTier: 'B',
+        structuredDataJson: { encryption: { scheme: 'AES-256-GCM', decryptedOk: false, errorCode: 'BAD_AUTH_TAG' } },
+      },
+    },
+    {
+      expected: 'DOWNSTREAM_NETWORK_ERROR',
+      ev: {
+        id: 'ev-span',
+        sourceKind: 'DOWNSTREAM_SPAN',
+        sourceRecordId: 'attempt-1',
+        summary: 'ECONNREFUSED',
+        sha256Digest: 'd3',
+        trustTier: 'B',
+        structuredDataJson: { subHttpFailureType: 'TCP_REFUSED', errorCode: 'ECONNREFUSED' },
+      },
+    },
+    {
+      expected: 'UNHANDLED_EXCEPTION',
+      ev: {
+        id: 'ev-exc',
+        sourceKind: 'HOST_EXCEPTION',
+        sourceRecordId: 'attempt-1',
+        summary: 'DB pool exhausted',
+        sha256Digest: 'd4',
+        trustTier: 'B',
+        structuredDataJson: { layer: 'CONTROLLER', name: 'Error', escapedAfterResponse: false },
+      },
+    },
+    {
+      expected: 'ASYNC_ESCAPE_FAILURE',
+      ev: {
+        id: 'ev-esc',
+        sourceKind: 'HOST_EXCEPTION',
+        sourceRecordId: 'attempt-1',
+        summary: 'Unhandled rejection after 200',
+        sha256Digest: 'd5',
+        trustTier: 'B',
+        structuredDataJson: { layer: 'UNHANDLED_REJECTION', name: 'Error', escapedAfterResponse: true },
+      },
+    },
+  ];
+
+  for (const item of cases) {
+    const matches = await evaluateRules(context({ evidence: [item.ev] }));
+    assert.deepEqual(
+      matches.map((m) => m.failureClass),
+      [item.expected],
+      item.expected,
+    );
+    assert.deepEqual(matches[0]?.evidenceIds, [item.ev.id]);
+  }
+});
+
 function context(input: {
   event?: WebhookEvent | null;
   attempts?: readonly DeliveryAttempt[];

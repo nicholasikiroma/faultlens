@@ -4,7 +4,14 @@ import type {
   RateFindingResult,
 } from "../feedback/feedback.ts";
 import type { TransitionIncidentResult } from "../incidents/lifecycle.ts";
+import type { EpisodeIngestResult } from "../ingest/episode-ingest.ts";
 import type { IngestResult } from "../ingest/ingest.ts";
+import type {
+  AgentSettingsResult,
+  ListInvestigationsResult,
+  RateHypothesisResult,
+  TriggerInvestigationResult,
+} from "../investigations/investigate.ts";
 import type { ListAttemptsResult, ListEventsResult } from "../read/events.ts";
 import type { ExportIncidentResult } from "../read/export.ts";
 import type { ListIncidentsResult } from "../read/incidents.ts";
@@ -54,6 +61,10 @@ export const ADMIN_QUERY_KEYS = {
   rateFinding: [],
   listFindingFeedback: [],
   listAuditEvents: ["objectType", "objectId"],
+  triggerInvestigation: [],
+  listIncidentInvestigations: [],
+  rateHypothesis: [],
+  getAgentSettings: [],
 } as const;
 
 export const ROUTES = [
@@ -61,6 +72,12 @@ export const ROUTES = [
     id: "ingest",
     method: "POST",
     path: "/v1/ingest",
+    access: { kind: "ingest", credential: "bearer", traffic: "real" },
+  },
+  {
+    id: "ingestEpisode",
+    method: "POST",
+    path: "/v1/ingest/episodes",
     access: { kind: "ingest", credential: "bearer", traffic: "real" },
   },
   {
@@ -117,6 +134,30 @@ export const ROUTES = [
     path: "/v1/audit-events",
     access: { kind: "admin" },
   },
+  {
+    id: "triggerInvestigation",
+    method: "POST",
+    path: "/v1/incidents/:incidentId/investigate",
+    access: { kind: "admin" },
+  },
+  {
+    id: "listIncidentInvestigations",
+    method: "GET",
+    path: "/v1/incidents/:incidentId/investigations",
+    access: { kind: "admin" },
+  },
+  {
+    id: "rateHypothesis",
+    method: "PUT",
+    path: "/v1/hypotheses/:hypothesisId/feedback",
+    access: { kind: "admin" },
+  },
+  {
+    id: "getAgentSettings",
+    method: "GET",
+    path: "/v1/settings/agent",
+    access: { kind: "admin" },
+  },
 ] as const satisfies readonly HttpRoute[];
 
 export const HTTP_ROUTES = ROUTES;
@@ -147,6 +188,15 @@ export const INGEST_STATUS = {
   oversized: 413,
   "unknown-token": 401,
 } as const satisfies Record<IngestResult["outcome"], number>;
+
+export const EPISODE_INGEST_STATUS = {
+  stored: 200,
+  duplicate: 200,
+  conflict: 409,
+  "schema-error": 400,
+  oversized: 413,
+  "unknown-token": 401,
+} as const satisfies Record<EpisodeIngestResult["outcome"], number>;
 
 export const LIST_EVENTS_STATUS = {
   unauthorized: 401,
@@ -191,6 +241,31 @@ export const LIST_AUDIT_STATUS = {
   unauthorized: 401,
   ok: 200,
 } as const satisfies Record<ListAuditEventsResult["kind"], number>;
+
+export const TRIGGER_INVESTIGATION_STATUS = {
+  queued: 202,
+  "already-running": 409,
+  missing: 404,
+  "ai-disabled": 503,
+  "queue-unavailable": 503,
+} as const satisfies Record<TriggerInvestigationResult["outcome"], number>;
+
+export const LIST_INVESTIGATIONS_STATUS = {
+  unauthorized: 401,
+  missing: 404,
+  ok: 200,
+} as const satisfies Record<ListInvestigationsResult["kind"], number>;
+
+export const RATE_HYPOTHESIS_STATUS = {
+  rated: 200,
+  unchanged: 200,
+  missing: 404,
+} as const satisfies Record<RateHypothesisResult["outcome"], number>;
+
+export const AGENT_SETTINGS_STATUS = {
+  unauthorized: 401,
+  ok: 200,
+} as const satisfies Record<AgentSettingsResult["kind"], number>;
 
 export const UNAUTHORIZED_BODY = {
   kind: "unauthorized",

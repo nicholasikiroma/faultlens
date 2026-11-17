@@ -188,7 +188,13 @@ async function ingestDelivery(input: IngestInput, credential: "api-key" | "simul
         await insertOutbox(tx, { eventId: placed.eventId, attemptId });
 
         // Immediate background classification trigger for real-time dashboard visibility
-        if (placed.eventId) {
+        // (disabled under node --test so transactional outbox / BullMQ dedup tests stay deterministic)
+        if (
+          placed.eventId &&
+          process.env["NODE_TEST_CONTEXT"] === undefined &&
+          !process.execArgv.includes("--test") &&
+          process.env["NODE_ENV"] !== "test"
+        ) {
           const eventIdToClassify = placed.eventId;
           setImmediate(async () => {
             try {

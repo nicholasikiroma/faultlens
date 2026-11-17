@@ -7,8 +7,12 @@ import {
   Download,
   Search,
   Check,
+  Copy,
+  ChevronDown,
+  ChevronUp,
   ThumbsUp,
   ThumbsDown,
+  HelpCircle,
   Terminal,
   Cpu,
   Sparkles,
@@ -24,24 +28,38 @@ import {
 interface InvestigationViewProps {
   incident: Incident;
   isLoadingDetail?: boolean;
+  isTriggeringAgent?: boolean;
+  aiEnabled?: boolean;
   onBack: () => void;
   onOpenEvidence: (ev: EvidenceItem) => void;
   onShowToast: (msg: string) => void;
-  onFeedback: (hypothesisId: string, feedback: 'helpful' | 'false_positive') => void;
+  onFeedback: (hypothesisId: string, feedback: 'helpful' | 'false_positive' | 'unverified') => void;
   onStatusChange?: (newStatus: IncidentStatus) => void;
+  onTriggerInvestigation?: () => void;
 }
 
 export const InvestigationView: React.FC<InvestigationViewProps> = ({
   incident,
   isLoadingDetail = false,
+  isTriggeringAgent = false,
+  aiEnabled = false,
   onBack,
   onOpenEvidence,
   onShowToast,
   onFeedback,
   onStatusChange,
+  onTriggerInvestigation,
 }) => {
   const [activeTab, setActiveTab] = useState<'timeline' | 'evidence' | 'attempts' | 'raw'>('timeline');
   const [copiedRaw, setCopiedRaw] = useState(false);
+  const [copiedSnippetId, setCopiedSnippetId] = useState<string | null>(null);
+  const [showProvenance, setShowProvenance] = useState(false);
+
+  const latestAgentRun = incident.agentRuns?.[0];
+  const isRunActive =
+    isTriggeringAgent ||
+    latestAgentRun?.state === 'QUEUED' ||
+    latestAgentRun?.state === 'RUNNING';
 
   const handleCopyRaw = () => {
     navigator.clipboard.writeText(JSON.stringify(incident.rawPayload, null, 2));
@@ -102,12 +120,27 @@ export const InvestigationView: React.FC<InvestigationViewProps> = ({
 
             <Button
               variant="primary"
-              onClick={() =>
-                onShowToast('Running deterministic rule check across linked evidence...')
+              disabled={isRunActive}
+              onClick={() => {
+                if (onTriggerInvestigation) {
+                  onTriggerInvestigation();
+                } else {
+                  onShowToast('Running deterministic rule check across linked evidence...');
+                }
+              }}
+              leadingIcon={
+                isRunActive ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Search className="w-3.5 h-3.5" />
+                )
               }
-              leadingIcon={<Search className="w-3.5 h-3.5" />}
             >
-              Run Investigation
+              {isRunActive
+                ? 'Investigating...'
+                : aiEnabled
+                ? 'Run AI Investigation'
+                : 'Run Investigation'}
             </Button>
           </>
         }
@@ -494,11 +527,25 @@ export const InvestigationView: React.FC<InvestigationViewProps> = ({
             <div className="flex items-center justify-between pb-3 border-b border-fl-border">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-fl-warning-dot" aria-hidden="true" />
-                <h3 className="text-fl-card text-fl-ink font-sans">Hypotheses</h3>
+                <h3 className="text-fl-card text-fl-ink font-sans">Hypotheses &amp; Solutions</h3>
               </div>
-              <span className="text-[10px] font-mono text-fl-warning-text bg-fl-warning-bg border border-dashed border-fl-warning-border px-2 py-0.5 rounded font-medium uppercase">
-                Unverified
-              </span>
+              {latestAgentRun ? (
+                <span
+                  className={`text-[10px] font-mono px-2 py-0.5 rounded font-medium uppercase border ${
+                    latestAgentRun.state === 'COMPLETED'
+                      ? 'bg-fl-success-bg text-fl-success-text border-fl-success-border'
+                      : latestAgentRun.state === 'FAILED'
+                      ? 'bg-fl-danger-bg text-fl-danger-text border-fl-danger-border'
+                      : 'bg-fl-warning-bg text-fl-warning-text border-fl-warning-border'
+                  }`}
+                >
+                  {latestAgentRun.state}
+                </span>
+              ) : (
+                <span className="text-[10px] font-mono text-fl-warning-text bg-fl-warning-bg border border-dashed border-fl-warning-border px-2 py-0.5 rounded font-medium uppercase">
+                  Deterministic
+                </span>
+              )}
             </div>
 
             {incident.hypotheses.map((hyp) => (
@@ -506,12 +553,50 @@ export const InvestigationView: React.FC<InvestigationViewProps> = ({
                 key={hyp.id}
                 className="p-3.5 rounded-lg bg-fl-surface-subtle border border-fl-border space-y-3"
               >
-                <div>
-                  <div className="text-[13px] font-sans font-semibold text-fl-ink">{hyp.title}</div>
-                  <p className="text-xs font-sans text-fl-secondary mt-1 leading-relaxed">
+                <div className="space-y-1.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="text-[13px] font-sans font-semibold text-fl-ink">{hyp.title}</div>
+                    {hyp.epistemicStatus && (
+                      <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded border border-fl-border bg-fl-surface text-fl-secondary shrink-0">
+                        {hyp.epistemicStatus}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs font-sans text-fl-secondary leading-relaxed">
                     {hyp.reasoning}
                   </p>
                 </div>
+
+                {hyp.citedEvidenceIds && hyp.citedEvidenceIds.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-[10px] font-mono uppercase text-fl-muted">Cited:</span>
+                    {hyp.citedEvidenceIds.map((evId) => {
+                      const ev = incident.evidence.find((e) => e.id === evId);
+                      return (
+                        <button
+                          key={evId}
+                          type="button"
+                          onClick={() => {
+                            if (ev) onOpenEvidence(ev);
+                            else onShowToast(`Evidence ${evId} not loaded in current view.`);
+                          }}
+                          className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-fl-accent-subtle text-fl-accent-text border border-fl-accent-border hover:underline"
+                        >
+                          {evId.slice(0, 8)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {hyp.missingInformation && hyp.missingInformation.length > 0 && (
+                  <div className="p-2 rounded bg-fl-surface border border-dashed border-fl-border text-[11px] font-sans text-fl-muted">
+                    <span className="font-mono uppercase text-[10px] text-fl-warning-text mr-1">
+                      Missing data:
+                    </span>
+                    {hyp.missingInformation.join(' • ')}
+                  </div>
+                )}
 
                 <div className="p-2.5 rounded-md bg-fl-surface border border-fl-border text-xs font-sans text-fl-ink">
                   <span className="text-fl-warning-text font-medium block text-[10px] font-mono uppercase mb-0.5">
@@ -520,9 +605,42 @@ export const InvestigationView: React.FC<InvestigationViewProps> = ({
                   {hyp.suggestedCheck}
                 </div>
 
-                <div className="pt-2 border-t border-fl-border flex items-center justify-between">
+                {hyp.remediation && (
+                  <div className="p-2.5 rounded-md bg-fl-surface border border-fl-accent-border space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] font-mono font-semibold uppercase text-fl-accent-text">
+                        Proposed Fix ({hyp.remediation.kind})
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void navigator.clipboard.writeText(hyp.remediation!.snippet);
+                          setCopiedSnippetId(hyp.id);
+                          setTimeout(() => setCopiedSnippetId(null), 2000);
+                        }}
+                        className="inline-flex items-center gap-1 text-[10px] font-mono text-fl-accent-text hover:underline"
+                      >
+                        {copiedSnippetId === hyp.id ? (
+                          <Check className="w-3 h-3" />
+                        ) : (
+                          <Copy className="w-3 h-3" />
+                        )}
+                        {copiedSnippetId === hyp.id ? 'Copied' : 'Copy'}
+                      </button>
+                    </div>
+                    <p className="text-xs font-sans text-fl-secondary">{hyp.remediation.summary}</p>
+                    <pre className="text-[11px] font-mono bg-fl-surface-subtle p-2 rounded border border-fl-border overflow-x-auto text-fl-ink">
+                      {hyp.remediation.snippet}
+                    </pre>
+                    <p className="text-[11px] font-sans text-fl-muted">
+                      Safety note: {hyp.remediation.safetyNote}
+                    </p>
+                  </div>
+                )}
+
+                <div className="pt-2 border-t border-fl-border flex items-center justify-between gap-2">
                   <span className="text-xs font-sans text-fl-muted">Feedback:</span>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <button
                       type="button"
                       onClick={() => onFeedback(hyp.id, 'helpful')}
@@ -533,7 +651,7 @@ export const InvestigationView: React.FC<InvestigationViewProps> = ({
                       }`}
                     >
                       <ThumbsUp className="w-3 h-3" aria-hidden="true" />
-                      Helpful
+                      Useful
                     </button>
                     <button
                       type="button"
@@ -545,12 +663,59 @@ export const InvestigationView: React.FC<InvestigationViewProps> = ({
                       }`}
                     >
                       <ThumbsDown className="w-3 h-3" aria-hidden="true" />
-                      False Positive
+                      Incorrect
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onFeedback(hyp.id, 'unverified')}
+                      className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-sans font-medium transition-colors ${
+                        hyp.feedback === 'unverified'
+                          ? 'bg-fl-warning-bg text-fl-warning-text border border-fl-warning-border'
+                          : 'bg-fl-surface border border-fl-border text-fl-muted hover:text-fl-ink'
+                      }`}
+                    >
+                      <HelpCircle className="w-3 h-3" aria-hidden="true" />
+                      Unverified
                     </button>
                   </div>
                 </div>
               </div>
             ))}
+
+            {(incident.toolCalls?.length ?? 0) > 0 && (
+              <div className="pt-2 border-t border-fl-border">
+                <button
+                  type="button"
+                  onClick={() => setShowProvenance((prev) => !prev)}
+                  className="w-full flex items-center justify-between text-xs font-mono text-fl-secondary hover:text-fl-ink py-1"
+                >
+                  <span>Agent Provenance ({incident.toolCalls!.length} tool calls)</span>
+                  {showProvenance ? (
+                    <ChevronUp className="w-3.5 h-3.5" />
+                  ) : (
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  )}
+                </button>
+                {showProvenance && (
+                  <div className="mt-2 space-y-1.5 max-h-60 overflow-y-auto">
+                    {incident.toolCalls!.map((tc) => (
+                      <div
+                        key={tc.id}
+                        className="p-2 rounded bg-fl-surface-subtle border border-fl-border text-[11px] font-mono space-y-0.5"
+                      >
+                        <div className="flex items-center justify-between text-fl-ink font-medium">
+                          <span>
+                            #{tc.stepIndex} {tc.toolName}
+                          </span>
+                          <span className="text-[10px] text-fl-muted">{tc.status}</span>
+                        </div>
+                        <div className="text-fl-secondary font-sans">{tc.resultSummary}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="pt-1 flex items-center gap-2 text-xs font-sans text-fl-muted">
               <ShieldCheck className="w-3.5 h-3.5 text-fl-success-dot" aria-hidden="true" />

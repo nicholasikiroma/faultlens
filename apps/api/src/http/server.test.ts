@@ -377,6 +377,142 @@ test('admin reads and writes run over HTTP', async () => {
   }
 });
 
+test('episode ingest, agent settings, investigate disabled/list, and hypothesis feedback work over HTTP', async () => {
+  await reset();
+  await seedIntegration('workspace-1', 'ep-key-1', 'ep-secret-1');
+  const incidentId = randomUUID();
+  const runId = randomUUID();
+  const hypothesisId = randomUUID();
+  const now = new Date('2026-11-17T12:00:00.000Z');
+
+  await db.orm.public.Incident.create({
+    id: incidentId,
+    workspaceId: 'workspace-1',
+    fingerprint: 'fp-http-agent',
+    integrationId: 'int-http-1',
+    environment: 'production',
+    failureClass: 'RATE_LIMIT',
+    endpoint: '/hooks/billing',
+    ruleVersion: '0',
+    status: 'OPEN',
+    firstSeenAt: now,
+    lastSeenAt: now,
+    eventCount: 1,
+  });
+  await db.orm.public.InvestigationRun.create({
+    id: runId,
+    workspaceId: 'workspace-1',
+    incidentId,
+    eventId: null,
+    mode: 'AI_ASSISTED',
+    state: 'COMPLETED',
+    triggeredBy: 'local-admin',
+    triggerReason: 'manual',
+    modelId: 'mock-v1',
+    promptVersion: '1.0.0',
+    rulesetVersion: '0',
+    toolCallCount: 1,
+    startedAt: now,
+    endedAt: now,
+  });
+  await db.orm.public.Hypothesis.create({
+    id: hypothesisId,
+    workspaceId: 'workspace-1',
+    incidentId,
+    investigationRunId: runId,
+    title: 'HTTP rate limit hypothesis',
+    reasoning: 'Attempt returned 429',
+    epistemicStatus: 'OBSERVED',
+    confidence: 'HIGH',
+    citedEvidenceIds: [],
+    missingInformation: [],
+    suggestedCheck: 'Check Retry-After',
+    remediationJson: null,
+    feedback: 'UNVERIFIED',
+    createdAt: now,
+  });
+
+  const server = await startApiServer({ host: '127.0.0.1', port: 0 });
+  const prevAi = process.env['FAULTLENS_AI_ENABLED'];
+  process.env['FAULTLENS_AI_ENABLED'] = '0';
+  try {
+    const epRes = await fetch(`${server.url}/v1/ingest/episodes`, {
+      method: 'POST',
+      headers: {
+        authorization: 'Bearer ep-key-1',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        episodeId: 'ep_http_1',
+        framework: 'node-http',
+        method: 'POST',
+        rawUrl: '/hooks/billing',
+        headers: {},
+        statusCode: 500,
+        verification: { state: 'VERIFIED', recordedAtMs: Date.now() },
+        encryption: { scheme: 'NONE', authenticatesSender: false, decryptedOk: true },
+        identity: { provider: 'stripe', eventId: 'evt_ep_http_1' },
+        idempotency: { handlerIdempotent: true, committedSideEffect: false },
+        downstreamCalls: [],
+        exceptions: [],
+        socket: {
+          ingressReceivedAtMs: Date.now() - 20,
+          finishFired: true,
+          closeFired: false,
+          writableEndedAtClose: false,
+          headersSentAtClose: false,
+          handlerSettled: true,
+          committedAfterAbort: false,
+          eventLoopMaxLagMs: 0,
+          activeCpuBlockMs: 0,
+        },
+        bodyTap: { totalBytesSeen: 2, tappedBytes: 2, truncatedByCap: false, wireBodyHmac: 'h' },
+        isDuplicateDelivery: false,
+        isOutOfOrderDelivery: false,
+        sealed: true,
+      }),
+    });
+    assert.equal(epRes.status, 200);
+    const epBody = (await epRes.json()) as { outcome: string };
+    assert.equal(epBody.outcome, 'stored');
+
+    const settingsRes = await fetch(`${server.url}/v1/settings/agent`, { headers: auth() });
+    assert.equal(settingsRes.status, 200);
+    const settingsBody = (await settingsRes.json()) as { kind: string; enabled: boolean };
+    assert.equal(settingsBody.kind, 'ok');
+    assert.equal(settingsBody.enabled, false);
+
+    const disabledTrig = await fetch(`${server.url}/v1/incidents/${incidentId}/investigate`, {
+      method: 'POST',
+      headers: auth(),
+    });
+    assert.equal(disabledTrig.status, 503);
+
+    const invList = await fetch(`${server.url}/v1/incidents/${incidentId}/investigations`, {
+      headers: auth(),
+    });
+    assert.equal(invList.status, 200);
+    const invBody = (await invList.json()) as { kind: string; hypotheses: unknown[]; runs: unknown[] };
+    assert.equal(invBody.kind, 'ok');
+    assert.equal(invBody.runs.length, 1);
+    assert.equal(invBody.hypotheses.length, 1);
+
+    const rateRes = await fetch(`${server.url}/v1/hypotheses/${hypothesisId}/feedback`, {
+      method: 'PUT',
+      headers: { ...auth(), 'content-type': 'application/json' },
+      body: JSON.stringify({ rating: 'USEFUL' }),
+    });
+    assert.equal(rateRes.status, 200);
+    const rateBody = (await rateRes.json()) as { outcome: string; hypothesis: { feedback: string } };
+    assert.equal(rateBody.outcome, 'rated');
+    assert.equal(rateBody.hypothesis.feedback, 'USEFUL');
+  } finally {
+    if (prevAi === undefined) delete process.env['FAULTLENS_AI_ENABLED'];
+    else process.env['FAULTLENS_AI_ENABLED'] = prevAi;
+    await server.close();
+  }
+});
+
 function postRaw(
   url: string,
   lines: readonly string[],
@@ -501,6 +637,8 @@ async function seedEvent(
 }
 
 async function reset(): Promise<void> {
+  await db.execute(db.raw.sql`DELETE FROM hypotheses`.affectedCount().build());
+  await db.execute(db.raw.sql`DELETE FROM tool_calls`.affectedCount().build());
   await db.execute(db.raw.sql`DELETE FROM feedback`.affectedCount().build());
   await db.execute(db.raw.sql`DELETE FROM audit_events`.affectedCount().build());
   await db.execute(db.raw.sql`DELETE FROM finding_evidence`.affectedCount().build());
