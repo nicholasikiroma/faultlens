@@ -1,4 +1,6 @@
 export { AGENT_PROMPT_VERSION, buildSystemPrompt } from './prompt.ts';
+export { attachCostEstimate, isLocalEndpointUrl, lookupModelRate } from './cost.ts';
+export type { ModelRate } from './cost.ts';
 export {
   capJsonString,
   extractJsonObjectText,

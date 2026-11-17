@@ -304,11 +304,13 @@ function parseJsonArgs(raw: unknown): Record<string, unknown> {
 function parseOpenAIUsage(raw: unknown): TokenUsage | undefined {
   if (!raw || typeof raw !== 'object') return undefined;
   const u = raw as Record<string, unknown>;
+  const providerCost = typeof u['cost'] === 'number' && Number.isFinite(u['cost']) ? u['cost'] : undefined;
   return {
     promptTokens: typeof u['prompt_tokens'] === 'number' ? u['prompt_tokens'] : undefined,
     completionTokens:
       typeof u['completion_tokens'] === 'number' ? u['completion_tokens'] : undefined,
     totalTokens: typeof u['total_tokens'] === 'number' ? u['total_tokens'] : undefined,
+    ...(providerCost !== undefined ? { estimatedCostUsd: providerCost, costSource: 'provider' as const } : {}),
   };
 }
 

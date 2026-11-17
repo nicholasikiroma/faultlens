@@ -50,4 +50,16 @@ export const config = {
     const parsed = Number(raw);
     return Number.isInteger(parsed) && parsed >= 1000 && parsed <= 300_000 ? parsed : 60_000;
   },
+  get aiInputCostPer1M(): number | undefined {
+    return parseOptionalCost(process.env['FAULTLENS_AI_INPUT_COST_PER_1M']);
+  },
+  get aiOutputCostPer1M(): number | undefined {
+    return parseOptionalCost(process.env['FAULTLENS_AI_OUTPUT_COST_PER_1M']);
+  },
 } as const;
+
+function parseOptionalCost(raw: string | undefined): number | undefined {
+  if (!raw || raw.trim().length === 0) return undefined;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
+}

@@ -584,14 +584,21 @@ export class ApiStore {
         if (body.kind === 'ok' && Array.isArray(body.items)) {
           this.isLiveConnected = true;
 
-          // Merge live summaries with existing loaded details
+          // Merge live summaries with existing loaded details without clobbering AI/detail state
           const liveIncidents: Incident[] = body.items.map((summary) => {
             const existing = this.incidents.find((i) => i.id === summary.id);
             const liveSummary = toFrontendIncidentSummary(summary);
-            if (existing && existing.timeline.length > 0) {
+            if (
+              existing &&
+              (existing.timeline.length > 0 ||
+                (existing.agentRuns?.length ?? 0) > 0 ||
+                existing.aiSummary !== null)
+            ) {
               return {
                 ...liveSummary,
-                status: existing.status,
+                aiSummary: existing.aiSummary ?? null,
+                agentRuns: existing.agentRuns ?? [],
+                toolCalls: existing.toolCalls ?? [],
                 timeline: existing.timeline,
                 evidence: existing.evidence,
                 attempts: existing.attempts,

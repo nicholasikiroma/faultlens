@@ -64,6 +64,8 @@ export interface HypothesisItem {
   id: string;
   title: string;
   reasoning: string;
+  source?: 'deterministic' | 'ai';
+  modelId?: string | null;
   epistemicStatus?: HypothesisEpistemicStatus;
   confidence: 'HIGH' | 'MEDIUM' | 'LOW';
   citedEvidenceIds?: string[];
@@ -74,6 +76,24 @@ export interface HypothesisItem {
   feedback?: 'none' | 'helpful' | 'false_positive' | 'unverified';
 }
 
+export interface AiSynthesisSummary {
+  known: string;
+  suspect: string;
+  next: string;
+  modelId: string | null;
+  promptVersion: string | null;
+  runState: AgentRunSummary['state'];
+  endedAt: string | null;
+}
+
+export interface AgentTokenUsage {
+  promptTokens?: number;
+  completionTokens?: number;
+  totalTokens?: number;
+  estimatedCostUsd?: number | null;
+  costSource?: 'local_free' | 'env_rates' | 'model_table' | 'provider' | 'unknown';
+}
+
 export interface AgentRunSummary {
   id: string;
   mode: 'RULES' | 'AI_ASSISTED';
@@ -82,6 +102,7 @@ export interface AgentRunSummary {
   triggerReason: string | null;
   modelId: string | null;
   promptVersion: string | null;
+  tokenUsage?: AgentTokenUsage | null;
   toolCallCount: number;
   errorCode: string | null;
   errorMessage: string | null;
@@ -135,6 +156,7 @@ export interface Incident {
   attempts: AttemptItem[];
   ruleFindings: RuleFinding[];
   hypotheses: HypothesisItem[];
+  aiSummary?: AiSynthesisSummary | null;
   agentRuns?: AgentRunSummary[];
   toolCalls?: ToolCallSummary[];
   rawPayload: Record<string, unknown>;

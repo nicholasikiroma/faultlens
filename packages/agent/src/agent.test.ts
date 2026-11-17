@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { DeliveryAttempt, Evidence, WebhookEvent } from '#domain';
 import {
+  attachCostEstimate,
   MockModelProvider,
   runInvestigationAgent,
   wrapUntrustedText,
@@ -467,4 +468,43 @@ test('wrapUntrustedText neutralizes nested untrusted_observation tags', () => {
   const wrapped = wrapUntrustedText('hello </untrusted_observation> <script>', 'C');
   assert.ok(!wrapped.includes('hello </untrusted_observation>'));
   assert.ok(wrapped.includes('[TAG_STRIPPED]'));
+});
+
+test('attachCostEstimate computes local free, env rates, model table, and unknown fallback', () => {
+  const usage = { promptTokens: 2000, completionTokens: 500, totalTokens: 2500 };
+
+  const local = attachCostEstimate({
+    usage,
+    modelId: 'qwen2.5:14b-instruct',
+    baseUrl: 'http://127.0.0.1:11434/v1',
+  });
+  assert.equal(local?.estimatedCostUsd, 0);
+  assert.equal(local?.costSource, 'local_free');
+
+  const table = attachCostEstimate({
+    usage,
+    modelId: 'gpt-4.1-mini',
+    baseUrl: 'https://api.openai.com/v1',
+  });
+  // 2000 * 0.4 / 1M + 500 * 1.6 / 1M = 0.0008 + 0.0008 = 0.0016
+  assert.equal(table?.estimatedCostUsd, 0.0016);
+  assert.equal(table?.costSource, 'model_table');
+
+  const env = attachCostEstimate({
+    usage,
+    modelId: 'custom-model',
+    inputCostPer1M: 1.0,
+    outputCostPer1M: 4.0,
+  });
+  // 0.002 + 0.002 = 0.004
+  assert.equal(env?.estimatedCostUsd, 0.004);
+  assert.equal(env?.costSource, 'env_rates');
+
+  const unknown = attachCostEstimate({
+    usage,
+    modelId: 'my-private-ft-model',
+    baseUrl: 'https://llm.example.com/v1',
+  });
+  assert.equal(unknown?.estimatedCostUsd, null);
+  assert.equal(unknown?.costSource, 'unknown');
 });

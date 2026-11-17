@@ -39,6 +39,7 @@ export type {
   AiInvestigationRequestedAuditEvent,
   AuditEvent,
   ClassificationRule,
+  CostSource,
   DeliveryAttempt,
   Evidence,
   Feedback,

@@ -37,7 +37,13 @@ export async function runInvestigationAgent(
 
   const observedEvidenceIds = new Set<string>();
   const toolLogs: AgentToolCallLog[] = [];
-  const totalUsage: { promptTokens: number; completionTokens: number; totalTokens: number } = {
+  const totalUsage: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+    estimatedCostUsd?: number;
+    costSource?: 'provider';
+  } = {
     promptTokens: 0,
     completionTokens: 0,
     totalTokens: 0,
@@ -241,7 +247,13 @@ export async function runInvestigationAgent(
 }
 
 function accumulateUsage(
-  target: { promptTokens: number; completionTokens: number; totalTokens: number },
+  target: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+    estimatedCostUsd?: number;
+    costSource?: 'provider';
+  },
   usage?: TokenUsage,
 ): void {
   if (!usage) return;
@@ -253,6 +265,10 @@ function accumulateUsage(
     target.totalTokens += usage.totalTokens;
   } else {
     target.totalTokens = target.promptTokens + target.completionTokens;
+  }
+  if (typeof usage.estimatedCostUsd === 'number' && Number.isFinite(usage.estimatedCostUsd)) {
+    target.estimatedCostUsd = (target.estimatedCostUsd ?? 0) + usage.estimatedCostUsd;
+    target.costSource = 'provider';
   }
 }
 

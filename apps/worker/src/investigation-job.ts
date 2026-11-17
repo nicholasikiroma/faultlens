@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import {
   AnthropicProvider,
+  attachCostEstimate,
   MockModelProvider,
   OpenAICompatibleProvider,
   runInvestigationAgent,
@@ -168,11 +169,20 @@ export async function investigateJob(
         })
       : null;
 
+    const tokenUsageWithCost = attachCostEstimate({
+      usage: result.tokenUsage,
+      modelId: result.modelId,
+      providerId: provider.id,
+      baseUrl: provider.id === 'openai-compatible' ? config.aiBaseUrl : undefined,
+      inputCostPer1M: config.aiInputCostPer1M,
+      outputCostPer1M: config.aiOutputCostPer1M,
+    });
+
     await tx.orm.public.InvestigationRun.where({ id: runId }).update({
       state: result.state,
       modelId: result.modelId,
       promptVersion: result.promptVersion,
-      tokenUsage: toJson(result.tokenUsage),
+      tokenUsage: toJson(tokenUsageWithCost),
       toolCallCount: result.toolCalls.length,
       errorCode: result.errorCode,
       errorMessage: result.errorMessage,

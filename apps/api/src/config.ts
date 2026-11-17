@@ -42,9 +42,24 @@ export const config = {
   get aiModel(): string {
     return process.env["FAULTLENS_AI_MODEL"] ?? "qwen2.5:14b-instruct";
   },
+  get aiBaseUrl(): string {
+    return process.env["FAULTLENS_AI_BASE_URL"] ?? "http://127.0.0.1:11434/v1";
+  },
   get aiBaseUrlConfigured(): boolean {
     const val = process.env["FAULTLENS_AI_BASE_URL"];
     return val !== undefined && val.trim().length > 0;
+  },
+  get aiInputCostPer1M(): number | undefined {
+    const raw = process.env["FAULTLENS_AI_INPUT_COST_PER_1M"];
+    if (!raw || raw.trim().length === 0) return undefined;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
+  },
+  get aiOutputCostPer1M(): number | undefined {
+    const raw = process.env["FAULTLENS_AI_OUTPUT_COST_PER_1M"];
+    if (!raw || raw.trim().length === 0) return undefined;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
   },
   get aiMaxToolCalls(): number {
     const raw = process.env["FAULTLENS_AI_MAX_TOOL_CALLS"] ?? "8";

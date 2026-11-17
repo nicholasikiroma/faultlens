@@ -99,10 +99,19 @@ export interface InvestigationSummary {
   nextSafeCheckSummary: string;
 }
 
+export type CostSource =
+  | 'local_free'
+  | 'env_rates'
+  | 'model_table'
+  | 'provider'
+  | 'unknown';
+
 export interface TokenUsage {
   promptTokens?: number;
   completionTokens?: number;
   totalTokens?: number;
+  estimatedCostUsd?: number | null;
+  costSource?: CostSource;
 }
 
 export interface InvestigationRunRecord {

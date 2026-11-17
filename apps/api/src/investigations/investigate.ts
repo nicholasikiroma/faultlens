@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { attachCostEstimate } from "#agent";
 import { db } from "#db";
 import type {
   HypothesisFeedbackRating,
@@ -327,6 +328,22 @@ export function toInvestigationRunRecord(row: {
   startedAt: Date;
   endedAt: Date | null;
 }): InvestigationRunRecord {
+  const rawUsage = (row.tokenUsage as TokenUsage | null) ?? null;
+  const enrichedUsage =
+    rawUsage === null
+      ? null
+      : attachCostEstimate({
+          usage: rawUsage,
+          modelId: row.modelId,
+          providerId: config.aiProvider,
+          baseUrl:
+            config.aiProvider === "openai-compatible" && config.aiBaseUrlConfigured
+              ? config.aiBaseUrl
+              : undefined,
+          inputCostPer1M: config.aiInputCostPer1M,
+          outputCostPer1M: config.aiOutputCostPer1M,
+        });
+
   return {
     id: row.id,
     workspaceId: row.workspaceId,
@@ -339,7 +356,7 @@ export function toInvestigationRunRecord(row: {
     modelId: row.modelId,
     promptVersion: row.promptVersion,
     rulesetVersion: row.rulesetVersion,
-    tokenUsage: (row.tokenUsage as TokenUsage | null) ?? null,
+    tokenUsage: enrichedUsage,
     toolCallCount: row.toolCallCount,
     errorCode: row.errorCode,
     errorMessage: row.errorMessage,

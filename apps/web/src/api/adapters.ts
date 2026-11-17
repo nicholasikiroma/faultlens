@@ -1,5 +1,7 @@
 import type {
   AgentRunSummary,
+  AgentTokenUsage,
+  AiSynthesisSummary,
   FailureClass,
   HypothesisItem,
   Incident,
@@ -100,6 +102,7 @@ export interface BackendInvestigationRun {
   triggerReason: string | null;
   modelId: string | null;
   promptVersion: string | null;
+  tokenUsage?: AgentTokenUsage | null;
   toolCallCount: number;
   errorCode: string | null;
   errorMessage: string | null;
@@ -311,11 +314,13 @@ export function toFrontendIncidentSummary(summary: BackendIncidentSummary): Inci
         id: `hyp_${summary.id}`,
         title: `Automated Pipeline Classification: ${cls}`,
         reasoning: `Rule classifier matched 100% of telemetry criteria for ${cls} under rule ${summary.ruleVersion}.`,
+        source: 'deterministic',
         confidence: 'HIGH',
         suggestedCheck: guidance.next,
         feedback: 'none',
       },
     ],
+    aiSummary: null,
     rawPayload: {
       incidentId: summary.id,
       fingerprint: summary.fingerprint,
@@ -444,6 +449,7 @@ export function toFrontendIncidentDetail(exportData: BackendExportIncidentResult
     triggerReason: r.triggerReason,
     modelId: r.modelId,
     promptVersion: r.promptVersion,
+    tokenUsage: r.tokenUsage ?? null,
     toolCallCount: r.toolCallCount,
     errorCode: r.errorCode,
     errorMessage: r.errorMessage,
@@ -465,32 +471,51 @@ export function toFrontendIncidentDetail(exportData: BackendExportIncidentResult
     endedAt: new Date(tc.endedAt).toISOString(),
   }));
 
-  const persistedHypotheses: HypothesisItem[] = (exportData.hypotheses ?? []).map((h) => ({
-    id: h.id,
-    title: h.title,
-    reasoning: h.reasoning,
-    epistemicStatus: h.epistemicStatus,
-    confidence: h.confidence,
-    citedEvidenceIds: [...h.citedEvidenceIds],
-    missingInformation: [...h.missingInformation],
-    suggestedCheck: h.suggestedCheck,
-    remediation: h.remediation,
-    isPersisted: true,
-    feedback:
-      h.feedback === 'USEFUL'
-        ? 'helpful'
-        : h.feedback === 'INCORRECT'
-        ? 'false_positive'
-        : 'unverified',
-  }));
+  const runById = new Map(agentRuns.map((r) => [r.id, r]));
 
-  const latestAiSummary = exportData.agentRuns?.find((r) => r.summary !== null)?.summary ?? null;
+  const persistedHypotheses: HypothesisItem[] = (exportData.hypotheses ?? []).map((h) => {
+    const parentRun = runById.get(h.investigationRunId);
+    return {
+      id: h.id,
+      title: h.title,
+      reasoning: h.reasoning,
+      source: 'ai',
+      modelId: parentRun?.modelId ?? null,
+      epistemicStatus: h.epistemicStatus,
+      confidence: h.confidence,
+      citedEvidenceIds: [...h.citedEvidenceIds],
+      missingInformation: [...h.missingInformation],
+      suggestedCheck: h.suggestedCheck,
+      remediation: h.remediation,
+      isPersisted: true,
+      feedback:
+        h.feedback === 'USEFUL'
+          ? 'helpful'
+          : h.feedback === 'INCORRECT'
+          ? 'false_positive'
+          : 'unverified',
+    };
+  });
+
+  const latestAiRunWithSummary = exportData.agentRuns?.find((r) => r.summary !== null) ?? null;
+  const aiSummary: AiSynthesisSummary | null =
+    latestAiRunWithSummary && latestAiRunWithSummary.summary
+      ? {
+          known: latestAiRunWithSummary.summary.knownSummary,
+          suspect: latestAiRunWithSummary.summary.suspectSummary,
+          next: latestAiRunWithSummary.summary.nextSafeCheckSummary,
+          modelId: latestAiRunWithSummary.modelId,
+          promptVersion: latestAiRunWithSummary.promptVersion,
+          runState: latestAiRunWithSummary.state,
+          endedAt: latestAiRunWithSummary.endedAt
+            ? new Date(latestAiRunWithSummary.endedAt).toISOString()
+            : null,
+        }
+      : null;
 
   return {
     ...base,
-    known: latestAiSummary?.knownSummary ?? base.known,
-    suspect: latestAiSummary?.suspectSummary ?? base.suspect,
-    next: latestAiSummary?.nextSafeCheckSummary ?? base.next,
+    aiSummary,
     timeline: timelineList.length > 0 ? timelineList : base.timeline,
     evidence: evidenceList.length > 0 ? evidenceList : base.evidence,
     attempts: attemptsList.length > 0 ? attemptsList : base.attempts,

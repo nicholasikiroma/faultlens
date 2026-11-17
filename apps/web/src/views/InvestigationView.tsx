@@ -1,5 +1,22 @@
 import React, { useState } from 'react';
-import type { Incident, EvidenceItem, IncidentStatus } from '../types';
+import type { AgentTokenUsage, Incident, EvidenceItem, IncidentStatus } from '../types';
+
+function formatUsdCost(usage: AgentTokenUsage | null | undefined): string {
+  if (!usage) return 'n/a';
+  if (usage.costSource === 'local_free') return '$0.00 (local)';
+  const usd = usage.estimatedCostUsd;
+  if (typeof usd !== 'number' || !Number.isFinite(usd)) return 'est. unavailable';
+  if (usd === 0) return '$0.00';
+  if (usd < 0.0001) return '<$0.0001';
+  if (usd < 0.01) return `~$${usd.toFixed(4)}`;
+  return `~$${usd.toFixed(3)}`;
+}
+
+function formatTokenCount(usage: AgentTokenUsage | null | undefined): string {
+  if (!usage) return '0 tok';
+  const total = usage.totalTokens ?? (usage.promptTokens ?? 0) + (usage.completionTokens ?? 0);
+  return `${total.toLocaleString()} tok`;
+}
 import { Badge } from '../components/Badge';
 import { Button, EmptyState, PageHeader, Panel } from '../components/ui';
 import {
@@ -191,26 +208,103 @@ export const InvestigationView: React.FC<InvestigationViewProps> = ({
 
       {/* Tri-Column Epistemic Strip: Know / Suspect / Next Safe Check */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-fl-border rounded-xl overflow-hidden border border-fl-border shadow-subtle">
-        <div className="p-4 bg-fl-surface space-y-1.5">
-          <div className="text-[10px] font-mono font-semibold tracking-wider text-fl-accent-text uppercase flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-fl-accent" aria-hidden="true" />
-            What We Know
+        <div className="p-4 bg-fl-surface space-y-3 flex flex-col justify-between">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-[10px] font-mono font-semibold tracking-wider text-fl-accent-text uppercase flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-fl-accent" aria-hidden="true" />
+                What We Know
+              </div>
+              <span className="text-[9px] font-mono font-medium uppercase px-1.5 py-0.5 rounded bg-fl-violet-bg text-fl-violet-text border border-fl-violet-border">
+                Deterministic
+              </span>
+            </div>
+            <p className="text-[13px] text-fl-ink leading-relaxed font-sans">{incident.known}</p>
           </div>
-          <p className="text-[13px] text-fl-ink leading-relaxed font-sans">{incident.known}</p>
+          {incident.aiSummary && (
+            <div className="pt-2.5 border-t border-dashed border-fl-border space-y-1">
+              <div className="flex items-center justify-between gap-2">
+                <span className="inline-flex items-center gap-1 text-[9px] font-mono font-semibold uppercase text-fl-warning-text">
+                  <Sparkles className="w-2.5 h-2.5" aria-hidden="true" />
+                  AI Synthesis
+                </span>
+                {incident.aiSummary.modelId && (
+                  <span className="text-[9px] font-mono text-fl-muted truncate max-w-[140px]">
+                    {incident.aiSummary.modelId}
+                  </span>
+                )}
+              </div>
+              <p className="text-[12px] text-fl-secondary leading-relaxed font-sans">
+                {incident.aiSummary.known}
+              </p>
+            </div>
+          )}
         </div>
-        <div className="p-4 bg-fl-surface space-y-1.5">
-          <div className="text-[10px] font-mono font-semibold tracking-wider text-fl-warning-text uppercase flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-fl-warning-dot" aria-hidden="true" />
-            What We Suspect
+
+        <div className="p-4 bg-fl-surface space-y-3 flex flex-col justify-between">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-[10px] font-mono font-semibold tracking-wider text-fl-warning-text uppercase flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-fl-warning-dot" aria-hidden="true" />
+                What We Suspect
+              </div>
+              <span className="text-[9px] font-mono font-medium uppercase px-1.5 py-0.5 rounded bg-fl-violet-bg text-fl-violet-text border border-fl-violet-border">
+                Deterministic
+              </span>
+            </div>
+            <p className="text-[13px] text-fl-ink leading-relaxed font-sans">{incident.suspect}</p>
           </div>
-          <p className="text-[13px] text-fl-ink leading-relaxed font-sans">{incident.suspect}</p>
+          {incident.aiSummary && (
+            <div className="pt-2.5 border-t border-dashed border-fl-border space-y-1">
+              <div className="flex items-center justify-between gap-2">
+                <span className="inline-flex items-center gap-1 text-[9px] font-mono font-semibold uppercase text-fl-warning-text">
+                  <Sparkles className="w-2.5 h-2.5" aria-hidden="true" />
+                  AI Synthesis
+                </span>
+                {incident.aiSummary.modelId && (
+                  <span className="text-[9px] font-mono text-fl-muted truncate max-w-[140px]">
+                    {incident.aiSummary.modelId}
+                  </span>
+                )}
+              </div>
+              <p className="text-[12px] text-fl-secondary leading-relaxed font-sans">
+                {incident.aiSummary.suspect}
+              </p>
+            </div>
+          )}
         </div>
-        <div className="p-4 bg-fl-surface space-y-1.5">
-          <div className="text-[10px] font-mono font-semibold tracking-wider text-fl-violet-text uppercase flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-fl-violet-dot" aria-hidden="true" />
-            Next Safe Check
+
+        <div className="p-4 bg-fl-surface space-y-3 flex flex-col justify-between">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-[10px] font-mono font-semibold tracking-wider text-fl-violet-text uppercase flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-fl-violet-dot" aria-hidden="true" />
+                Next Safe Check
+              </div>
+              <span className="text-[9px] font-mono font-medium uppercase px-1.5 py-0.5 rounded bg-fl-violet-bg text-fl-violet-text border border-fl-violet-border">
+                Deterministic
+              </span>
+            </div>
+            <p className="text-[13px] text-fl-ink leading-relaxed font-sans">{incident.next}</p>
           </div>
-          <p className="text-[13px] text-fl-ink leading-relaxed font-sans">{incident.next}</p>
+          {incident.aiSummary && (
+            <div className="pt-2.5 border-t border-dashed border-fl-border space-y-1">
+              <div className="flex items-center justify-between gap-2">
+                <span className="inline-flex items-center gap-1 text-[9px] font-mono font-semibold uppercase text-fl-warning-text">
+                  <Sparkles className="w-2.5 h-2.5" aria-hidden="true" />
+                  AI Synthesis
+                </span>
+                {incident.aiSummary.modelId && (
+                  <span className="text-[9px] font-mono text-fl-muted truncate max-w-[140px]">
+                    {incident.aiSummary.modelId}
+                  </span>
+                )}
+              </div>
+              <p className="text-[12px] text-fl-secondary leading-relaxed font-sans">
+                {incident.aiSummary.next}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -548,20 +642,59 @@ export const InvestigationView: React.FC<InvestigationViewProps> = ({
               )}
             </div>
 
+            {latestAgentRun && (
+              <div
+                className="px-3 py-2 rounded-lg bg-fl-surface-subtle border border-fl-border flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono"
+                title={
+                  latestAgentRun.tokenUsage
+                    ? `Prompt: ${(latestAgentRun.tokenUsage.promptTokens ?? 0).toLocaleString()} • Completion: ${(latestAgentRun.tokenUsage.completionTokens ?? 0).toLocaleString()} • Source: ${latestAgentRun.tokenUsage.costSource ?? 'unknown'}`
+                    : undefined
+                }
+              >
+                <span className="text-fl-secondary truncate max-w-[160px]">
+                  {latestAgentRun.modelId ?? 'Agent Run'}
+                </span>
+                <div className="flex items-center gap-2 text-fl-ink tabular-nums">
+                  <span>{formatTokenCount(latestAgentRun.tokenUsage)}</span>
+                  <span className="text-fl-muted">•</span>
+                  <span
+                    className={
+                      latestAgentRun.tokenUsage?.costSource === 'local_free'
+                        ? 'text-fl-success-text font-semibold'
+                        : 'text-fl-accent-text font-semibold'
+                    }
+                  >
+                    {formatUsdCost(latestAgentRun.tokenUsage)}
+                  </span>
+                </div>
+              </div>
+            )}
+
             {incident.hypotheses.map((hyp) => (
               <div
                 key={hyp.id}
                 className="p-3.5 rounded-lg bg-fl-surface-subtle border border-fl-border space-y-3"
               >
                 <div className="space-y-1.5">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="text-[13px] font-sans font-semibold text-fl-ink">{hyp.title}</div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {hyp.source === 'ai' ? (
+                      <span className="inline-flex items-center gap-1 text-[9px] font-mono font-semibold uppercase px-1.5 py-0.5 rounded bg-fl-warning-bg text-fl-warning-text border border-fl-warning-border">
+                        <Sparkles className="w-2.5 h-2.5" aria-hidden="true" />
+                        AI Agent{hyp.modelId ? ` · ${hyp.modelId}` : ''}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[9px] font-mono font-semibold uppercase px-1.5 py-0.5 rounded bg-fl-violet-bg text-fl-violet-text border border-fl-violet-border">
+                        <Cpu className="w-2.5 h-2.5" aria-hidden="true" />
+                        Deterministic
+                      </span>
+                    )}
                     {hyp.epistemicStatus && (
-                      <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded border border-fl-border bg-fl-surface text-fl-secondary shrink-0">
+                      <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded border border-fl-border bg-fl-surface text-fl-secondary">
                         {hyp.epistemicStatus}
                       </span>
                     )}
                   </div>
+                  <div className="text-[13px] font-sans font-semibold text-fl-ink">{hyp.title}</div>
                   <p className="text-xs font-sans text-fl-secondary leading-relaxed">
                     {hyp.reasoning}
                   </p>
@@ -697,7 +830,31 @@ export const InvestigationView: React.FC<InvestigationViewProps> = ({
                   )}
                 </button>
                 {showProvenance && (
-                  <div className="mt-2 space-y-1.5 max-h-60 overflow-y-auto">
+                  <div className="mt-2 space-y-2 max-h-72 overflow-y-auto">
+                    {(incident.agentRuns ?? []).map((run) => (
+                      <div
+                        key={run.id}
+                        className="p-2 rounded bg-fl-surface border border-fl-border text-[11px] font-mono space-y-1"
+                      >
+                        <div className="flex items-center justify-between text-fl-ink">
+                          <span className="truncate max-w-[160px] font-medium">
+                            {run.modelId ?? run.mode}
+                          </span>
+                          <span className="text-[10px] text-fl-muted">{run.state}</span>
+                        </div>
+                        {run.tokenUsage && (
+                          <div className="flex items-center justify-between text-[10px] text-fl-secondary tabular-nums">
+                            <span>
+                              in {(run.tokenUsage.promptTokens ?? 0).toLocaleString()} / out{' '}
+                              {(run.tokenUsage.completionTokens ?? 0).toLocaleString()}
+                            </span>
+                            <span className="text-fl-ink font-medium">
+                              {formatUsdCost(run.tokenUsage)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                     {incident.toolCalls!.map((tc) => (
                       <div
                         key={tc.id}

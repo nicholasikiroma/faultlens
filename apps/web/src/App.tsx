@@ -74,6 +74,10 @@ export const App: React.FC = () => {
   const prevIncidentStatsRef = useRef<Map<string, { events: number; lastSeenAt: number }>>(
     new Map()
   );
+  const currentPageRef = useRef(currentPage);
+  currentPageRef.current = currentPage;
+  const selectedIncidentIdRef = useRef(selectedIncidentId);
+  selectedIncidentIdRef.current = selectedIncidentId;
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -146,6 +150,22 @@ export const App: React.FC = () => {
           }
 
           setIncidents(liveIncidents);
+
+          const openPage = currentPageRef.current;
+          const openIncidentId = selectedIncidentIdRef.current;
+          if (openPage === 'investigation' && openIncidentId) {
+            const activeInc = liveIncidents.find((i) => i.id === openIncidentId);
+            const activeRun = activeInc?.agentRuns?.[0];
+            const needsDetailSync =
+              (activeStreamHit && activeStreamHit.id === openIncidentId) ||
+              activeRun?.state === 'QUEUED' ||
+              activeRun?.state === 'RUNNING';
+            if (needsDetailSync) {
+              void apiStore.fetchIncidentDetail(openIncidentId).then(() => {
+                if (isMounted) setIncidents(apiStore.getIncidents());
+              });
+            }
+          }
         }
       }
     };
