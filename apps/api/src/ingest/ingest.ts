@@ -46,10 +46,16 @@ interface IngestEpisodeMeta {
   statusCode?: number;
   rootCauseSummary?: string;
   exceptions?: Array<{ name: string; message: string }>;
-  downstreamCalls?: Array<{ statusCode?: number; origin?: string; path?: string }>;
+  downstreamCalls?: Array<{
+    statusCode?: number;
+    origin?: string;
+    path?: string;
+  }>;
 }
 
-function parseEpisodeMeta(headers: Readonly<Record<string, string>>): IngestEpisodeMeta | null {
+function parseEpisodeMeta(
+  headers: Readonly<Record<string, string>>,
+): IngestEpisodeMeta | null {
   const raw = headerValue(headers, "x-faultlens-episode");
   if (!raw) return null;
   try {
@@ -70,16 +76,22 @@ export function ingestSimulated(input: IngestInput): Promise<IngestResult> {
   return ingestDelivery(input, "simulated");
 }
 
-async function ingestDelivery(input: IngestInput, credential: "api-key" | "simulated"): Promise<IngestResult> {
+async function ingestDelivery(
+  input: IngestInput,
+  credential: "api-key" | "simulated",
+): Promise<IngestResult> {
   if (input.rawBody.length > MAX_BODY_BYTES) {
     return { outcome: "oversized" };
   }
 
   const receivedAt = new Date();
   return db.transaction(async (tx) => {
-    const integration = credential === "api-key"
-      ? await integrationForKey(tx, input.token)
-      : await tx.orm.public.Integration.where({ endpointToken: input.token }).first();
+    const integration =
+      credential === "api-key"
+        ? await integrationForKey(tx, input.token)
+        : await tx.orm.public.Integration.where({
+            endpointToken: input.token,
+          }).first();
     if (integration === null) {
       return { outcome: "unknown-token" };
     }
@@ -135,9 +147,12 @@ async function ingestDelivery(input: IngestInput, credential: "api-key" | "simul
 
         // Decode FlightRecorder SDK telemetry metadata if attached
         const episodeMeta = parseEpisodeMeta(input.headers);
-        let httpStatus: number | null = placed.outcome === "conflict" ? 409 : 200;
-        let errorCode: string | null = placed.outcome === "conflict" ? "conflict" : null;
-        let verificationState: Exclude<VerificationState, "RECEIVED"> = "VERIFIED";
+        let httpStatus: number | null =
+          placed.outcome === "conflict" ? 409 : 200;
+        let errorCode: string | null =
+          placed.outcome === "conflict" ? "conflict" : null;
+        let verificationState: Exclude<VerificationState, "RECEIVED"> =
+          "VERIFIED";
 
         if (episodeMeta) {
           if (episodeMeta.statusCode && episodeMeta.statusCode >= 400) {
@@ -156,7 +171,10 @@ async function ingestDelivery(input: IngestInput, credential: "api-key" | "simul
           } else if (episodeMeta.primaryClass === "INVALID_SIGNATURE") {
             verificationState = "REJECTED";
             errorCode = "invalid_signature";
-          } else if (episodeMeta.primaryClass === "UPSTREAM_5XX" || (httpStatus !== null && httpStatus >= 500)) {
+          } else if (
+            episodeMeta.primaryClass === "UPSTREAM_5XX" ||
+            (httpStatus !== null && httpStatus >= 500)
+          ) {
             errorCode = "upstream_5xx";
           } else if (episodeMeta.primaryClass === "DUPLICATE_DELIVERY") {
             errorCode = "duplicate_delivery";
@@ -173,12 +191,18 @@ async function ingestDelivery(input: IngestInput, credential: "api-key" | "simul
           errorCode,
         });
 
-        if (episodeMeta && episodeMeta.primaryClass && episodeMeta.primaryClass !== "HEALTHY") {
+        if (
+          episodeMeta &&
+          episodeMeta.primaryClass &&
+          episodeMeta.primaryClass !== "HEALTHY"
+        ) {
           await tx.orm.public.Evidence.create({
             id: randomUUID(),
             sourceKind: "DELIVERY_ATTEMPT",
             sourceRecordId: attemptId,
-            summary: episodeMeta.rootCauseSummary ?? `Ingress flight incident: ${episodeMeta.primaryClass}`,
+            summary:
+              episodeMeta.rootCauseSummary ??
+              `Ingress flight incident: ${episodeMeta.primaryClass}`,
             sha256Digest: digest,
             trustTier: "A",
             workspaceId: integration.workspaceId,
@@ -198,7 +222,8 @@ async function ingestDelivery(input: IngestInput, credential: "api-key" | "simul
           const eventIdToClassify = placed.eventId;
           setImmediate(async () => {
             try {
-              const { classifyJob } = await import("../../../worker/src/classify-job.ts");
+              const { classifyJob } =
+                await import("../../../worker/src/classify-job.ts");
               await classifyJob(eventIdToClassify);
             } catch {
               // Gracefully handled by BullMQ worker
