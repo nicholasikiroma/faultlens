@@ -92,6 +92,59 @@ export function unhandledExceptionEvidence(ctx: Readonly<IncidentContext>): read
   });
 }
 
+export function outOfOrderEvidence(ctx: Readonly<IncidentContext>): {
+  readonly matched: boolean;
+  readonly evidenceIds: readonly string[];
+  readonly detail: string | null;
+} {
+  const episodeHits = ctx.evidence.filter((item) => {
+    if (item.sourceKind !== 'FLIGHT_RECORDER_EPISODE') return false;
+    const data = asRecord(item.structuredDataJson);
+    return data?.['isOutOfOrderDelivery'] === true;
+  });
+  if (episodeHits.length > 0) {
+    return {
+      matched: true,
+      evidenceIds: episodeHits.map((e) => e.id),
+      detail: 'FlightRecorder observed an out-of-order provider timestamp relative to previously seen events.',
+    };
+  }
+
+  const event = ctx.event;
+  const peers = ctx.peerEvents ?? [];
+  if (event === null || event.occurredAt === null || peers.length === 0) {
+    return { matched: false, evidenceIds: [], detail: null };
+  }
+
+  const newerDeliveredEarlier = peers.find(
+    (peer) =>
+      peer.id !== event.id &&
+      peer.integrationId === event.integrationId &&
+      (event.eventType === null || peer.eventType === null || peer.eventType === event.eventType) &&
+      peer.occurredAt !== null &&
+      peer.firstReceivedAt < event.firstReceivedAt &&
+      peer.occurredAt > event.occurredAt!,
+  );
+
+  if (!newerDeliveredEarlier) {
+    return { matched: false, evidenceIds: [], detail: null };
+  }
+
+  const evIds = ctx.evidence
+    .filter(
+      (item) =>
+        (item.sourceKind === 'WEBHOOK_EVENT' && item.sourceRecordId === event.id) ||
+        item.sourceKind === 'DELIVERY_ATTEMPT',
+    )
+    .map((item) => item.id);
+
+  return {
+    matched: true,
+    evidenceIds: evIds,
+    detail: `Event occurredAt (${event.occurredAt.toISOString()}) is older than previously received event ${newerDeliveredEarlier.id} (${newerDeliveredEarlier.occurredAt!.toISOString()}).`,
+  };
+}
+
 export function anySpecific(ctx: Readonly<IncidentContext>): boolean {
   return (
     authFailures(ctx).length > 0 ||
@@ -101,6 +154,7 @@ export function anySpecific(ctx: Readonly<IncidentContext>): boolean {
     schemaMismatches(ctx).length > 0 ||
     invalidSignatures(ctx).length > 0 ||
     duplicateDeliveries(ctx).length > 0 ||
+    outOfOrderEvidence(ctx).matched ||
     ingressAbortedEvidence(ctx).length > 0 ||
     decryptFailureEvidence(ctx).length > 0 ||
     downstreamNetworkErrorEvidence(ctx).length > 0 ||

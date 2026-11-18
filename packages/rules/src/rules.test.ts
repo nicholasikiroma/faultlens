@@ -133,6 +133,35 @@ test('out of order stays empty until the context can show arrival order across e
   );
 });
 
+test('out of order triggers when peerEvents show newer occurredAt arrived earlier or FlightRecorder observed it', async () => {
+  const olderEvent = event({
+    id: 'event-late',
+    eventType: 'subscription.updated',
+    occurredAt: new Date('2026-11-07T00:00:00.000Z'),
+    firstReceivedAt: new Date('2026-11-07T00:00:10.000Z'),
+  });
+  const newerPeer = event({
+    id: 'event-early',
+    eventType: 'subscription.updated',
+    occurredAt: new Date('2026-11-07T00:00:05.000Z'),
+    firstReceivedAt: new Date('2026-11-07T00:00:06.000Z'),
+  });
+
+  const multiMatches = await evaluateRules({
+    integrationId: 'integration-1',
+    environment: 'production',
+    event: olderEvent,
+    attempts: [attempt({ id: 'attempt-1', eventId: 'event-late', httpStatus: 200 })],
+    evidence: [evidence('evidence-1', 'attempt-1')],
+    peerEvents: [newerPeer],
+  });
+  assert.deepEqual(
+    multiMatches.map((m) => m.failureClass),
+    ['OUT_OF_ORDER'],
+  );
+  assert.deepEqual(multiMatches[0]?.evidenceIds, ['evidence-1']);
+});
+
 test('two timeouts for one integration and endpoint share a fingerprint', () => {
   const first = fingerprint({
     integrationId: 'integration-1',

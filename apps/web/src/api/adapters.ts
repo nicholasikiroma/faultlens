@@ -5,6 +5,7 @@ import type {
   FailureClass,
   HypothesisItem,
   Incident,
+  IncidentQuestionItem,
   IncidentSeverity,
   IncidentStatus,
   RemediationProposal,
@@ -129,6 +130,19 @@ export interface BackendToolCall {
   endedAt: string | Date;
 }
 
+export interface BackendIncidentQuestion {
+  id: string;
+  actor: string;
+  question: string;
+  answer: string;
+  epistemicStatus: 'OBSERVED' | 'INFERRED' | 'HYPOTHESIS' | 'UNVERIFIED';
+  citedEvidenceIds: readonly string[];
+  modelId: string | null;
+  tokenUsage?: AgentTokenUsage | null;
+  toolCallCount: number;
+  createdAt: string | Date;
+}
+
 export interface BackendExportIncidentResult {
   kind: 'ok' | 'missing' | 'unauthorized';
   incidentId: string;
@@ -141,6 +155,7 @@ export interface BackendExportIncidentResult {
   hypotheses?: readonly BackendHypothesis[];
   agentRuns?: readonly BackendInvestigationRun[];
   toolCalls?: readonly BackendToolCall[];
+  questions?: readonly BackendIncidentQuestion[];
 }
 
 function normalizeFailureClass(cls: string): FailureClass {
@@ -513,6 +528,19 @@ export function toFrontendIncidentDetail(exportData: BackendExportIncidentResult
         }
       : null;
 
+  const questions: IncidentQuestionItem[] = (exportData.questions ?? []).map((q) => ({
+    id: q.id,
+    actor: q.actor,
+    question: q.question,
+    answer: q.answer,
+    epistemicStatus: q.epistemicStatus,
+    citedEvidenceIds: [...q.citedEvidenceIds],
+    modelId: q.modelId,
+    tokenUsage: q.tokenUsage ?? null,
+    toolCallCount: q.toolCallCount,
+    createdAt: new Date(q.createdAt).toISOString(),
+  }));
+
   return {
     ...base,
     aiSummary,
@@ -523,6 +551,7 @@ export function toFrontendIncidentDetail(exportData: BackendExportIncidentResult
     hypotheses: persistedHypotheses.length > 0 ? persistedHypotheses : base.hypotheses,
     agentRuns,
     toolCalls,
+    questions,
     rawPayload: {
       incidentId: exportData.incidentId,
       fingerprint: exportData.incident.fingerprint,

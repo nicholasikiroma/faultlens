@@ -4,6 +4,7 @@ import { after, test } from 'node:test';
 import { db } from '#db';
 import type { Episode } from '#sdk';
 import { classifyJob } from '../../../worker/src/classify-job.ts';
+import { closeInvestigationQueue } from '../../../worker/src/investigation-queue.ts';
 import { ensureProductSchema } from '../seed/seed.ts';
 import { ingestEpisode } from './episode-ingest.ts';
 import { hashIngestKey } from './keys.ts';
@@ -12,6 +13,7 @@ const token = 'episode-ingest-test-key';
 const workspaceId = 'workspace-1';
 
 after(async () => {
+  await closeInvestigationQueue();
   await db.close();
 });
 

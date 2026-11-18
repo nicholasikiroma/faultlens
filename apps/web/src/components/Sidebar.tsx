@@ -4,6 +4,7 @@ import {
   AlertCircle,
   Plug,
   Play,
+  BarChart3,
   Settings,
   Pause,
   RefreshCw,
@@ -47,6 +48,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'incidents', label: 'Incidents', icon: AlertCircle, count: openIncidentsCount },
     { id: 'integrations', label: 'Integrations', icon: Plug },
     { id: 'playground', label: 'Playground', icon: Play },
+    { id: 'evaluations', label: 'Evaluations', icon: BarChart3 },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 

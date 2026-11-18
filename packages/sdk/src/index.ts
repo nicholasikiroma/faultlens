@@ -1,6 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import crypto from 'node:crypto';
-import { INGEST_SIGNATURE_HEADER, MAX_INGEST_BODY_BYTES } from '#domain';
+import { MAX_INGEST_BODY_BYTES } from '#domain';
 import type {
   DiagnosisDecision,
   Episode,
@@ -273,49 +272,9 @@ export class FlightRecorder {
         this.shippedEpisodes.push(episode);
       }
 
-      // Non-blocking shipping to FaultLens backend if transport and signingSecret are available
-      if (decision.shouldShip && this.transport && this.signingSecret) {
-        const captured = episode.bodyTap.capturedBytes;
-        const rawBody: Buffer = captured && captured.length > 0
-          ? captured
-          : Buffer.from(JSON.stringify({
-              event_id: episode.identity.eventId || episode.episodeId,
-              type: episode.identity.eventType || "flight_recorder.episode",
-            }));
-
-        if (rawBody.byteLength <= MAX_INGEST_BODY_BYTES) {
-          const signature = crypto
-            .createHmac('sha256', this.signingSecret)
-            .update(rawBody)
-            .digest('hex');
-
-          const episodeMeta = Buffer.from(
-            JSON.stringify({
-              episodeId: episode.episodeId,
-              primaryClass: decision.primaryClass,
-              secondaryClasses: decision.secondaryClasses,
-              rootCauseSummary: decision.rootCauseSummary,
-              timeoutAttribution: decision.timeoutAttribution,
-              autoReplaySafe: decision.autoReplaySafe,
-              replayGateReasons: decision.replayGateReasons,
-              statusCode: episode.statusCode,
-              framework: episode.framework,
-              downstreamCalls: episode.downstreamCalls,
-              exceptions: episode.exceptions,
-              wireBodyHmac: episode.bodyTap.wireBodyHmac,
-            })
-          ).toString('base64');
-
-          void this.transport.deliver(() => ({
-            path: '/v1/ingest',
-            body: new Uint8Array(rawBody),
-            headers: {
-              'content-type': 'application/json',
-              [INGEST_SIGNATURE_HEADER]: signature,
-              'x-faultlens-episode': episodeMeta,
-            },
-          }));
-        }
+      // Non-blocking shipping to FaultLens backend /v1/ingest/episodes when transport is configured
+      if (decision.shouldShip && this.transport) {
+        void this.shipEpisode(episode);
       }
 
       if (
@@ -327,6 +286,38 @@ export class FlightRecorder {
     });
 
     return decision;
+  }
+
+  /**
+   * Ships a sanitized Episode (without raw `capturedBytes`) to `POST /v1/ingest/episodes`.
+   */
+  public shipEpisode(episode: Episode): Promise<DeliveryResult> {
+    if (!this.transport) {
+      return Promise.resolve({ outcome: 'failed', reason: 'network' });
+    }
+    const sanitizedEpisode: Episode = {
+      ...episode,
+      bodyTap: {
+        totalBytesSeen: episode.bodyTap.totalBytesSeen,
+        tappedBytes: episode.bodyTap.tappedBytes,
+        truncatedByCap: episode.bodyTap.truncatedByCap,
+        wireBodyHmac: episode.bodyTap.wireBodyHmac,
+        ...(episode.bodyTap.previewJson !== undefined
+          ? { previewJson: episode.bodyTap.previewJson }
+          : {}),
+      },
+    };
+    const serialized = Buffer.from(JSON.stringify(sanitizedEpisode), 'utf8');
+    if (serialized.byteLength > MAX_INGEST_BODY_BYTES) {
+      return Promise.resolve({ outcome: 'dropped', reason: 'oversized' });
+    }
+    return this.transport.deliver(() => ({
+      path: '/v1/ingest/episodes',
+      body: new Uint8Array(serialized),
+      headers: {
+        'content-type': 'application/json',
+      },
+    }));
   }
 }
 

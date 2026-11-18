@@ -1,6 +1,8 @@
 import type {
   AgentSettingsSummary,
+  EvaluationsSummaryData,
   Incident,
+  IncidentQuestionItem,
   IntegrationItem,
   PlaygroundScenario,
 } from '../types';
@@ -494,7 +496,7 @@ export class ApiStore {
   private isLiveConnected = false;
   private lastLatencyMs: number | null = null;
 
-  private adminToken = 'local-dev-admin-token';
+  private adminToken = localStorage.getItem('fl_admin_token') || 'local-dev-admin-token';
   private baseUrl = '';
 
   constructor() {
@@ -512,6 +514,21 @@ export class ApiStore {
 
     // In browser/Vite dev, requests to /v1 are proxied to localhost:3000
     this.baseUrl = window.location.origin;
+  }
+
+  getAdminToken(): string {
+    return this.adminToken;
+  }
+
+  setAdminToken(token: string): void {
+    const trimmed = token.trim();
+    this.adminToken = trimmed.length > 0 ? trimmed : 'local-dev-admin-token';
+    try {
+      if (trimmed.length > 0) localStorage.setItem('fl_admin_token', trimmed);
+      else localStorage.removeItem('fl_admin_token');
+    } catch {
+      // Ignore storage errors
+    }
   }
 
   getIsLiveConnected(): boolean {
@@ -599,6 +616,7 @@ export class ApiStore {
                 aiSummary: existing.aiSummary ?? null,
                 agentRuns: existing.agentRuns ?? [],
                 toolCalls: existing.toolCalls ?? [],
+                questions: existing.questions ?? [],
                 timeline: existing.timeline,
                 evidence: existing.evidence,
                 attempts: existing.attempts,
@@ -771,6 +789,63 @@ export class ApiStore {
         model: body.model,
         baseUrlConfigured: body.baseUrlConfigured,
         budgets: body.budgets,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  async askIncidentQuestion(
+    incidentId: string,
+    question: string,
+  ): Promise<{ outcome: 'answered'; item: IncidentQuestionItem } | { outcome: 'error'; message: string }> {
+    try {
+      const res = await fetch(`${this.baseUrl}/v1/incidents/${incidentId}/ask`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.adminToken}`,
+        },
+        body: JSON.stringify({ question }),
+      });
+      const body = (await res.json()) as {
+        outcome?: string;
+        item?: IncidentQuestionItem;
+        message?: string;
+      };
+      if (res.ok && body.outcome === 'answered' && body.item) {
+        const inc = this.incidents.find((i) => i.id === incidentId);
+        if (inc) {
+          inc.questions = [...(inc.questions ?? []), body.item];
+          this.save();
+        }
+        return { outcome: 'answered', item: body.item };
+      }
+      return {
+        outcome: 'error',
+        message:
+          body.outcome === 'ai-disabled'
+            ? 'AI agent is disabled (FAULTLENS_AI_ENABLED=0).'
+            : body.message ?? 'Unable to answer follow-up question.',
+      };
+    } catch {
+      return { outcome: 'error', message: 'Backend API unreachable.' };
+    }
+  }
+
+  async fetchEvaluationsSummary(): Promise<EvaluationsSummaryData | null> {
+    try {
+      const res = await fetch(`${this.baseUrl}/v1/evaluations/summary`, {
+        headers: {
+          Authorization: `Bearer ${this.adminToken}`,
+        },
+      });
+      if (!res.ok) return null;
+      const body = (await res.json()) as EvaluationsSummaryData & { kind?: string };
+      if (body.kind !== 'ok') return null;
+      return {
+        totals: body.totals,
+        byModel: body.byModel,
       };
     } catch {
       return null;

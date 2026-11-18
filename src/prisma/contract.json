@@ -36,6 +36,10 @@
       "model": "IncidentEvent",
       "namespace": "public"
     },
+    "incident_questions": {
+      "model": "IncidentQuestion",
+      "namespace": "public"
+    },
     "incidents": {
       "model": "Incident",
       "namespace": "public"
@@ -1175,6 +1179,21 @@
                   "namespace": "public"
                 }
               },
+              "questions": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "incidentId"
+                  ]
+                },
+                "to": {
+                  "model": "IncidentQuestion",
+                  "namespace": "public"
+                }
+              },
               "runs": {
                 "cardinality": "1:N",
                 "on": {
@@ -1309,6 +1328,163 @@
               },
               "namespaceId": "public",
               "table": "incident_events"
+            }
+          },
+          "IncidentQuestion": {
+            "fields": {
+              "actor": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "answer": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "citedEvidenceIds": {
+                "many": {
+                  "elementNullable": true
+                },
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamp-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "epistemicStatus": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/enum@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "typeName": "EpistemicStatus"
+                  }
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "incidentId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "modelId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "question": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "tokenUsage": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/jsonb@1",
+                  "kind": "scalar"
+                }
+              },
+              "toolCallCount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "workspaceId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "incident": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "incidentId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Incident",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "actor": {
+                  "column": "actor"
+                },
+                "answer": {
+                  "column": "answer"
+                },
+                "citedEvidenceIds": {
+                  "column": "cited_evidence_ids"
+                },
+                "createdAt": {
+                  "column": "created_at"
+                },
+                "epistemicStatus": {
+                  "column": "epistemic_status"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "incidentId": {
+                  "column": "incident_id"
+                },
+                "modelId": {
+                  "column": "model_id"
+                },
+                "question": {
+                  "column": "question"
+                },
+                "tokenUsage": {
+                  "column": "token_usage"
+                },
+                "toolCallCount": {
+                  "column": "tool_call_count"
+                },
+                "workspaceId": {
+                  "column": "workspace_id"
+                }
+              },
+              "namespaceId": "public",
+              "table": "incident_questions"
             }
           },
           "IngestKey": {
@@ -3252,6 +3428,126 @@
               },
               "uniques": []
             },
+            "incident_questions": {
+              "columns": {
+                "actor": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "answer": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "cited_evidence_ids": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "many": {
+                    "elementNullable": true
+                  },
+                  "nullable": true
+                },
+                "created_at": {
+                  "codecId": "pg/timestamp-date@1",
+                  "dataType": "pg/timestamp",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "epistemic_status": {
+                  "codecId": "pg/enum@1",
+                  "dataType": "pg/enum",
+                  "nullable": false,
+                  "typeParams": {
+                    "typeName": "EpistemicStatus"
+                  },
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "EpistemicStatus",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "incident_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "model_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
+                "question": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "token_usage": {
+                  "codecId": "pg/jsonb@1",
+                  "dataType": "pg/jsonb",
+                  "nullable": true
+                },
+                "tool_call_count": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "default": {
+                    "kind": "literal",
+                    "value": 0
+                  },
+                  "nullable": false
+                },
+                "workspace_id": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "cascade",
+                  "onUpdate": "cascade",
+                  "source": {
+                    "columns": [
+                      "incident_id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "incident_questions"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "incidents"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "workspace_id",
+                    "incident_id",
+                    "created_at"
+                  ],
+                  "name": "incident_questions_workspace_id_incident_id_created_at_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
             "incidents": {
               "columns": {
                 "endpoint": {
@@ -4164,10 +4460,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "4a9c6e25fcf6533be988b06df029aff2bff3e429df0bdea6ea0d1c355b2a5303"
+    "storageHash": "e55e91f16ca33fc847e33bffafca04a118798984b4881a810dd4e3a13595b0e5"
   },
   "execution": {
-    "executionHash": "bc3b6f6bf380bc82d4820a53e26beed244d7f31ec1173cf0f04f6b04ed993374",
+    "executionHash": "93fd73b02ba148c066b437781f7e14cd0412c7ac5906edcf579415fc8df12116",
     "mutations": {
       "defaults": [
         {
@@ -4232,6 +4528,17 @@
           },
           "ref": {
             "entry": "hypotheses",
+            "field": "id",
+            "namespace": "public"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "entry": "incident_questions",
             "field": "id",
             "namespace": "public"
           }

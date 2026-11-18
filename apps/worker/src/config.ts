@@ -56,7 +56,22 @@ export const config = {
   get aiOutputCostPer1M(): number | undefined {
     return parseOptionalCost(process.env['FAULTLENS_AI_OUTPUT_COST_PER_1M']);
   },
+  get retentionEnabled(): boolean {
+    return process.env['FAULTLENS_RETENTION_ENABLED'] === '1';
+  },
+  get retentionMetadataDays(): number {
+    return parsePositiveDays(process.env['FAULTLENS_RETENTION_METADATA_DAYS'], 30);
+  },
+  get retentionPayloadDays(): number {
+    return parsePositiveDays(process.env['FAULTLENS_RETENTION_PAYLOAD_DAYS'], 7);
+  },
 } as const;
+
+function parsePositiveDays(raw: string | undefined, fallback: number): number {
+  if (!raw || raw.trim().length === 0) return fallback;
+  const parsed = Number(raw);
+  return Number.isInteger(parsed) && parsed >= 1 && parsed <= 3650 ? parsed : fallback;
+}
 
 function parseOptionalCost(raw: string | undefined): number | undefined {
   if (!raw || raw.trim().length === 0) return undefined;

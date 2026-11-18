@@ -136,6 +136,49 @@ export interface AgentSettingsSummary {
   };
 }
 
+export interface IncidentQuestionItem {
+  id: string;
+  actor: string;
+  question: string;
+  answer: string;
+  epistemicStatus: HypothesisEpistemicStatus;
+  citedEvidenceIds: string[];
+  modelId: string | null;
+  tokenUsage?: AgentTokenUsage | null;
+  toolCallCount: number;
+  createdAt: string;
+}
+
+export interface EvaluationsSummaryData {
+  totals: {
+    totalRuns: number;
+    completedRuns: number;
+    needsReviewRuns: number;
+    failedRuns: number;
+    totalTokens: number;
+    totalEstimatedCostUsd: number;
+    totalHypotheses: number;
+    usefulHypotheses: number;
+    incorrectHypotheses: number;
+    unverifiedHypotheses: number;
+    precisionRate: number | null;
+  };
+  byModel: Array<{
+    modelId: string;
+    promptVersion: string;
+    runCount: number;
+    completedCount: number;
+    needsReviewCount: number;
+    failedCount: number;
+    totalTokens: number;
+    totalEstimatedCostUsd: number;
+    usefulCount: number;
+    incorrectCount: number;
+    unverifiedCount: number;
+    precisionRate: number | null;
+  }>;
+}
+
 export interface Incident {
   id: string;
   key: string;
@@ -159,6 +202,7 @@ export interface Incident {
   aiSummary?: AiSynthesisSummary | null;
   agentRuns?: AgentRunSummary[];
   toolCalls?: ToolCallSummary[];
+  questions?: IncidentQuestionItem[];
   rawPayload: Record<string, unknown>;
 }
 

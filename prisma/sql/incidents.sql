@@ -358,6 +358,24 @@ CREATE TABLE IF NOT EXISTS hypotheses (
 CREATE INDEX IF NOT EXISTS hypotheses_workspace_id_incident_id_created_at_idx
   ON hypotheses (workspace_id, incident_id, created_at);
 
+CREATE TABLE IF NOT EXISTS incident_questions (
+  id text PRIMARY KEY,
+  workspace_id text NOT NULL,
+  incident_id text NOT NULL REFERENCES incidents (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  actor text NOT NULL,
+  question text NOT NULL,
+  answer text NOT NULL,
+  epistemic_status "EpistemicStatus" NOT NULL,
+  cited_evidence_ids text[] NOT NULL DEFAULT '{}',
+  model_id text,
+  token_usage jsonb,
+  tool_call_count integer NOT NULL DEFAULT 0,
+  created_at timestamp(3) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS incident_questions_workspace_id_incident_id_created_at_idx
+  ON incident_questions (workspace_id, incident_id, created_at);
+
 -- CREATE TABLE IF NOT EXISTS does not change keys that already exist.
 ALTER TABLE incident_events DROP CONSTRAINT IF EXISTS incident_events_incident_id_fkey;
 ALTER TABLE incident_events DROP CONSTRAINT IF EXISTS incident_events_event_id_fkey;

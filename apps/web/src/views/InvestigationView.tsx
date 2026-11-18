@@ -27,6 +27,8 @@ import {
   Copy,
   ChevronDown,
   ChevronUp,
+  Send,
+  MessageSquare,
   ThumbsUp,
   ThumbsDown,
   HelpCircle,
@@ -53,6 +55,7 @@ interface InvestigationViewProps {
   onFeedback: (hypothesisId: string, feedback: 'helpful' | 'false_positive' | 'unverified') => void;
   onStatusChange?: (newStatus: IncidentStatus) => void;
   onTriggerInvestigation?: () => void;
+  onAskQuestion?: (question: string) => Promise<void>;
 }
 
 export const InvestigationView: React.FC<InvestigationViewProps> = ({
@@ -66,11 +69,14 @@ export const InvestigationView: React.FC<InvestigationViewProps> = ({
   onFeedback,
   onStatusChange,
   onTriggerInvestigation,
+  onAskQuestion,
 }) => {
   const [activeTab, setActiveTab] = useState<'timeline' | 'evidence' | 'attempts' | 'raw'>('timeline');
   const [copiedRaw, setCopiedRaw] = useState(false);
   const [copiedSnippetId, setCopiedSnippetId] = useState<string | null>(null);
   const [showProvenance, setShowProvenance] = useState(false);
+  const [followUpQuestion, setFollowUpQuestion] = useState('');
+  const [askingQuestion, setAskingQuestion] = useState(false);
 
   const latestAgentRun = incident.agentRuns?.[0];
   const isRunActive =
@@ -878,6 +884,80 @@ export const InvestigationView: React.FC<InvestigationViewProps> = ({
               <ShieldCheck className="w-3.5 h-3.5 text-fl-success-dot" aria-hidden="true" />
               <span>Read-only diagnosis • No destructive actions</span>
             </div>
+          </Panel>
+
+          <Panel padding="md" className="space-y-3">
+            <div className="flex items-center justify-between pb-2.5 border-b border-fl-border">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-fl-accent" aria-hidden="true" />
+                <h3 className="text-fl-card text-fl-ink font-sans">Follow-Up Q&amp;A</h3>
+              </div>
+              <span className="text-[10px] font-mono uppercase text-fl-muted">
+                Read-Only
+              </span>
+            </div>
+
+            {(incident.questions ?? []).length > 0 && (
+              <div className="space-y-2.5 max-h-64 overflow-y-auto">
+                {incident.questions!.map((q) => (
+                  <div
+                    key={q.id}
+                    className="p-2.5 rounded-lg bg-fl-surface-subtle border border-fl-border space-y-1.5 text-xs"
+                  >
+                    <div className="font-sans font-semibold text-fl-ink">Q: {q.question}</div>
+                    <p className="font-sans text-fl-secondary leading-relaxed">{q.answer}</p>
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[10px] font-mono text-fl-muted">
+                      <span>{q.epistemicStatus}</span>
+                      {q.tokenUsage && (
+                        <span>
+                          {formatTokenCount(q.tokenUsage)} · {formatUsdCost(q.tokenUsage)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {onAskQuestion && (
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const trimmed = followUpQuestion.trim();
+                  if (!trimmed || askingQuestion) return;
+                  setAskingQuestion(true);
+                  try {
+                    await onAskQuestion(trimmed);
+                    setFollowUpQuestion('');
+                  } finally {
+                    setAskingQuestion(false);
+                  }
+                }}
+                className="flex items-center gap-2"
+              >
+                <input
+                  type="text"
+                  value={followUpQuestion}
+                  onChange={(e) => setFollowUpQuestion(e.target.value)}
+                  disabled={!aiEnabled || askingQuestion}
+                  placeholder={
+                    aiEnabled
+                      ? 'Ask a read-only question about this incident...'
+                      : 'Enable FAULTLENS_AI_ENABLED=1 for Q&A'
+                  }
+                  className="flex-1 min-w-0 px-2.5 py-1.5 rounded-md text-xs font-sans bg-fl-surface border border-fl-border text-fl-ink placeholder:text-fl-muted focus:outline-none focus:border-fl-accent disabled:opacity-60"
+                />
+                <Button
+                  type="submit"
+                  size="sm"
+                  variant="secondary"
+                  disabled={!aiEnabled || askingQuestion || followUpQuestion.trim().length === 0}
+                  leadingIcon={<Send className="w-3 h-3" />}
+                >
+                  {askingQuestion ? '...' : 'Ask'}
+                </Button>
+              </form>
+            )}
           </Panel>
         </div>
       </div>

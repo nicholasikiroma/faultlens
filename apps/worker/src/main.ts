@@ -6,6 +6,7 @@ import {
   closeInvestigationQueue,
   createInvestigationWorker,
 } from './investigation-queue.ts';
+import { purgeExpiredData } from './retention.ts';
 
 export interface WorkerRuntime {
   close: () => Promise<void>;
@@ -38,11 +39,28 @@ export async function startWorker(options?: {
   }, intervalMs);
   timer.unref();
 
+  let retentionTimer: ReturnType<typeof setInterval> | null = null;
+  if (config.retentionEnabled) {
+    const runRetention = async () => {
+      try {
+        await purgeExpiredData();
+      } catch (error) {
+        console.error('Retention purge failed', error);
+      }
+    };
+    void runRetention();
+    retentionTimer = setInterval(() => {
+      void runRetention();
+    }, 3_600_000);
+    retentionTimer.unref();
+  }
+
   return {
     close: async () => {
       if (stopped) return;
       stopped = true;
       clearInterval(timer);
+      if (retentionTimer) clearInterval(retentionTimer);
       await worker.close();
       await investigationWorker.close();
       await closeQueue();

@@ -246,6 +246,7 @@ model Incident {
   findings   Finding[]
   runs       InvestigationRun[]
   hypotheses Hypothesis[]
+  questions  IncidentQuestion[]
 
   @@unique([workspaceId, fingerprint, ruleVersion])
   @@map("incidents")
@@ -365,6 +366,26 @@ model Hypothesis {
 
   @@index([workspaceId, incidentId, createdAt])
   @@map("hypotheses")
+}
+
+model IncidentQuestion {
+  id               String          @id @default(uuid())
+  workspaceId      String          @map("workspace_id")
+  incidentId       String          @map("incident_id")
+  actor            String
+  question         String
+  answer           String
+  epistemicStatus  EpistemicStatus @map("epistemic_status")
+  citedEvidenceIds String[]        @map("cited_evidence_ids")
+  modelId          String?         @map("model_id")
+  tokenUsage       Json?           @map("token_usage")
+  toolCallCount    Int             @default(0) @map("tool_call_count")
+  createdAt        DateTime        @map("created_at")
+
+  incident Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, incidentId, createdAt])
+  @@map("incident_questions")
 }
 
 model Feedback {

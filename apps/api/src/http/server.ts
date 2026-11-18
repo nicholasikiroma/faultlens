@@ -19,8 +19,11 @@ import {
   handleTransitionIncident,
 } from "./controllers/incidents.controller.ts";
 import {
+  handleAskIncidentQuestion,
   handleGetAgentSettings,
+  handleGetEvaluationsSummary,
   handleListIncidentInvestigations,
+  handleListIncidentQuestions,
   handleRateHypothesis,
   handleTriggerInvestigation,
 } from "./controllers/investigations.controller.ts";
@@ -61,6 +64,9 @@ const adminHandlers = {
   listIncidentInvestigations: handleListIncidentInvestigations,
   rateHypothesis: handleRateHypothesis,
   getAgentSettings: handleGetAgentSettings,
+  askIncidentQuestion: handleAskIncidentQuestion,
+  listIncidentQuestions: handleListIncidentQuestions,
+  getEvaluationsSummary: handleGetEvaluationsSummary,
 } satisfies Record<AdminRouteId, AdminHandler>;
 
 export function createApiApp(): Hono<ApiEnv> {

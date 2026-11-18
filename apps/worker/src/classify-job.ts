@@ -52,12 +52,30 @@ export async function classifyJob(eventId: string): Promise<void> {
             row.sourceKind === "SOCKET_TIMING") &&
             attemptIds.has(row.sourceRecordId))),
     );
+    const peerEventRows =
+      event.occurredAt === null
+        ? []
+        : (
+            await tx.orm.public.WebhookEvent.where({
+              workspaceId: event.workspaceId,
+              integrationId: event.integrationId,
+            }).all()
+          )
+            .filter(
+              (row) =>
+                row.id !== event.id &&
+                row.occurredAt !== null &&
+                row.firstReceivedAt < event.firstReceivedAt,
+            )
+            .slice(-25);
+
     const ctx: IncidentContext = {
       integrationId: event.integrationId,
       environment: integration.environment,
       event: toEvent(event),
       attempts: attemptRows.map(toAttempt),
       evidence: evidenceRows.map(toEvidence),
+      peerEvents: peerEventRows.map(toEvent),
     };
     const seenAt = event.firstReceivedAt;
     const allMatches: Array<{ match: RuleMatch; incidentId: string }> = [];
@@ -106,7 +124,13 @@ export async function classifyJob(eventId: string): Promise<void> {
       }
     }
 
-    if (config.aiEnabled && config.aiAutoInvestigate) {
+    const isTestRunner =
+      process.env["NODE_TEST_CONTEXT"] !== undefined ||
+      process.env["NODE_ENV"] === "test";
+    const allowAutoInCurrentProcess =
+      !isTestRunner || process.env["FAULTLENS_AI_AUTO_INVESTIGATE_IN_TEST"] === "1";
+
+    if (config.aiEnabled && config.aiAutoInvestigate && allowAutoInCurrentProcess) {
       const competing = allMatches.length > 1;
       for (const { match, incidentId } of allMatches) {
         const reason = escalationReason(match, competing);

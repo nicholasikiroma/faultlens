@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import type { AgentSettingsSummary } from '../types';
 import { Button, PageHeader, Panel } from '../components/ui';
-import { Sun, Moon, RotateCcw, Server, RefreshCw } from 'lucide-react';
+import { Sun, Moon, RotateCcw, Server, RefreshCw, KeyRound } from 'lucide-react';
+import { apiStore } from '../api/client';
 
 interface SettingsViewProps {
   theme: 'dark' | 'light';
@@ -23,6 +24,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   onTestConnection,
 }) => {
   const [testing, setTesting] = useState(false);
+  const [tokenInput, setTokenInput] = useState(() => apiStore.getAdminToken());
+  const [tokenSaved, setTokenSaved] = useState(false);
 
   const handleTest = async () => {
     if (onTestConnection) {
@@ -77,6 +80,41 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           >
             {testing ? 'Testing...' : 'Test Connection'}
           </Button>
+        </div>
+
+        <div className="p-5 flex items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <KeyRound className="w-4 h-4 text-fl-accent" aria-hidden="true" />
+              <span className="text-fl-card text-fl-ink font-sans">Admin Bearer Token</span>
+            </div>
+            <p className="text-xs font-sans text-fl-secondary mt-1 leading-relaxed">
+              Stored locally in your browser to authenticate admin reads and investigation requests against <code className="font-mono text-fl-ink">FAULTLENS_ADMIN_TOKEN</code>.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <input
+              type="password"
+              value={tokenInput}
+              onChange={(e) => {
+                setTokenInput(e.target.value);
+                setTokenSaved(false);
+              }}
+              aria-label="Admin Bearer Token"
+              className="w-48 px-2.5 py-1.5 rounded-md text-xs font-mono bg-fl-surface border border-fl-border text-fl-ink focus:outline-none focus:border-fl-accent"
+            />
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                apiStore.setAdminToken(tokenInput);
+                setTokenSaved(true);
+                if (onTestConnection) void onTestConnection();
+              }}
+            >
+              {tokenSaved ? 'Saved' : 'Save'}
+            </Button>
+          </div>
         </div>
 
         <div className="p-5 flex items-center justify-between gap-4">

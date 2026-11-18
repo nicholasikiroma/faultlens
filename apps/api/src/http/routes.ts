@@ -8,6 +8,9 @@ import type { EpisodeIngestResult } from "../ingest/episode-ingest.ts";
 import type { IngestResult } from "../ingest/ingest.ts";
 import type {
   AgentSettingsResult,
+  AskIncidentFollowUpResult,
+  EvaluationsSummaryResult,
+  ListIncidentQuestionsResult,
   ListInvestigationsResult,
   RateHypothesisResult,
   TriggerInvestigationResult,
@@ -65,6 +68,9 @@ export const ADMIN_QUERY_KEYS = {
   listIncidentInvestigations: [],
   rateHypothesis: [],
   getAgentSettings: [],
+  askIncidentQuestion: [],
+  listIncidentQuestions: [],
+  getEvaluationsSummary: [],
 } as const;
 
 export const ROUTES = [
@@ -156,6 +162,24 @@ export const ROUTES = [
     id: "getAgentSettings",
     method: "GET",
     path: "/v1/settings/agent",
+    access: { kind: "admin" },
+  },
+  {
+    id: "askIncidentQuestion",
+    method: "POST",
+    path: "/v1/incidents/:incidentId/ask",
+    access: { kind: "admin" },
+  },
+  {
+    id: "listIncidentQuestions",
+    method: "GET",
+    path: "/v1/incidents/:incidentId/questions",
+    access: { kind: "admin" },
+  },
+  {
+    id: "getEvaluationsSummary",
+    method: "GET",
+    path: "/v1/evaluations/summary",
     access: { kind: "admin" },
   },
 ] as const satisfies readonly HttpRoute[];
@@ -266,6 +290,24 @@ export const AGENT_SETTINGS_STATUS = {
   unauthorized: 401,
   ok: 200,
 } as const satisfies Record<AgentSettingsResult["kind"], number>;
+
+export const ASK_QUESTION_STATUS = {
+  answered: 200,
+  missing: 404,
+  "ai-disabled": 503,
+  "provider-error": 502,
+} as const satisfies Record<AskIncidentFollowUpResult["outcome"], number>;
+
+export const LIST_QUESTIONS_STATUS = {
+  unauthorized: 401,
+  missing: 404,
+  ok: 200,
+} as const satisfies Record<ListIncidentQuestionsResult["kind"], number>;
+
+export const EVALUATIONS_SUMMARY_STATUS = {
+  unauthorized: 401,
+  ok: 200,
+} as const satisfies Record<EvaluationsSummaryResult["kind"], number>;
 
 export const UNAUTHORIZED_BODY = {
   kind: "unauthorized",

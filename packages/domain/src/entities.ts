@@ -60,6 +60,7 @@ export interface IncidentContext {
   event: WebhookEvent | null;
   attempts: readonly DeliveryAttempt[];
   evidence: readonly Evidence[];
+  peerEvents?: readonly WebhookEvent[];
 }
 
 export interface RuleMatch {
@@ -164,6 +165,21 @@ export interface HypothesisRecord {
   suggestedCheck: string;
   remediation: RemediationProposal | null;
   feedback: HypothesisFeedbackRating;
+  createdAt: Date;
+}
+
+export interface IncidentQuestionRecord {
+  id: string;
+  workspaceId: string;
+  incidentId: string;
+  actor: string;
+  question: string;
+  answer: string;
+  epistemicStatus: EpistemicStatus;
+  citedEvidenceIds: readonly string[];
+  modelId: string | null;
+  tokenUsage: TokenUsage | null;
+  toolCallCount: number;
   createdAt: Date;
 }
 

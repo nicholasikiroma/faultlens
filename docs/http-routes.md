@@ -190,6 +190,36 @@ Admin. Calls `getAgentSettings`. Returns non-secret AI configuration (`enabled`,
 | `ok` | 200 |
 | `unauthorized` | 401 |
 
+### POST /v1/incidents/:incidentId/ask
+
+Admin write. Calls `askIncidentFollowUp`. Runs a bounded read-only follow-up Q&A turn over the incident's evidence and persists the cited answer. Body: `{ "question": "<text>" }`.
+
+| Outcome | Status |
+| --- | --- |
+| `answered` | 200 |
+| `missing` | 404 |
+| `ai-disabled` | 503 |
+| `provider-error` | 502 |
+
+### GET /v1/incidents/:incidentId/questions
+
+Admin. Calls `listIncidentQuestions`. Returns persisted follow-up Q&A turns for the incident.
+
+| Kind | Status |
+| --- | --- |
+| `ok` | 200 |
+| `missing` | 404 |
+| `unauthorized` | 401 |
+
+### GET /v1/evaluations/summary
+
+Admin. Calls `getEvaluationsSummary`. Returns aggregated AI run completion, token usage, estimated cost, and hypothesis feedback precision metrics grouped by model and prompt version.
+
+| Kind | Status |
+| --- | --- |
+| `ok` | 200 |
+| `unauthorized` | 401 |
+
 ## Testing and shutdown
 
 `npm run test:http` runs the route-contract and transport-validation tests without querying or resetting the database. The real-socket/database integration tests remain in `server.test.ts` and run with `npm test`.

@@ -1,15 +1,22 @@
 import { randomUUID } from "node:crypto";
-import { attachCostEstimate } from "#agent";
+import {
+  askIncidentQuestion,
+  attachCostEstimate,
+  type ModelProvider,
+} from "#agent";
 import { db } from "#db";
 import type {
   HypothesisFeedbackRating,
   HypothesisRecord,
+  IncidentQuestionRecord,
   InvestigationRunRecord,
   InvestigationSummary,
   RemediationProposal,
   TokenUsage,
   ToolCallRecord,
 } from "#domain";
+import { createPostgresAgentRepository } from "../../../worker/src/agent-repo.ts";
+import { createProviderFromConfig } from "../../../worker/src/investigation-job.ts";
 import { enqueueInvestigationRun } from "../../../worker/src/investigation-queue.ts";
 import { recordAudit } from "../audit/audit.ts";
 import { config } from "../config.ts";
@@ -82,6 +89,66 @@ export type AgentSettingsResult =
         maxToolCalls: number;
         maxDurationMs: number;
       };
+    };
+
+export interface AskIncidentFollowUpInput {
+  workspaceId: string;
+  incidentId: string;
+  actor: string;
+  question: string;
+  provider?: ModelProvider;
+}
+
+export type AskIncidentFollowUpResult =
+  | { outcome: "ai-disabled" }
+  | { outcome: "missing" }
+  | { outcome: "provider-error"; message: string }
+  | { outcome: "answered"; item: IncidentQuestionRecord };
+
+export interface ListIncidentQuestionsInput {
+  adminToken: string | null | undefined;
+  workspaceId: string;
+  incidentId: string;
+}
+
+export type ListIncidentQuestionsResult =
+  | { kind: "unauthorized" }
+  | { kind: "missing" }
+  | { kind: "ok"; items: readonly IncidentQuestionRecord[] };
+
+export interface ModelEvaluationBreakdown {
+  modelId: string;
+  promptVersion: string;
+  runCount: number;
+  completedCount: number;
+  needsReviewCount: number;
+  failedCount: number;
+  totalTokens: number;
+  totalEstimatedCostUsd: number;
+  usefulCount: number;
+  incorrectCount: number;
+  unverifiedCount: number;
+  precisionRate: number | null;
+}
+
+export type EvaluationsSummaryResult =
+  | { kind: "unauthorized" }
+  | {
+      kind: "ok";
+      totals: {
+        totalRuns: number;
+        completedRuns: number;
+        needsReviewRuns: number;
+        failedRuns: number;
+        totalTokens: number;
+        totalEstimatedCostUsd: number;
+        totalHypotheses: number;
+        usefulHypotheses: number;
+        incorrectHypotheses: number;
+        unverifiedHypotheses: number;
+        precisionRate: number | null;
+      };
+      byModel: readonly ModelEvaluationBreakdown[];
     };
 
 export async function triggerInvestigation(
@@ -305,6 +372,287 @@ export async function getAgentSettings(
       maxToolCalls: config.aiMaxToolCalls,
       maxDurationMs: config.aiTimeoutMs,
     },
+  };
+}
+
+export async function askIncidentFollowUp(
+  input: AskIncidentFollowUpInput,
+): Promise<AskIncidentFollowUpResult> {
+  if (!config.aiEnabled && !input.provider) {
+    return { outcome: "ai-disabled" };
+  }
+
+  const incident = await db.orm.public.Incident.where({
+    id: input.incidentId,
+    workspaceId: input.workspaceId,
+  }).first();
+  if (incident === null) {
+    return { outcome: "missing" };
+  }
+
+  let provider: ModelProvider;
+  try {
+    provider = input.provider ?? createProviderFromConfig();
+  } catch (err) {
+    return {
+      outcome: "provider-error",
+      message: err instanceof Error ? err.message : "Invalid AI provider configuration",
+    };
+  }
+
+  const repo = createPostgresAgentRepository();
+  let qaResult;
+  try {
+    qaResult = await askIncidentQuestion({
+      workspaceId: input.workspaceId,
+      incidentId: input.incidentId,
+      question: input.question,
+      provider,
+      repo,
+      budgets: {
+        maxToolCalls: Math.min(6, config.aiMaxToolCalls),
+        maxDurationMs: config.aiTimeoutMs,
+      },
+    });
+  } catch (err) {
+    return {
+      outcome: "provider-error",
+      message: err instanceof Error ? err.message.slice(0, 240) : "Follow-up query failed",
+    };
+  }
+
+  const usageWithCost = attachCostEstimate({
+    usage: qaResult.tokenUsage,
+    modelId: qaResult.modelId,
+    providerId: provider.id,
+    baseUrl: provider.id === "openai-compatible" ? config.aiBaseUrl : undefined,
+    inputCostPer1M: config.aiInputCostPer1M,
+    outputCostPer1M: config.aiOutputCostPer1M,
+  });
+
+  const now = new Date();
+  const id = randomUUID();
+  type QuestionJson = Parameters<typeof db.orm.public.IncidentQuestion.create>[0]["tokenUsage"];
+  await db.orm.public.IncidentQuestion.create({
+    id,
+    workspaceId: input.workspaceId,
+    incidentId: input.incidentId,
+    actor: input.actor,
+    question: input.question.trim(),
+    answer: qaResult.answer,
+    epistemicStatus: qaResult.epistemicStatus,
+    citedEvidenceIds: [...qaResult.citedEvidenceIds],
+    modelId: qaResult.modelId,
+    tokenUsage: usageWithCost ? (JSON.parse(JSON.stringify(usageWithCost)) as QuestionJson) : null,
+    toolCallCount: qaResult.toolCalls.length,
+    createdAt: now,
+  });
+
+  return {
+    outcome: "answered",
+    item: {
+      id,
+      workspaceId: input.workspaceId,
+      incidentId: input.incidentId,
+      actor: input.actor,
+      question: input.question.trim(),
+      answer: qaResult.answer,
+      epistemicStatus: qaResult.epistemicStatus,
+      citedEvidenceIds: qaResult.citedEvidenceIds,
+      modelId: qaResult.modelId,
+      tokenUsage: usageWithCost,
+      toolCallCount: qaResult.toolCalls.length,
+      createdAt: now,
+    },
+  };
+}
+
+export async function listIncidentQuestions(
+  input: ListIncidentQuestionsInput,
+): Promise<ListIncidentQuestionsResult> {
+  if (
+    !verifyAdminToken(input.adminToken) ||
+    input.workspaceId.trim().length === 0
+  ) {
+    return { kind: "unauthorized" };
+  }
+
+  const incident = await db.orm.public.Incident.where({
+    id: input.incidentId,
+    workspaceId: input.workspaceId,
+  }).first();
+  if (incident === null) {
+    return { kind: "missing" };
+  }
+
+  const rows = (
+    await db.orm.public.IncidentQuestion.where({
+      workspaceId: input.workspaceId,
+      incidentId: input.incidentId,
+    }).all()
+  ).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime() || a.id.localeCompare(b.id));
+
+  return {
+    kind: "ok",
+    items: rows.map(toIncidentQuestionRecord),
+  };
+}
+
+export async function getEvaluationsSummary(input: {
+  adminToken: string | null | undefined;
+  workspaceId: string;
+}): Promise<EvaluationsSummaryResult> {
+  if (
+    !verifyAdminToken(input.adminToken) ||
+    input.workspaceId.trim().length === 0
+  ) {
+    return { kind: "unauthorized" };
+  }
+
+  const aiRuns = (
+    await db.orm.public.InvestigationRun.where({
+      workspaceId: input.workspaceId,
+    }).all()
+  )
+    .filter((r) => r.mode === "AI_ASSISTED")
+    .map(toInvestigationRunRecord);
+
+  const hypotheses = await db.orm.public.Hypothesis.where({
+    workspaceId: input.workspaceId,
+  }).all();
+
+  const runById = new Map(aiRuns.map((r) => [r.id, r]));
+  const groups = new Map<string, ModelEvaluationBreakdown>();
+
+  let totalTokens = 0;
+  let totalEstimatedCostUsd = 0;
+  let completedRuns = 0;
+  let needsReviewRuns = 0;
+  let failedRuns = 0;
+
+  for (const run of aiRuns) {
+    const modelId = run.modelId ?? "unassigned";
+    const promptVersion = run.promptVersion ?? "0";
+    const key = `${modelId}::${promptVersion}`;
+    const existing = groups.get(key) ?? {
+      modelId,
+      promptVersion,
+      runCount: 0,
+      completedCount: 0,
+      needsReviewCount: 0,
+      failedCount: 0,
+      totalTokens: 0,
+      totalEstimatedCostUsd: 0,
+      usefulCount: 0,
+      incorrectCount: 0,
+      unverifiedCount: 0,
+      precisionRate: null,
+    };
+
+    existing.runCount += 1;
+    if (run.state === "COMPLETED") {
+      existing.completedCount += 1;
+      completedRuns += 1;
+    } else if (run.state === "NEEDS_REVIEW") {
+      existing.needsReviewCount += 1;
+      needsReviewRuns += 1;
+    } else if (run.state === "FAILED") {
+      existing.failedCount += 1;
+      failedRuns += 1;
+    }
+
+    const tok = run.tokenUsage?.totalTokens ?? 0;
+    const cost = run.tokenUsage?.estimatedCostUsd ?? 0;
+    existing.totalTokens += tok;
+    existing.totalEstimatedCostUsd += cost;
+    totalTokens += tok;
+    totalEstimatedCostUsd += cost;
+    groups.set(key, existing);
+  }
+
+  let usefulHypotheses = 0;
+  let incorrectHypotheses = 0;
+  let unverifiedHypotheses = 0;
+
+  for (const h of hypotheses) {
+    const run = runById.get(h.investigationRunId);
+    const key = `${run?.modelId ?? "unassigned"}::${run?.promptVersion ?? "0"}`;
+    const bucket = groups.get(key);
+
+    if (h.feedback === "USEFUL") {
+      usefulHypotheses += 1;
+      if (bucket) bucket.usefulCount += 1;
+    } else if (h.feedback === "INCORRECT") {
+      incorrectHypotheses += 1;
+      if (bucket) bucket.incorrectCount += 1;
+    } else {
+      unverifiedHypotheses += 1;
+      if (bucket) bucket.unverifiedCount += 1;
+    }
+  }
+
+  const byModel = [...groups.values()]
+    .map((g) => {
+      const rated = g.usefulCount + g.incorrectCount;
+      return {
+        ...g,
+        totalEstimatedCostUsd: Math.round(g.totalEstimatedCostUsd * 1_000_000) / 1_000_000,
+        precisionRate: rated > 0 ? Math.round((g.usefulCount / rated) * 1000) / 1000 : null,
+      };
+    })
+    .sort((a, b) => b.runCount - a.runCount || a.modelId.localeCompare(b.modelId));
+
+  const totalRated = usefulHypotheses + incorrectHypotheses;
+
+  return {
+    kind: "ok",
+    totals: {
+      totalRuns: aiRuns.length,
+      completedRuns,
+      needsReviewRuns,
+      failedRuns,
+      totalTokens,
+      totalEstimatedCostUsd: Math.round(totalEstimatedCostUsd * 1_000_000) / 1_000_000,
+      totalHypotheses: hypotheses.length,
+      usefulHypotheses,
+      incorrectHypotheses,
+      unverifiedHypotheses,
+      precisionRate:
+        totalRated > 0 ? Math.round((usefulHypotheses / totalRated) * 1000) / 1000 : null,
+    },
+    byModel,
+  };
+}
+
+export function toIncidentQuestionRecord(row: {
+  id: string;
+  workspaceId: string;
+  incidentId: string;
+  actor: string;
+  question: string;
+  answer: string;
+  epistemicStatus: IncidentQuestionRecord["epistemicStatus"];
+  citedEvidenceIds: readonly (string | null)[] | null;
+  modelId: string | null;
+  tokenUsage: unknown;
+  toolCallCount: number;
+  createdAt: Date;
+}): IncidentQuestionRecord {
+  return {
+    id: row.id,
+    workspaceId: row.workspaceId,
+    incidentId: row.incidentId,
+    actor: row.actor,
+    question: row.question,
+    answer: row.answer,
+    epistemicStatus: row.epistemicStatus,
+    citedEvidenceIds: (row.citedEvidenceIds ?? []).filter(
+      (id): id is string => id !== null,
+    ),
+    modelId: row.modelId,
+    tokenUsage: (row.tokenUsage as TokenUsage | null) ?? null,
+    toolCallCount: row.toolCallCount,
+    createdAt: row.createdAt,
   };
 }
 

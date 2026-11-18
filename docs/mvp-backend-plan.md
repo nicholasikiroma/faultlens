@@ -36,6 +36,8 @@ Last checked against the source on 9 Nov 2026 for milestone 14: `npm run typeche
 | 12 | Hashed ingest keys | Done | A revoked key writes no event. A valid key stores one event, one attempt, and one outbox row. |
 | 13 | SDK | Done | A sample host returns its own response when the SDK post fails. |
 | 14 | Local install | Done | One documented command seeds fixtures and starts the backend with no model key. |
+| 15 | Episode ingest & runtime rules | Done | Sealed `FlightRecorder` episodes post to `/v1/ingest/episodes`, redact secrets, and classify `INGRESS_ABORTED`, `DECRYPT_FAILURE`, `DOWNSTREAM_NETWORK_ERROR`, `UNHANDLED_EXCEPTION`, `ASYNC_ESCAPE_FAILURE`, and multi-event `OUT_OF_ORDER`. |
+| 16 | Bounded read-only AI agent | Done | Optional agent runs in `apps/worker` (`packages/agent`), persists `ToolCall`/`Hypothesis`/`IncidentQuestion` provenance and USD cost estimates, enforces grounding/injection/workspace guardrails, and reports evaluation metrics. |
 
 `Later`, not in the count above. OIDC for dashboard users. `OUT_OF_ORDER`. The UI. OpenTelemetry. Model calls. GitHub. Multiple workspaces, roles, and retention settings. CSV and PDF export.
 
@@ -199,10 +201,6 @@ These stay out of the milestone count until an operator moves one up.
 
 OIDC. `docs/decisions.md` says dashboard users use OIDC. The PRD puts SSO in P1 and says the MVP is one admin with server-side authentication. Milestone 9 is that local admin. OIDC is not started here.
 
-`OUT_OF_ORDER`. The rule file returns no match. The P0 class list does not include it. Add a milestone only when the context can show arrival order against more than one `occurredAt`.
+OpenTelemetry collector ingest (`OTLP`) and read-only GitHub deploy/commit correlation remain post-MVP extensions.
 
-The UI. Overview, incident list, investigation detail, and the layout acceptance test are M2 product work and are not this backend plan.
-
-OpenTelemetry, model calls, and the GitHub integration. The roadmap puts traces in M3, the model in M4, and the decisions doc holds GitHub until the investigation workflow exists. The deterministic path has to meet milestones 1 through 14 first.
-
-Multiple workspaces, roles, retention settings, and CSV or PDF export. The PRD lists those as P1 or optional later features. Metadata-only capture stays the default while they wait.
+Multiple workspaces, roles, and CSV or PDF export remain P1 or later features. Metadata-only capture stays the default.

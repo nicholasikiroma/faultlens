@@ -47,6 +47,7 @@ export type {
   HypothesisRatedAuditEvent,
   HypothesisRecord,
   IncidentContext,
+  IncidentQuestionRecord,
   IncidentStatusAuditEvent,
   InvestigationRunRecord,
   InvestigationSummary,

@@ -15,6 +15,8 @@ export {
   OpenAICompatibleProvider,
 } from './providers.ts';
 export { runInvestigationAgent } from './runner.ts';
+export { askIncidentQuestion } from './qa.ts';
+export type { AskIncidentQuestionInput, AskIncidentQuestionResult } from './qa.ts';
 export { ALLOWLISTED_TOOLS, executeAllowlistedTool } from './tools.ts';
 export { DEFAULT_AGENT_BUDGETS } from './types.ts';
 export type {

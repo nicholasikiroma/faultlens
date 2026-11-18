@@ -543,4 +543,44 @@ describe('9. Wire Ingest & Shared Delivery Transport', () => {
       pending.resolve({ outcome: 'failed', reason: 'network' });
     }
   });
+
+  test('FlightRecorder ships failure episodes to /v1/ingest/episodes without signingSecret and strips capturedBytes', { timeout: 5000 }, async (t) => {
+    const requests: Array<{ path: string; auth: string | undefined; body: Record<string, unknown> }> = [];
+    const baseUrl = await listen(
+      t,
+      createServer((req, res) => {
+        const chunks: Buffer[] = [];
+        req.on('data', (c: Buffer) => chunks.push(c));
+        req.on('end', () => {
+          requests.push({
+            path: req.url ?? '',
+            auth: req.headers.authorization,
+            body: JSON.parse(Buffer.concat(chunks).toString('utf8')) as Record<string, unknown>,
+          });
+          res.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify({ outcome: 'stored' }));
+        });
+      })
+    );
+
+    const recorder = createFaultLensClient({ baseUrl, apiKey: 'flk_episode_only_key' });
+    const ep = createEpisode({ framework: 'node-http', method: 'POST', rawUrl: '/orders', headers: {} });
+    ep.statusCode = 500;
+    ep.bodyTap.capturedBytes = Buffer.from('{"secret":"raw"}');
+    ep.exceptions.push({
+      layer: 'CONTROLLER',
+      name: 'Error',
+      message: 'DB pool exhausted',
+      escapedAfterResponse: false,
+      recordedAtMs: Date.now(),
+    });
+
+    const decision = recorder.finalizeAndExport(ep);
+    assert.equal(decision.shouldShip, true);
+
+    await new Promise((r) => setTimeout(r, 80));
+    assert.equal(requests.length, 1);
+    assert.equal(requests[0]?.path, '/v1/ingest/episodes');
+    assert.equal(requests[0]?.auth, 'Bearer flk_episode_only_key');
+    assert.equal((requests[0]?.body['bodyTap'] as Record<string, unknown>)['capturedBytes'], undefined);
+  });
 });

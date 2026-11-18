@@ -4,12 +4,14 @@ import type {
   Evidence,
   FailureClass,
   HypothesisRecord,
+  IncidentQuestionRecord,
   InvestigationRunRecord,
   ToolCallRecord,
   WebhookEvent,
 } from "#domain";
 import {
   toHypothesisRecord,
+  toIncidentQuestionRecord,
   toInvestigationRunRecord,
   toToolCallRecord,
 } from "../investigations/investigate.ts";
@@ -53,6 +55,7 @@ export type ExportIncidentResult =
       hypotheses: readonly HypothesisRecord[];
       agentRuns: readonly InvestigationRunRecord[];
       toolCalls: readonly ToolCallRecord[];
+      questions: readonly IncidentQuestionRecord[];
     };
 
 export async function exportIncident(
@@ -206,6 +209,14 @@ export async function exportIncident(
     .map((id) => evidenceById.get(id)!)
     .filter((item): item is Evidence => item !== undefined);
 
+  const questionRows = (
+    await db.orm.public.IncidentQuestion.where({
+      workspaceId: input.workspaceId,
+      incidentId: incidentRow.id,
+    }).all()
+  ).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime() || a.id.localeCompare(b.id));
+  const questions = questionRows.map(toIncidentQuestionRecord);
+
   return {
     kind: "ok",
     incidentId: incidentRow.id,
@@ -218,5 +229,6 @@ export async function exportIncident(
     hypotheses,
     agentRuns,
     toolCalls,
+    questions,
   };
 }

@@ -17,6 +17,7 @@ import { IncidentsView } from './views/IncidentsView';
 import { InvestigationView } from './views/InvestigationView';
 import { IntegrationsView } from './views/IntegrationsView';
 import { PlaygroundView } from './views/PlaygroundView';
+import { EvaluationsView } from './views/EvaluationsView';
 import { SettingsView } from './views/SettingsView';
 
 function getInitialTheme(): 'dark' | 'light' {
@@ -302,6 +303,7 @@ export const App: React.FC = () => {
     if (currentPage === 'investigation') return ['Incidents', currentIncident?.key ?? 'INC'];
     if (currentPage === 'integrations') return ['Integrations'];
     if (currentPage === 'playground') return ['Playground'];
+    if (currentPage === 'evaluations') return ['Evaluations'];
     if (currentPage === 'settings') return ['Settings'];
     return ['Console'];
   };
@@ -385,6 +387,15 @@ export const App: React.FC = () => {
               onFeedback={handleFeedback}
               onStatusChange={handleStatusChange}
               onTriggerInvestigation={() => void handleTriggerInvestigation(currentIncident.id)}
+              onAskQuestion={async (question) => {
+                const res = await apiStore.askIncidentQuestion(currentIncident.id, question);
+                if (res.outcome === 'answered') {
+                  setIncidents(apiStore.getIncidents());
+                  showToast('Follow-up answer grounded in incident evidence.');
+                } else {
+                  showToast(res.message);
+                }
+              }}
             />
           )}
 
@@ -406,6 +417,8 @@ export const App: React.FC = () => {
               onOpenIncident={handleSelectIncident}
             />
           )}
+
+          {currentPage === 'evaluations' && <EvaluationsView />}
 
           {currentPage === 'settings' && (
             <SettingsView

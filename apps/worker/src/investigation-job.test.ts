@@ -4,7 +4,10 @@ import { after, test } from 'node:test';
 import { MockModelProvider } from '#agent';
 import { db } from '#db';
 import {
+  askIncidentFollowUp,
+  getEvaluationsSummary,
   listIncidentInvestigations,
+  listIncidentQuestions,
   rateHypothesis,
   triggerInvestigation,
 } from '../../api/src/investigations/investigate.ts';
@@ -14,8 +17,10 @@ import { config as apiConfig } from '../../api/src/config.ts';
 import { createPostgresAgentRepository } from './agent-repo.ts';
 import { classifyJob } from './classify-job.ts';
 import { investigateJob } from './investigation-job.ts';
+import { closeInvestigationQueue } from './investigation-queue.ts';
 
 after(async () => {
+  await closeInvestigationQueue();
   await db.close();
 });
 
@@ -184,10 +189,74 @@ test('investigateJob persists ToolCalls, Hypotheses, supports feedback and expor
   assert.equal(exported.toolCalls.length, 3);
   assert.ok(!JSON.stringify(exported).includes('ultra_secret_signing_key_do_not_leak'));
 
+  // Follow-up read-only Q&A grounded in incident evidence
+  const qaProvider = new MockModelProvider([
+    {
+      content: null,
+      toolCalls: [{ id: 'q1', name: 'get_evidence', arguments: { evidenceIds: [evidenceId] } }],
+      usage: { promptTokens: 50, completionTokens: 15, totalTokens: 65 },
+    },
+    {
+      content: JSON.stringify({
+        knownSummary: 'HTTP 429 occurred on attempt.',
+        suspectSummary: 'Burst exceeded limit.',
+        nextSafeCheckSummary: 'Check concurrency.',
+        hypotheses: [
+          {
+            title: 'Retry status',
+            reasoning: `Evidence ${evidenceId} confirms HTTP 429 was observed on attempt ${attemptId}.`,
+            epistemicStatus: 'OBSERVED',
+            confidence: 'HIGH',
+            citedEvidenceIds: [evidenceId],
+            missingInformation: [],
+            suggestedCheck: 'Check Retry-After',
+          },
+        ],
+      }),
+      toolCalls: [],
+      usage: { promptTokens: 80, completionTokens: 30, totalTokens: 110 },
+    },
+  ]);
+
+  const asked = await askIncidentFollowUp({
+    workspaceId: 'workspace-1',
+    incidentId: incident.id,
+    actor: 'local-admin',
+    question: 'Which HTTP status was observed?',
+    provider: qaProvider,
+  });
+  assert.equal(asked.outcome, 'answered');
+  if (asked.outcome === 'answered') {
+    assert.equal(asked.item.epistemicStatus, 'OBSERVED');
+    assert.deepEqual(asked.item.citedEvidenceIds, [evidenceId]);
+  }
+
+  const questionsList = await listIncidentQuestions({
+    adminToken: apiConfig.adminToken,
+    workspaceId: 'workspace-1',
+    incidentId: incident.id,
+  });
+  assert.equal(questionsList.kind, 'ok');
+  if (questionsList.kind === 'ok') {
+    assert.equal(questionsList.items.length, 1);
+  }
+
+  const evalSummary = await getEvaluationsSummary({
+    adminToken: apiConfig.adminToken,
+    workspaceId: 'workspace-1',
+  });
+  assert.equal(evalSummary.kind, 'ok');
+  if (evalSummary.kind === 'ok') {
+    assert.equal(evalSummary.totals.totalRuns, 1);
+    assert.equal(evalSummary.totals.usefulHypotheses, 1);
+    assert.equal(evalSummary.totals.precisionRate, 1);
+  }
+
   process.env['FAULTLENS_AI_ENABLED'] = '0';
 });
 
 async function reset(): Promise<void> {
+  await db.execute(db.raw.sql`DELETE FROM incident_questions`.affectedCount().build());
   await db.execute(db.raw.sql`DELETE FROM hypotheses`.affectedCount().build());
   await db.execute(db.raw.sql`DELETE FROM tool_calls`.affectedCount().build());
   await db.execute(db.raw.sql`DELETE FROM feedback`.affectedCount().build());

@@ -1,13 +1,18 @@
 import assert from 'node:assert/strict';
 import { createHmac, randomUUID } from 'node:crypto';
 import { connect } from 'node:net';
-import { after, beforeEach, test } from 'node:test';
+import { after, before, beforeEach, test } from 'node:test';
 import { db } from '#db';
 import { config } from '../config.ts';
 import { MAX_BODY_BYTES } from '../ingest/ingest.ts';
 import { hashIngestKey } from '../ingest/keys.ts';
 import { SIGNATURE_HEADER } from '../ingest/verify.ts';
+import { ensureProductSchema } from '../seed/seed.ts';
 import { startApiServer } from './server.ts';
+
+before(async () => {
+  await ensureProductSchema();
+});
 
 const ADMIN = 'test-admin-token-secret-value';
 const WORKSPACE = 'workspace-1';
@@ -506,6 +511,33 @@ test('episode ingest, agent settings, investigate disabled/list, and hypothesis 
     const rateBody = (await rateRes.json()) as { outcome: string; hypothesis: { feedback: string } };
     assert.equal(rateBody.outcome, 'rated');
     assert.equal(rateBody.hypothesis.feedback, 'USEFUL');
+
+    const askDisabled = await fetch(`${server.url}/v1/incidents/${incidentId}/ask`, {
+      method: 'POST',
+      headers: { ...auth(), 'content-type': 'application/json' },
+      body: JSON.stringify({ question: 'Why did this fail?' }),
+    });
+    assert.equal(askDisabled.status, 503);
+
+    const questionsRes = await fetch(`${server.url}/v1/incidents/${incidentId}/questions`, {
+      headers: auth(),
+    });
+    assert.equal(questionsRes.status, 200);
+    const questionsBody = (await questionsRes.json()) as { kind: string; items: unknown[] };
+    assert.equal(questionsBody.kind, 'ok');
+    assert.equal(questionsBody.items.length, 0);
+
+    const evalRes = await fetch(`${server.url}/v1/evaluations/summary`, {
+      headers: auth(),
+    });
+    assert.equal(evalRes.status, 200);
+    const evalBody = (await evalRes.json()) as {
+      kind: string;
+      totals: { totalRuns: number; usefulHypotheses: number };
+    };
+    assert.equal(evalBody.kind, 'ok');
+    assert.equal(evalBody.totals.totalRuns, 1);
+    assert.equal(evalBody.totals.usefulHypotheses, 1);
   } finally {
     if (prevAi === undefined) delete process.env['FAULTLENS_AI_ENABLED'];
     else process.env['FAULTLENS_AI_ENABLED'] = prevAi;
@@ -637,6 +669,7 @@ async function seedEvent(
 }
 
 async function reset(): Promise<void> {
+  await db.execute(db.raw.sql`DELETE FROM incident_questions`.affectedCount().build());
   await db.execute(db.raw.sql`DELETE FROM hypotheses`.affectedCount().build());
   await db.execute(db.raw.sql`DELETE FROM tool_calls`.affectedCount().build());
   await db.execute(db.raw.sql`DELETE FROM feedback`.affectedCount().build());
