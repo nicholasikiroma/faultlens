@@ -254,6 +254,58 @@ export class MockModelProvider implements ModelProvider {
   }
 }
 
+export interface CreateModelProviderOptions {
+  readonly provider: string;
+  readonly model: string;
+  readonly baseUrl: string;
+  readonly apiKey?: string;
+}
+
+/**
+ * Instantiates a configured ModelProvider from explicit runtime settings.
+ */
+export function createModelProvider(options: CreateModelProviderOptions): ModelProvider {
+  switch (options.provider) {
+    case 'anthropic':
+      if (!options.apiKey) {
+        throw new Error('FAULTLENS_AI_API_KEY is required when FAULTLENS_AI_PROVIDER=anthropic');
+      }
+      return new AnthropicProvider({
+        model: options.model,
+        apiKey: options.apiKey,
+      });
+    case 'mock':
+      return new MockModelProvider([
+        {
+          content: JSON.stringify({
+            knownSummary: 'Mock provider active; inspected incident records.',
+            suspectSummary: 'Requires a live Ollama or cloud model for live inference.',
+            nextSafeCheckSummary: 'Configure FAULTLENS_AI_PROVIDER=openai-compatible.',
+            hypotheses: [
+              {
+                title: 'Mock investigation run completed',
+                reasoning: 'Configured with FAULTLENS_AI_PROVIDER=mock.',
+                epistemicStatus: 'UNVERIFIED',
+                confidence: 'LOW',
+                citedEvidenceIds: [],
+                missingInformation: ['Live model endpoint'],
+                suggestedCheck: 'Point FAULTLENS_AI_BASE_URL to Ollama or vLLM.',
+              },
+            ],
+          }),
+          toolCalls: [],
+        },
+      ]);
+    case 'openai-compatible':
+    default:
+      return new OpenAICompatibleProvider({
+        baseUrl: options.baseUrl,
+        model: options.model,
+        apiKey: options.apiKey,
+      });
+  }
+}
+
 function toOpenAIMessage(msg: ChatMessage): Record<string, unknown> {
   if (msg.role === 'assistant') {
     return {

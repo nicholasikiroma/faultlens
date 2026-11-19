@@ -1,15 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import {
-  AnthropicProvider,
   attachCostEstimate,
-  MockModelProvider,
-  OpenAICompatibleProvider,
+  createModelProvider,
   runInvestigationAgent,
   type AgentBudgets,
   type ModelProvider,
 } from '#agent';
+import { createPostgresAgentRepository } from '#agent-repo';
 import { db } from '#db';
-import { createPostgresAgentRepository } from './agent-repo.ts';
 import { config } from './config.ts';
 
 export interface InvestigateJobOptions {
@@ -18,45 +16,12 @@ export interface InvestigateJobOptions {
 }
 
 export function createProviderFromConfig(): ModelProvider {
-  switch (config.aiProvider) {
-    case 'anthropic':
-      if (!config.aiApiKey) {
-        throw new Error('FAULTLENS_AI_API_KEY is required when FAULTLENS_AI_PROVIDER=anthropic');
-      }
-      return new AnthropicProvider({
-        model: config.aiModel,
-        apiKey: config.aiApiKey,
-      });
-    case 'mock':
-      return new MockModelProvider([
-        {
-          content: JSON.stringify({
-            knownSummary: 'Mock provider active; inspected incident records.',
-            suspectSummary: 'Requires a live Ollama or cloud model for live inference.',
-            nextSafeCheckSummary: 'Configure FAULTLENS_AI_PROVIDER=openai-compatible.',
-            hypotheses: [
-              {
-                title: 'Mock investigation run completed',
-                reasoning: 'Configured with FAULTLENS_AI_PROVIDER=mock.',
-                epistemicStatus: 'UNVERIFIED',
-                confidence: 'LOW',
-                citedEvidenceIds: [],
-                missingInformation: ['Live model endpoint'],
-                suggestedCheck: 'Point FAULTLENS_AI_BASE_URL to Ollama or vLLM.',
-              },
-            ],
-          }),
-          toolCalls: [],
-        },
-      ]);
-    case 'openai-compatible':
-    default:
-      return new OpenAICompatibleProvider({
-        baseUrl: config.aiBaseUrl,
-        model: config.aiModel,
-        apiKey: config.aiApiKey,
-      });
-  }
+  return createModelProvider({
+    provider: config.aiProvider,
+    model: config.aiModel,
+    baseUrl: config.aiBaseUrl,
+    apiKey: config.aiApiKey,
+  });
 }
 
 export async function investigateJob(

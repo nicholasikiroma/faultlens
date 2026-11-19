@@ -1,4 +1,5 @@
 import { db } from "#db";
+import { closeInvestigationQueue } from "../investigations/queue.ts";
 import { startApiServer } from "./server.ts";
 
 const { url, close } = await startApiServer();
@@ -14,6 +15,12 @@ async function shutdown(): Promise<void> {
     console.error("HTTP shutdown failed", error);
     process.exitCode = 1;
   } finally {
+    try {
+      await closeInvestigationQueue();
+    } catch (error) {
+      console.error("Queue shutdown failed", error);
+      process.exitCode = 1;
+    }
     try {
       await db.close();
     } catch (error) {

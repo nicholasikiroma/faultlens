@@ -1,9 +1,10 @@
 import { Queue, Worker, type Job } from 'bullmq';
 import { Redis } from 'ioredis';
+import { INVESTIGATIONS_QUEUE_NAME } from '#agent';
 import { config } from './config.ts';
 import { investigateJob } from './investigation-job.ts';
 
-export const INVESTIGATIONS_QUEUE_NAME = 'investigations';
+export { INVESTIGATIONS_QUEUE_NAME };
 
 export interface InvestigationJobData {
   runId: string;

@@ -10,6 +10,9 @@ export const config = {
   get adminActor(): string {
     return process.env["FAULTLENS_ADMIN_ACTOR"] ?? "local-admin";
   },
+  get redisUrl(): string {
+    return process.env["REDIS_URL"] ?? "redis://127.0.0.1:6379";
+  },
   get httpHost(): string {
     return process.env["FAULTLENS_API_HOST"] ?? "127.0.0.1";
   },
@@ -48,6 +51,10 @@ export const config = {
   get aiBaseUrlConfigured(): boolean {
     const val = process.env["FAULTLENS_AI_BASE_URL"];
     return val !== undefined && val.trim().length > 0;
+  },
+  get aiApiKey(): string | undefined {
+    const key = process.env["FAULTLENS_AI_API_KEY"];
+    return key && key.trim().length > 0 ? key.trim() : undefined;
   },
   get aiInputCostPer1M(): number | undefined {
     const raw = process.env["FAULTLENS_AI_INPUT_COST_PER_1M"];

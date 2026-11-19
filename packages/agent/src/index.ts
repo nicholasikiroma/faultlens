@@ -11,9 +11,12 @@ export {
 } from './guardrails.ts';
 export {
   AnthropicProvider,
+  createModelProvider,
   MockModelProvider,
   OpenAICompatibleProvider,
 } from './providers.ts';
+export type { CreateModelProviderOptions } from './providers.ts';
+export const INVESTIGATIONS_QUEUE_NAME = 'investigations';
 export { runInvestigationAgent } from './runner.ts';
 export { askIncidentQuestion } from './qa.ts';
 export type { AskIncidentQuestionInput, AskIncidentQuestionResult } from './qa.ts';

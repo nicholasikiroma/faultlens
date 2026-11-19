@@ -2,3 +2,10 @@ node_modules/
 dist/
 .env
 .agents/
+.cursor/
+design-spec/
+unreliable-systems/
+prisma-8.md
+docs/mvp-backend-plan.md
+docs/filling-the-skeletons.md
+docs/decisions.md

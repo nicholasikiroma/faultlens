@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { after, test } from 'node:test';
 import { MockModelProvider } from '#agent';
+import { createPostgresAgentRepository } from '#agent-repo';
 import { db } from '#db';
 import {
   askIncidentFollowUp,
@@ -11,15 +12,16 @@ import {
   rateHypothesis,
   triggerInvestigation,
 } from '../../api/src/investigations/investigate.ts';
+import { closeInvestigationQueue as closeApiInvestigationQueue } from '../../api/src/investigations/queue.ts';
 import { exportIncident } from '../../api/src/read/export.ts';
 import { ensureProductSchema } from '../../api/src/seed/seed.ts';
 import { config as apiConfig } from '../../api/src/config.ts';
-import { createPostgresAgentRepository } from './agent-repo.ts';
 import { classifyJob } from './classify-job.ts';
 import { investigateJob } from './investigation-job.ts';
 import { closeInvestigationQueue } from './investigation-queue.ts';
 
 after(async () => {
+  await closeApiInvestigationQueue();
   await closeInvestigationQueue();
   await db.close();
 });

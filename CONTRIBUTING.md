@@ -1,6 +1,6 @@
-# Contributing to WireSleuth / FaultLens
+# Contributing to FaultLens
 
-Thank you for contributing! WireSleuth is licensed under Apache License 2.0.
+Thank you for contributing! FaultLens is licensed under Apache License 2.0.
 
 ## Local Development
 

@@ -8,7 +8,8 @@
     "#domain": "./packages/domain/src/index.ts",
     "#rules": "./packages/rules/src/index.ts",
     "#sdk": "./packages/sdk/src/index.ts",
-    "#agent": "./packages/agent/src/index.ts"
+    "#agent": "./packages/agent/src/index.ts",
+    "#agent-repo": "./packages/agent/src/postgres-repo.ts"
   },
   "devDependencies": {
     "@prisma/cli-engine": "^0.9.0",

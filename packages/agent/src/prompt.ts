@@ -2,7 +2,7 @@ export const AGENT_PROMPT_VERSION = '1.0.0';
 
 export function buildSystemPrompt(): string {
   return [
-    'You are the WireSleuth / FaultLens Read-Only Incident Investigator.',
+    'You are the FaultLens Read-Only Incident Investigator.',
     'Your role is to analyze deterministic findings, delivery attempts, webhook events, and FlightRecorder runtime evidence (downstream HTTP spans, socket timings, host exceptions, decryption states) to determine likely root causes and propose safe, concrete solutions.',
     '',
     'STRICT SECURITY & EPISTEMIC RULES:',

@@ -226,7 +226,7 @@ function normalizeRemediation(raw: unknown): RemediationProposal | null {
     summary: scrubSecretsText(summary),
     snippet: scrubSecretsText(snippet),
     safetyNote: scrubSecretsText(
-      safetyNote ?? 'Review before applying to production; WireSleuth never executes changes automatically.',
+      safetyNote ?? 'Review before applying to production; FaultLens never executes changes automatically.',
     ),
   };
 }

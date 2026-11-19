@@ -2,7 +2,7 @@
 
 ## Architectural Trust Boundaries
 
-WireSleuth / FaultLens enforces the following security invariants:
+FaultLens enforces the following security invariants:
 
 - **Ingest Authentication**: Production delivery (`POST /v1/ingest`, `POST /v1/ingest/episodes`) requires an active scoped `IngestKey` bearer token stored only as a SHA-256 hash. Webhook payloads are verified with constant-time HMAC-SHA256 (`crypto.timingSafeEqual`).
 - **Redaction Before Storage & LLM**: Secret fields (`secret`, `authorization`, `signingKey`, `apiKey`, `cookie`) and token patterns (`Bearer ...`, `sk_live_...`, `whsec_...`) are scrubbed before database persistence and before tool outputs are sent to any model.

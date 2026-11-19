@@ -2,5 +2,11 @@ node_modules
 dist
 .git
 .env
+.agents
+.cursor
 unreliable-systems
 design-spec
+prisma-8.md
+docs/mvp-backend-plan.md
+docs/filling-the-skeletons.md
+docs/decisions.md

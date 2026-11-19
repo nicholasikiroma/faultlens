@@ -1,6 +1,6 @@
 # Local install
 
-Milestone 14 provides a one-command bootstrap that starts PostgreSQL, Redis, the API, and the classification worker, and idempotently seeds the eight deterministic webhook failure scenarios into the product database with no AI/model key required.
+FaultLens provides a one-command bootstrap that starts PostgreSQL, Redis, the API, and the classification worker, and idempotently seeds the eight deterministic webhook failure scenarios into the product database with no AI/model key required.
 
 ## Start the full stack with Docker Compose
 

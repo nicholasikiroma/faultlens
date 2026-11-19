@@ -201,4 +201,13 @@ test("CORS preflight and cross-origin headers allow local dashboard requests", a
   });
   assert.equal(unauth.status, 401);
   assert.equal(unauth.headers.get("access-control-allow-origin"), "http://localhost:5173");
+
+  const untrusted = await app.request("/v1/events", {
+    method: "GET",
+    headers: {
+      Origin: "https://evil.example.com",
+    },
+  });
+  assert.equal(untrusted.status, 401);
+  assert.equal(untrusted.headers.get("access-control-allow-origin"), null);
 });

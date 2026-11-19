@@ -75,11 +75,20 @@ export function createApiApp(): Hono<ApiEnv> {
     "*",
     cors({
       origin: (origin) => {
-        if (!origin) return "*";
+        if (!origin) return null;
         if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
           return origin;
         }
-        return config.corsOrigin ?? origin;
+        if (config.corsOrigin) {
+          const allowed = config.corsOrigin
+            .split(",")
+            .map((value) => value.trim())
+            .filter(Boolean);
+          if (allowed.includes(origin)) {
+            return origin;
+          }
+        }
+        return null;
       },
       allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
       allowHeaders: [

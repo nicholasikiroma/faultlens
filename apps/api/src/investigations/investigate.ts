@@ -2,8 +2,10 @@ import { randomUUID } from "node:crypto";
 import {
   askIncidentQuestion,
   attachCostEstimate,
+  createModelProvider,
   type ModelProvider,
 } from "#agent";
+import { createPostgresAgentRepository } from "#agent-repo";
 import { db } from "#db";
 import type {
   HypothesisFeedbackRating,
@@ -15,12 +17,10 @@ import type {
   TokenUsage,
   ToolCallRecord,
 } from "#domain";
-import { createPostgresAgentRepository } from "../../../worker/src/agent-repo.ts";
-import { createProviderFromConfig } from "../../../worker/src/investigation-job.ts";
-import { enqueueInvestigationRun } from "../../../worker/src/investigation-queue.ts";
 import { recordAudit } from "../audit/audit.ts";
 import { config } from "../config.ts";
 import { verifyAdminToken } from "../read/auth.ts";
+import { enqueueInvestigationRun } from "./queue.ts";
 
 export interface TriggerInvestigationInput {
   workspaceId: string;
@@ -392,7 +392,14 @@ export async function askIncidentFollowUp(
 
   let provider: ModelProvider;
   try {
-    provider = input.provider ?? createProviderFromConfig();
+    provider =
+      input.provider ??
+      createModelProvider({
+        provider: config.aiProvider,
+        model: config.aiModel,
+        baseUrl: config.aiBaseUrl,
+        apiKey: config.aiApiKey,
+      });
   } catch (err) {
     return {
       outcome: "provider-error",

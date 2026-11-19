@@ -2,6 +2,7 @@ import { db } from "#db";
 import { startWorker } from "../../../worker/src/main.ts";
 import { config } from "../config.ts";
 import { startApiServer } from "../http/server.ts";
+import { closeInvestigationQueue } from "../investigations/queue.ts";
 import { seedProductFixtures } from "./seed.ts";
 
 if (!process.env["FAULTLENS_ADMIN_TOKEN"]) {
@@ -37,6 +38,7 @@ async function shutdown(): Promise<void> {
   shuttingDown = true;
   try {
     await api.close();
+    await closeInvestigationQueue();
     await worker.close();
   } catch (error) {
     console.error("Local backend shutdown failed", error);

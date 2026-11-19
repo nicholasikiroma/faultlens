@@ -39,8 +39,8 @@ New observation sources should be added only with concrete backend investigation
 
 HTTP requests, queue processing, and background jobs remain future work. No APIs or backend contracts for them are promised here. There is no universal event envelope, automatic instrumentation framework, exception tracking, retry queue, or durable telemetry store in the SDK. A different future transport or credential scope can be introduced when a real capability needs it; the current scoped ingest key must not imply permission to submit unrelated observations.
 
-The existing backend remains webhook-specific in milestone 13. This refactor establishes SDK boundaries, not a claim that the API or investigation engine already handles arbitrary distributed-system incidents.
+The initial backend investigation capability focuses on webhook deliveries and FlightRecorder runtime episodes. This establishes clear SDK boundaries without claiming that the API or investigation engine already handles arbitrary distributed-system incidents.
 
 ## Validation
 
-`npm run test:sdk` covers the public client composition, optional webhook configuration, webhook wire compatibility, and shared delivery behavior. It also checks that a sample host keeps its own response when delivery fails or remains pending. `docs/webhook-sdk.md` documents the first capability's provisioning and usage.
+`npm run test:sdk` covers the public client composition, optional webhook configuration, webhook wire compatibility, and shared delivery behavior. It also checks that a sample host (`apps/sdk-example`) keeps its own response when delivery fails or remains pending. See [ingest keys](ingest-keys.md) and the root [README](../README.md) for provisioning and usage.
